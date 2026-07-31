@@ -48,6 +48,7 @@ if analyze_btn or fund_code:
                             markers=True, range_r=[0, 20], template="plotly_dark",
                             color_discrete_sequence=['#00CC96'])
         fig.update_traces(fill='toself')
+        fig.update_layout(render_mode='svg')
         st.plotly_chart(fig, use_container_width=True)
 
     with col_table:
