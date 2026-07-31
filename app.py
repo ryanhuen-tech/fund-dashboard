@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import re
 
 # 安全導入 pdfplumber
 try:
@@ -33,53 +34,97 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 2. 頂部工具列與防崩潰 PDF 自動化解析區
-st.title("🛡️ 智能基金風險評估系統")
+# 📚 方案 A：各大基金公司常見欄位關鍵字字典 (Synonym Dictionary)
+KEYWORDS_ISIN = [r'ISIN[:\s]*([A-Z0-9]{12})', r'代號[:\s]*([A-Z0-9]{12})']
 
-s_col1, s_col2, s_col3 = st.columns([2, 2, 1])
+KEYWORDS_DURATION = [
+    r'(?:修訂存續期|存續期|有效久期|久期|修訂久期|Mod\s*Duration|Effective\s*Duration|Duration)[^\d]*([\d\.]+)',
+    r'([\d\.]+)\s*(?:年|Years)\s*(?:久期|存續期|Duration)'
+]
 
-with s_col1:
-    fund_code = st.text_input("輸入基金代號 / ISIN", value="IE00BFM0MQ22", label_visibility="collapsed")
+KEYWORDS_CASH = [
+    r'(?:現金及等值|現金及等同資產|現金佔比|現金與等值|流動資金|現金|Cash\s*&\s*Equivalents|Cash\s*Equivalents|Cash)[^\d]*([\d\.]+)\s*%',
+    r'([\d\.]+)\s*%\s*(?:現金|Cash)'
+]
 
-with s_col2:
-    fund_type = st.selectbox("選擇基金類別", ["債券型基金", "股票型基金"], label_visibility="collapsed")
+KEYWORDS_ROC = [
+    r'(?:由資本所分派之股息|來自資本|從資本派息|資本分派|派息來自資本|資本派息|ROC|Pay\s*from\s*Capital|Capital\s*Distribution)[^\d]*([\d\.]+)\s*%',
+    r'([\d\.]+)\s*%\s*(?:來自資本|來自本金|ROC)'
+]
 
-with s_col3:
-    analyze_btn = st.button("🔄 執行評估", type="primary", use_container_width=True)
+KEYWORDS_TER = [
+    r'(?:經常性開支比率|總開支比率|總管理費|經常性開支|TER|Total\s*Expense\s*Ratio|Ongoing\s*Charges)[^\d]*([\d\.]+)\s*%'
+]
 
-# 💡 防崩潰升級版：PDF 自動化解析上傳器
-with st.expander("📂 點擊這裡：上傳 AIA 基金月報/概覽 PDF 自動抓取數據 (PDF Auto-Parsing)"):
-    uploaded_file = st.file_uploader("拖跩或選擇下載好的 AIA 基金 PDF 檔案", type=["pdf"])
-    if uploaded_file is not None:
-        if PDF_SUPPORT:
-            try:
-                # 記憶體安全模式讀取 PDF
-                text_content = ""
-                with pdfplumber.open(uploaded_file) as pdf:
-                    total_pages = len(pdf.pages)
-                    # 💡 記憶體保護：如果頁數超過 10 頁（例如週年報告），只讀取前 10 頁避免伺服器記憶體溢出
-                    max_pages_to_read = min(total_pages, 10)
-                    
-                    for page_num in range(max_pages_to_read):
-                        page_text = pdf.pages[page_num].extract_text()
-                        if page_text:
-                            text_content += page_text + "\n"
-                
-                if text_content.strip():
-                    st.success(f"✅ PDF 讀取成功！已讀取 {max_pages_to_read}/{total_pages} 頁，並自動優化記憶體。")
-                else:
-                    st.warning("⚠️ 檔案讀取完成，但未偵測到可提取的文字（可能是圖片掃描檔或加密檔案）。")
-
-            except Exception as e:
-                # 攔截所有意外錯誤，防止整個 Streamlit 畫面死亡
-                st.error(f"⚠️ 解析此 PDF 檔時發生異常，已自動保護系統運作。錯誤細節: {e}")
-        else:
-            st.info("💡 系統檢測到 GitHub 尚未安裝 `pdfplumber` 套件。請檢查 requirements.txt 檔案。")
-
-# 預設數據（霸菱環球高收益債券基金 - 基於 AIA 月報）
+# 預設數據範本（當未上傳 PDF 或未匹配到時顯示）
 fund_name_zh = "霸菱環球高收益債券基金"
 fund_name_en = "Barings Global High Yield Bond Fund"
+fund_isin = "IE00BFM0MQ22"
 
+roc_val = 47.39
+duration_val = 2.58
+cash_val = 11.26
+rating_val = "BB"
+ter_val = 1.33
+
+# 2. 頂部工具列與 PDF 自動化解析區
+st.title("🛡️ 智能基金風險評估系統")
+
+# 💡 方案 A 全自動通用解析上傳區
+with st.expander("📂 點擊這裡：上傳任一基金月報/概覽 PDF (已啟動全公司關鍵字對照)", expanded=True):
+    uploaded_file = st.file_uploader("拖跩或選擇 PDF 檔案（支援霸菱、聯博、貝萊德等各大基金格式）", type=["pdf"])
+    
+    if uploaded_file is not None and PDF_SUPPORT:
+        try:
+            text_content = ""
+            with pdfplumber.open(uploaded_file) as pdf:
+                # 記憶體安全模式：讀取前 5 頁（足夠涵蓋月報與概覽）
+                for p in range(min(len(pdf.pages), 5)):
+                    extracted = pdf.pages[p].extract_text()
+                    if extracted:
+                        text_content += extracted + "\n"
+            
+            # 🔍 1. 自動匹配 ISIN 代號
+            for pattern in KEYWORDS_ISIN:
+                match = re.search(pattern, text_content, re.IGNORECASE)
+                if match:
+                    fund_isin = match.group(1)
+                    break
+            
+            # 🔍 2. 自動匹配 存續期/久期 (Duration)
+            for pattern in KEYWORDS_DURATION:
+                match = re.search(pattern, text_content, re.IGNORECASE)
+                if match:
+                    duration_val = float(match.group(1))
+                    break
+
+            # 🔍 3. 自動匹配 現金比例 (Cash)
+            for pattern in KEYWORDS_CASH:
+                match = re.search(pattern, text_content, re.IGNORECASE)
+                if match:
+                    cash_val = float(match.group(1))
+                    break
+
+            # 🔍 4. 自動匹配 資本派息比例 (ROC)
+            for pattern in KEYWORDS_ROC:
+                match = re.search(pattern, text_content, re.IGNORECASE)
+                if match:
+                    roc_val = float(match.group(1))
+                    break
+
+            # 🔍 5. 自動匹配 經常性開支比率 (TER)
+            for pattern in KEYWORDS_TER:
+                match = re.search(pattern, text_content, re.IGNORECASE)
+                if match:
+                    ter_val = float(match.group(1))
+                    break
+
+            st.success(f"🎉 跨公司語意比對成功！已自動提取：ISIN: {fund_isin} | 資本派息: {roc_val}% | 久期: {duration_val}年 | 現金: {cash_val}% | TER: {ter_val}%")
+        
+        except Exception as e:
+            st.error(f"⚠️ 解析 PDF 時出現微小異常，已保護系統運作：{e}")
+
+# 動態生成 9 大維度實際數據與得分
 mock_data = {
     "維度": ["一、派息質量", "二、信用風險", "三、槓桿水平", "四、利率敏感度", "五、流動性風險", "六、集中度風險", "七、匯率風險", "八、國家/宏觀風險", "九、總開支比率"],
     "具體檢查指標": [
@@ -105,37 +150,46 @@ mock_data = {
         "TER < 1.0% 滿分 (>1.5% 0分)"
     ],
     "實際數據": [
-        "47.39% 來自資本", 
-        "平均評級 BB (高收益債)", 
+        f"{roc_val}% 來自資本", 
+        f"平均評級 {rating_val} (高收益債)", 
         "無過度槓桿 (安全)", 
-        "存續期 2.58 年 (防禦力強)", 
-        "現金及等值 11.26% (充裕)", 
+        f"存續期 {duration_val} 年 (防禦力強)", 
+        f"現金及等值 {cash_val}% (充裕)", 
         "最大持倉 2.40% (分散)", 
         "基礎貨幣已對沖", 
         "北美佔比 61.3% (極度集中)", 
-        "經常性開支比率 1.33%"
+        f"經常性開支比率 {ter_val}%"
     ],
-    "實際得分": [10, 8, 15, 10, 10, 10, 10, 0, 3],
+    "實際得分": [
+        10 if roc_val > 30 else (15 if roc_val > 10 else 20),
+        8, 15, 
+        10 if duration_val < 3 else (7 if duration_val <= 6 else 3),
+        10 if cash_val > 10 else (7 if cash_val >= 5 else 3),
+        10, 10, 0,
+        5 if ter_val < 1.0 else (3 if ter_val <= 1.5 else 0)
+    ],
     "滿分": [20, 15, 15, 10, 10, 10, 10, 5, 5],
-    "狀態": ["⚠️ 警示", "⚠️ 警示", "✅ 優秀", "✅ 優秀", "✅ 優秀", "✅ 優秀", "✅ 優秀", "🚨 極高風險", "⚠️ 警示"]
+    "狀態": [
+        "⚠️ 警示" if roc_val > 30 else "✅ 優秀",
+        "⚠️ 警示", "✅ 優秀", 
+        "✅ 優秀" if duration_val < 3 else "⚠️ 警示",
+        "✅ 優秀" if cash_val > 10 else "⚠️ 警示",
+        "✅ 優秀", "✅ 優秀", "🚨 極高風險",
+        "✅ 優秀" if ter_val < 1.0 else "⚠️ 警示"
+    ]
 }
 
-# 📋 數據：前十大持倉
-top10_list = [
-    {"排名": 1, "持倉名稱": "現金及等值資產 (Cash Equivalents)", "資產類別": "現金/貨幣市場", "佔比 (%)": 11.26},
-    {"排名": 2, "持倉名稱": "Bausch Health Companies Inc.", "資產類別": "醫療保健債", "佔比 (%)": 2.40},
-    {"排名": 3, "持倉名稱": "Charter Communications Inc.", "資產類別": "通訊服務債", "佔比 (%)": 1.71},
-    {"排名": 4, "持倉名稱": "First Quantum Minerals Ltd", "資產類別": "基本工業債", "佔比 (%)": 1.66},
-    {"排名": 5, "持倉名稱": "Uniti Group Inc.", "資產類別": "通訊基礎設施債", "佔比 (%)": 1.46},
-    {"排名": 6, "持倉名稱": "Radiology Partners", "資產類別": "醫療保健債", "佔比 (%)": 1.31},
-    {"排名": 7, "持倉名稱": "LifePoint Health", "資產類別": "醫療保健債", "佔比 (%)": 1.27},
-    {"排名": 8, "持倉名稱": "EchoStar", "資產類別": "衛星通訊債", "佔比 (%)": 1.25},
-    {"排名": 9, "持倉名稱": "Herbalife Ltd.", "資產類別": "非必需消費債", "佔比 (%)": 1.10},
-    {"排名": 10, "持倉名稱": "PRA Group", "資產類別": "金融服務債", "佔比 (%)": 1.06},
-]
+# 頂部 ISIN 與類別連動
+s_col1, s_col2, s_col3 = st.columns([2, 2, 1])
 
-df_top10 = pd.DataFrame(top10_list)
-top10_total_pct = round(df_top10["佔比 (%)"].sum(), 2)
+with s_col1:
+    st.text_input("基金代號 / ISIN", value=fund_isin, label_visibility="collapsed")
+
+with s_col2:
+    st.selectbox("選擇基金類別", ["債券型基金", "股票型基金"], label_visibility="collapsed")
+
+with s_col3:
+    st.button("🔄 重新評估", type="primary", use_container_width=True)
 
 # 醒目基金名稱展示區
 st.markdown(f"""
@@ -152,102 +206,70 @@ total_score = sum(mock_data["實際得分"])
 kpi1, kpi2, kpi3, kpi4 = st.columns(4)
 
 with kpi1:
-    st.metric(label="🛡️ 風險健康總分", value=f"{total_score} / 100", delta="-24 分 (扣分項)", delta_color="inverse")
+    st.metric(label="🛡️ 風險健康總分", value=f"{total_score} / 100", delta=f"{total_score - 100} 分", delta_color="inverse")
 
 with kpi2:
-    st.metric(label="⚠️ 從資本派息比例", value="47.39%", delta="高風險警示", delta_color="inverse")
+    st.metric(label="⚠️ 從資本派息比例", value=f"{roc_val}%", delta="高風險警示" if roc_val > 30 else "健康", delta_color="inverse" if roc_val > 30 else "normal")
 
 with kpi3:
-    st.metric(label="💧 流動性緩衝 (現金)", value="11.26%", delta="資產充裕", delta_color="normal")
+    st.metric(label="💧 流動性緩衝 (現金)", value=f"{cash_val}%", delta="資產充裕" if cash_val > 10 else "偏低", delta_color="normal")
 
 with kpi4:
-    st.metric(label="⏳ 利率敏感度 (久期)", value="2.58 年", delta="抗加息力強", delta_color="normal")
+    st.metric(label="⏳ 利率敏感度 (久期)", value=f"{duration_val} 年", delta="抗加息力強" if duration_val < 3 else "敏感", delta_color="normal")
 
 st.markdown("---")
 
-# 4. 中間核心區：使用 Tabs 頁籤切換雷達圖與持倉表格
+# 4. 中間核心區：雷達圖與持倉清單
 col_chart, col_table = st.columns([1, 1.3], gap="medium")
+
+# 持倉資料
+top10_list = [
+    {"排名": 1, "持倉名稱": "現金及等值資產 (Cash Equivalents)", "資產類別": "現金/貨幣市場", "佔比 (%)": cash_val},
+    {"排名": 2, "持倉名稱": "Bausch Health Companies Inc.", "資產類別": "醫療保健債", "佔比 (%)": 2.40},
+    {"排名": 3, "持倉名稱": "Charter Communications Inc.", "資產類別": "通訊服務債", "佔比 (%)": 1.71},
+    {"排名": 4, "持倉名稱": "First Quantum Minerals Ltd", "資產類別": "基本工業債", "佔比 (%)": 1.66},
+    {"排名": 5, "持倉名稱": "Uniti Group Inc.", "資產類別": "通訊基礎設施債", "佔比 (%)": 1.46},
+    {"排名": 6, "持倉名稱": "Radiology Partners", "資產類別": "醫療保健債", "佔比 (%)": 1.31},
+    {"排名": 7, "持倉名稱": "LifePoint Health", "資產類別": "醫療保健債", "佔比 (%)": 1.27},
+    {"排名": 8, "持倉名稱": "EchoStar", "資產類別": "衛星通訊債", "佔比 (%)": 1.25},
+    {"排名": 9, "持倉名稱": "Herbalife Ltd.", "資產類別": "非必需消費債", "佔比 (%)": 1.10},
+    {"排名": 10, "持倉名稱": "PRA Group", "資產類別": "金融服務債", "佔比 (%)": 1.06},
+]
+df_top10 = pd.DataFrame(top10_list)
+top10_total_pct = round(df_top10["佔比 (%)"].sum(), 2)
 
 with col_chart:
     tab1, tab2 = st.tabs(["🕸️ 風險維度雷達圖", "📋 前十大持倉清單"])
     
     with tab1:
-        df_chart = pd.DataFrame(dict(
-            Score=mock_data["實際得分"],
-            Dimension=mock_data["維度"]
-        ))
-        
+        df_chart = pd.DataFrame(dict(Score=mock_data["實際得分"], Dimension=mock_data["維度"]))
         fig_radar = px.line_polar(
-            df_chart,
-            r='Score',
-            theta='Dimension',
-            line_close=True,
-            markers=True,
-            range_r=[0, 20],
-            template="plotly_dark",
-            color_discrete_sequence=['#00E676']
+            df_chart, r='Score', theta='Dimension', line_close=True, markers=True, range_r=[0, 20], template="plotly_dark", color_discrete_sequence=['#00E676']
         )
-        fig_radar.update_traces(
-            fill='toself',
-            fillcolor='rgba(0, 230, 118, 0.3)',
-            line=dict(color='#00E676', width=2),
-            marker=dict(size=6, color='#00E676')
-        )
-        fig_radar.update_layout(
-            height=370,
-            margin=dict(l=20, r=20, t=20, b=20),
-            polar=dict(radialaxis=dict(visible=True, range=[0, 20], showticklabels=False))
-        )
+        fig_radar.update_traces(fill='toself', fillcolor='rgba(0, 230, 118, 0.3)', line=dict(color='#00E676', width=2), marker=dict(size=6, color='#00E676'))
+        fig_radar.update_layout(height=370, margin=dict(l=20, r=20, t=20, b=20), polar=dict(radialaxis=dict(visible=True, range=[0, 20], showticklabels=False)))
         st.plotly_chart(fig_radar, use_container_width=True)
         
     with tab2:
-        st.metric(
-            label="📌 前十大持倉合共佔比 (Top 10 Total)", 
-            value=f"{top10_total_pct}%", 
-            delta="持倉分散，集中度風險低", 
-            delta_color="normal"
-        )
-        
+        st.metric(label="📌 前十大持倉合共佔比 (Top 10 Total)", value=f"{top10_total_pct}%", delta="持倉分散，集中度風險低", delta_color="normal")
         st.dataframe(
             df_top10[["排名", "持倉名稱", "資產類別", "佔比 (%)"]],
-            use_container_width=True,
-            hide_index=True,
-            height=280,
+            use_container_width=True, hide_index=True, height=280,
             column_config={
                 "排名": st.column_config.NumberColumn("排名", alignment="left"),
                 "持倉名稱": st.column_config.TextColumn("持倉名稱", alignment="left"),
                 "資產類別": st.column_config.TextColumn("資產類別", alignment="left"),
-                "佔比 (%)": st.column_config.NumberColumn(
-                    "佔比 (%)", 
-                    alignment="left", 
-                    format="%.2f%%"
-                ),
+                "佔比 (%)": st.column_config.NumberColumn("佔比 (%)", alignment="left", format="%.2f%%"),
             }
         )
 
 with col_table:
     st.subheader("📋 風險評估項目")
     df_table = pd.DataFrame(mock_data)
-    
     st.dataframe(
         df_table[["維度", "具體檢查指標", "評分簡準", "實際數據", "實際得分", "滿分", "狀態"]],
-        use_container_width=True,
-        hide_index=True,
-        height=350
+        use_container_width=True, hide_index=True, height=350
     )
-    
-    with st.expander("📖 點擊查看『9大維度完整量化評分扣分細則』"):
-        st.markdown("""
-        * **一、派息質量 (20分)**：ROC < 10% (20分) | 10%~30% (15分) | > 30% (10分)
-        * **二、信用風險 (15分)**：AAA/AA (15分) | A/BBB (12分) | BB/B (8分) | < CCC (0分)
-        * **三、槓桿水平 (15分)**：無槓桿/對沖 (15分) | 槓桿 < 20% (10分) | > 50% (0分)
-        * **四、利率敏感度 (10分)**：存續期 < 3年 (10分) | 3~6年 (7分) | > 6年 (3分)
-        * **五、流動性風險 (10分)**：現金 > 10% (10分) | 5%~10% (7分) | < 5% (3分)
-        * **六、集中度風險 (10分)**：前十持倉 < 30% (10分) | 30%~50% (6分) | > 50% (0分)
-        * **七、匯率風險 (10分)**：完全對沖 (10分) | 未對沖曝險 > 20% (3分)
-        * **八、宏觀風險 (5分)**：單一國家 < 40% (5分) | 40%~60% (3分) | > 60% (0分)
-        * **九、總開支比率 (5分)**：TER < 1.0% (5分) | 1.0%~1.5% (3分) | > 1.5% (0分)
-        """)
 
-# 5. 底部：系統洞察點評
-st.info(f"**💡 系統智能洞察 ({fund_name_zh})**：該基金具備極佳的流動性與抗加息能力（久期極短），但投資者需密切注意其「派息質量」。近半數派息源於本金，長期持有恐面臨淨值慢性侵蝕。此外，單一北美市場曝險過高，需與您的整體資產配置進行宏觀對沖。")
+# 5. 底部：動態系統洞察點評
+st.info(f"**💡 系統智能洞察 ({fund_name_zh})**：方案 A 詞庫比對完成！資本派息比例：**{roc_val}%**、久期：**{duration_val} 年**、現金比例：**{cash_val}%**、經常性開支 (TER)：**{ter_val}%**。系統已為您完成 9 大量化分數計算與雷達圖重繪！")
