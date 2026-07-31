@@ -130,7 +130,7 @@ with st.expander("📂 點擊這裡：上傳任一基金月報/股息紀錄 PDF�
                     """
 
                     # 3. 備援模型調用機制：依序嘗試官方正確模型代號，絕不跳 404！
-models_to_try = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro"]
+                    models_to_try = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro"]
                     response = None
                     used_model_name = ""
                     error_logs = []
