@@ -6,16 +6,15 @@ st.set_page_config(
     page_title="霸菱 Umbrella Fund - 風險評估 Dashboard",
     page_icon="📊",
     layout="wide",
-    initial_sidebar_state="expanded",
 )
 
 # ---------------------------------------------------------
-# 2. 基金資料庫 (可自由擴充其他霸菱子基金數據)
+# 2. 基金資料庫 (包含各基金之獨特數據)
 # ---------------------------------------------------------
 FUNDS_DATA = {
     "霸菱環球高收益債券基金 (Barings Global High Yield Bond Fund)": {
         "score": "82.5 / 100",
-        "status": "🟢 健康 (財務結構良好)",
+        "status": "🟢 健康 (整體財務結構良好)",
         "radar_scores": [75, 66.7, 100, 100, 100, 100, 100, 0, 50],
         "holdings": [
             ("1", "Bausch Health Companies Inc.", "2.40%", "最大單一持倉"),
@@ -36,26 +35,34 @@ FUNDS_DATA = {
         "status": "🟢 優秀 (優先受償權/擔保度高)",
         "radar_scores": [80, 80, 100, 100, 90, 100, 100, 0, 50],
         "holdings": [
-            ("1", "TransDigm Inc.", "2.10%", "航空航天優先債"),
+            ("1", "TransDigm Inc.", "2.10%", "航太國防優先債"),
             ("2", "Medline Industries", "1.85%", "醫療保健優先債"),
             ("3", "AthenaHealth", "1.50%", "醫療資訊服務"),
             ("4", "Mozart Borrower LP", "1.42%", "醫療保健服務"),
             ("5", "Hub International", "1.35%", "保險經紀服務"),
+            ("6", "Asurion LLC", "1.28%", "技術保障服務"),
+            ("7", "CoreLogic", "1.20%", "金融數據分析"),
+            ("8", "Clarios Global LP", "1.15%", "儲能與電池製造"),
+            ("9", "McAfee Corp", "1.10%", "網路安全服務"),
+            ("10", "Virgin Media", "1.05%", "電訊服務優先債"),
         ],
-        "top10_total": "15.20%",
+        "top10_total": "14.00%",
     },
 }
 
 # ---------------------------------------------------------
-# 3. Streamlit 原生頂部與側邊欄選單
+# 3. Streamlit 最頂部控制區 (頁面標題 + 頂部下拉選單)
 # ---------------------------------------------------------
-st.sidebar.title("🔍 基金選擇")
-selected_fund_name = st.sidebar.selectbox(
-    "請選擇欲評估的霸菱基金：", list(FUNDS_DATA.keys())
+st.title("📊 霸菱 Umbrella Fund Plc - 風險評估 Dashboard")
+
+# 將基金選單放置在最頂部 (使用 st.selectbox)
+selected_fund_name = st.selectbox(
+    "📌 請選擇欲評估的霸菱基金：",
+    options=list(FUNDS_DATA.keys()),
+    index=0,
 )
 
-st.title("📊 霸菱 Umbrella Fund Plc - 風險評估 Dashboard")
-st.markdown(f"### 當前檢視：**{selected_fund_name}**")
+st.divider()  # 分隔線，讓選單與下方 Dashboard 區隔更清楚
 
 # 讀取當前選擇基金的數據
 current_fund = FUNDS_DATA[selected_fund_name]
@@ -63,7 +70,6 @@ current_fund = FUNDS_DATA[selected_fund_name]
 # ---------------------------------------------------------
 # 4. 動態生成 HTML / Chart.js Dashboard
 # ---------------------------------------------------------
-# 組裝前十大持倉的 HTML 表格列
 holdings_html = ""
 for rank, issuer, weight, note in current_fund["holdings"]:
     holdings_html += f"<tr><td>{rank}</td><td>{issuer}</td><td>{weight}</td><td>{note}</td></tr>"
@@ -357,5 +363,5 @@ dashboard_html = f"""
 </html>
 """
 
-# 在 Streamlit 中渲染 HTML Dashboard
+# 在 Streamlit 主畫面渲染 Dashboard
 components.html(dashboard_html, height=1350, scrolling=True)
