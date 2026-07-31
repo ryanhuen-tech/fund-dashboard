@@ -1,14 +1,22 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import json
 import re
 
-# 安全導入 pdfplumber
+# 安全導入 pdfplumber 與 google-genai
 try:
     import pdfplumber
     PDF_SUPPORT = True
 except ImportError:
     PDF_SUPPORT = False
+
+try:
+    from google import genai
+    from google.genai import types
+    GEMINI_SUPPORT = True
+except ImportError:
+    GEMINI_SUPPORT = False
 
 # 1. 網頁基本設定
 st.set_page_config(
@@ -42,100 +50,115 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 📚 方案 A：通用關鍵字字典
-KEYWORDS_ISIN = [r'ISIN[:\s]*([A-Z0-9]{12})', r'代號[:\s]*([A-Z0-9]{12})']
-KEYWORDS_DURATION = [r'(?:修訂存續期|存續期|有效久期|久期|Mod\s*Duration|Effective\s*Duration|Duration)[^\d]*([\d\.]+)', r'([\d\.]+)\s*(?:年|Years)\s*(?:久期|存續期|Duration)']
-KEYWORDS_CASH = [r'(?:現金及等值|現金及等同資產|現金佔比|現金與等值|流動資金|現金|Cash\s*&\s*Equivalents|Cash\s*Equivalents|Cash)[^\d]*([\d\.]+)\s*%', r'([\d\.]+)\s*%\s*(?:現金|Cash)']
-KEYWORDS_ROC = [r'(?:由資本所分派之股息|來自資本|從資本派息|資本分派|派息來自資本|資本派息|ROC|Pay\s*from\s*Capital|Capital\s*Distribution)[^\d]*([\d\.]+)\s*%', r'([\d\.]+)\s*%\s*(?:來自資本|來自本金|ROC)']
-KEYWORDS_TER = [r'(?:經常性開支比率|總開支比率|總管理費|經常性開支|TER|Total\s*Expense\s*Ratio|Ongoing\s*Charges)[^\d]*([\d\.]+)\s*%']
+# 預設數據範本（當未上傳 PDF 或 AI 尚未執行時）
+fund_name_zh = "富達基金 - 美元高收益基金"
+fund_name_en = "Fidelity Funds - US High Yield Fund"
+fund_isin = "LU0132282301"
 
-# 預設數據範本 (未上傳時的預設值)
-fund_name_zh = "霸菱環球高收益債券基金"
-fund_name_en = "Barings Global High Yield Bond Fund"
-fund_isin = "IE00BFM0MQ22"
+roc_val = 0.0
+duration_val = 2.8
+cash_val = -0.40
+rating_val = "BB-"
+ter_val = 1.00
+data_source = "預設範本 (富達 Z13)"
+ai_analysis_summary = "該基金有效存續期為 2.8 年，現金比例為 -0.40%，每年管理費為 1.00%。持倉高度分散，但美國單一市場佔比達 79.60%，需留意區域集中風險。"
 
-roc_val = 47.39
-duration_val = 2.58
-cash_val = 11.26
-rating_val = "BB"
-ter_val = 1.33
-data_source = "預設範本"
-
-# 預設霸菱十大持倉
 top10_list = [
-    {"排名": 1, "持倉名稱": "現金及等值資產 (Cash Equivalents)", "資產類別": "現金/貨幣市場", "佔比 (%)": 11.26},
-    {"排名": 2, "持倉名稱": "Bausch Health Companies Inc.", "資產類別": "醫療保健債", "佔比 (%)": 2.40},
-    {"排名": 3, "持倉名稱": "Charter Communications Inc.", "資產類別": "通訊服務債", "佔比 (%)": 1.71},
-    {"排名": 4, "持倉名稱": "First Quantum Minerals Ltd", "資產類別": "基本工業債", "佔比 (%)": 1.66},
-    {"排名": 5, "持倉名稱": "Uniti Group Inc.", "資產類別": "通訊基礎設施債", "佔比 (%)": 1.46},
-    {"排名": 6, "持倉名稱": "Radiology Partners", "資產類別": "醫療保健債", "佔比 (%)": 1.31},
-    {"排名": 7, "持倉名稱": "LifePoint Health", "資產類別": "醫療保健債", "佔比 (%)": 1.27},
-    {"排名": 8, "持倉名稱": "EchoStar", "資產類別": "衛星通訊債", "佔比 (%)": 1.25},
-    {"排名": 9, "持倉名稱": "Herbalife Ltd.", "資產類別": "非必需消費債", "佔比 (%)": 1.10},
-    {"排名": 10, "持倉名稱": "PRA Group", "資產類別": "金融服務債", "佔比 (%)": 1.06},
+    {"排名": 1, "持倉名稱": "UST BILLS 0% 07/30/26", "資產類別": "美國國庫券", "佔比 (%)": 3.02},
+    {"排名": 2, "持倉名稱": "UST BILLS 0% 09/10/26", "資產類別": "美國國庫券", "佔比 (%)": 2.02},
+    {"排名": 3, "持倉名稱": "DIRECTV HLDGS 9.25% 6/32", "資產類別": "通訊服務債", "佔比 (%)": 0.89},
+    {"排名": 4, "持倉名稱": "VENTURE 9.875% 02/01/32", "資產類別": "能源債", "佔比 (%)": 0.88},
+    {"排名": 5, "持倉名稱": "WULF COMPUTE 7.75% 10/30", "資產類別": "科技債", "佔比 (%)": 0.84},
+    {"排名": 6, "持倉名稱": "NISSAN MOTOR 7.5% 7/17/30", "資產類別": "汽車債", "佔比 (%)": 0.82},
+    {"排名": 7, "持倉名稱": "SWORD PURCH 8.25% 4/15/33", "資產類別": "工業債", "佔比 (%)": 0.82},
+    {"排名": 8, "持倉名稱": "1261229 BC LTD 10% 4/32", "資產類別": "醫療債", "佔比 (%)": 0.80},
+    {"排名": 9, "持倉名稱": "CARNIVAL CORP 6.125% 2/33", "資產類別": "休閒旅遊債", "佔比 (%)": 0.80},
+    {"排名": 10, "持倉名稱": "OAK-EAGLE ACQUI 7.25% 7/33", "資產類別": "金融債", "佔比 (%)": 0.78},
 ]
 
 # 2. 頂部工具列與 PDF 自動化解析區
 st.title("🛡️ 智能基金風險評估系統")
 
-with st.expander("📂 點擊這裡：上傳任一基金月報/概覽 PDF (已啟動全公司關鍵字對照)", expanded=True):
-    uploaded_file = st.file_uploader("拖跩或選擇 PDF 檔案（支援霸菱、聯博、貝萊德等各大基金格式）", type=["pdf"])
+# 🤖 Google Gemini AI 全自動解析上傳區
+with st.expander("📂 點擊這裡：上傳任一基金月報 PDF（Google Gemini AI 自動理解與解析）", expanded=True):
+    uploaded_file = st.file_uploader("請上傳任意基金月報/概覽 PDF（不限霸菱、富達、聯博或貝萊德）", type=["pdf"])
     
     if uploaded_file is not None and PDF_SUPPORT:
-        try:
-            text_content = ""
-            with pdfplumber.open(uploaded_file) as pdf:
-                for p in range(min(len(pdf.pages), 5)):
-                    extracted = pdf.pages[p].extract_text()
-                    if extracted:
-                        text_content += extracted + "\n"
-            
-            # 🔍 自動抓取基金名稱 (取第一行文字或檔名)
-            file_title = uploaded_file.name.replace(".pdf", "")
-            fund_name_zh = f"已分析基金 ({file_title})"
-            fund_name_en = f"Uploaded PDF: {uploaded_file.name}"
-            data_source = f"PDF 解析自: {uploaded_file.name}"
-
-            # 🔍 1. ISIN
-            for pattern in KEYWORDS_ISIN:
-                match = re.search(pattern, text_content, re.IGNORECASE)
-                if match:
-                    fund_isin = match.group(1)
-                    break
-            
-            # 🔍 2. Duration
-            for pattern in KEYWORDS_DURATION:
-                match = re.search(pattern, text_content, re.IGNORECASE)
-                if match:
-                    duration_val = float(match.group(1))
-                    break
-
-            # 🔍 3. Cash
-            for pattern in KEYWORDS_CASH:
-                match = re.search(pattern, text_content, re.IGNORECASE)
-                if match:
-                    cash_val = float(match.group(1))
-                    top10_list[0]["佔比 (%)"] = cash_val  # 自動連動現金持倉比率
-                    break
-
-            # 🔍 4. ROC
-            for pattern in KEYWORDS_ROC:
-                match = re.search(pattern, text_content, re.IGNORECASE)
-                if match:
-                    roc_val = float(match.group(1))
-                    break
-
-            # 🔍 5. TER
-            for pattern in KEYWORDS_TER:
-                match = re.search(pattern, text_content, re.IGNORECASE)
-                if match:
-                    ter_val = float(match.group(1))
-                    break
-
-            st.success(f"🎉 數據更新成功！已載入檔案《{uploaded_file.name}》| ISIN: {fund_isin} | 資本派息: {roc_val}% | 久期: {duration_val}年 | 現金: {cash_val}%")
+        # 從 Streamlit Secrets 讀取 API Key
+        gemini_api_key = st.secrets.get("GEMINI_API_KEY", "")
         
-        except Exception as e:
-            st.error(f"⚠️ 解析 PDF 時出現微小異常，已保護系統運作：{e}")
+        if not gemini_api_key:
+            st.warning("⚠️ 未檢測到 Google Gemini API Key，請至 Streamlit 專案 Settings -> Secrets 設定 `GEMINI_API_KEY`。")
+        elif not GEMINI_SUPPORT:
+            st.warning("⚠️ GitHub 尚未完成 `google-genai` 安裝，請確保 `requirements.txt` 中已新增該套件。")
+        else:
+            try:
+                with st.spinner("🤖 Google Gemini AI 正在閱讀 PDF 並進行 9 大維度智能解析中..."):
+                    # 1. 提取文字
+                    text_content = ""
+                    with pdfplumber.open(uploaded_file) as pdf:
+                        for p in range(min(len(pdf.pages), 5)):
+                            extracted = pdf.pages[p].extract_text()
+                            if extracted:
+                                text_content += extracted + "\n"
+
+                    # 2. 調用 Gemini API
+                    client = genai.Client(api_key=gemini_api_key)
+                    
+                    prompt = f"""
+                    你是一位頂尖的金融量化分析師。請閱讀以下基金月報內容，精確提取關鍵數據並回傳 JSON 格式。
+                    若內容未提及 ROC 派息來自資本，請將 roc 設為 0。
+                    
+                    請嚴格只輸出 JSON，格式如下：
+                    {{
+                        "fund_name_zh": "基金中文名稱",
+                        "fund_name_en": "基金英文名稱",
+                        "fund_isin": "ISIN代號",
+                        "duration": 數字(存續期/久期，單位:年),
+                        "cash": 數字(現金比例%，可為負數),
+                        "roc": 數字(派息來自資本%，若無則0),
+                        "ter": 數字(管理費/TER %),
+                        "rating": "字串(如 BB-, BB, BBB, A)",
+                        "summary": "一段100字內的智能洞察點評",
+                        "top10": [
+                            {{"排名": 1, "持倉名稱": "持倉1", "資產類別": "類別", "佔比 (%)": 數字}},
+                            ... (最多10個)
+                        ]
+                    }}
+
+                    基金文本內容：
+                    {text_content[:6000]}
+                    """
+                    
+                    response = client.models.generate_content(
+                        model='gemini-2.5-flash',
+                        contents=prompt,
+                        config=types.GenerateContentConfig(
+                            response_mime_type="application/json",
+                        ),
+                    )
+                    
+                    # 3. 解析 AI 回傳的 JSON 數據
+                    ai_result = json.loads(response.text)
+                    
+                    fund_name_zh = ai_result.get("fund_name_zh", uploaded_file.name)
+                    fund_name_en = ai_result.get("fund_name_en", "")
+                    fund_isin = ai_result.get("fund_isin", "N/A")
+                    duration_val = float(ai_result.get("duration", 0.0))
+                    cash_val = float(ai_result.get("cash", 0.0))
+                    roc_val = float(ai_result.get("roc", 0.0))
+                    ter_val = float(ai_result.get("ter", 1.0))
+                    rating_val = ai_result.get("rating", "BB")
+                    ai_analysis_summary = ai_result.get("summary", "")
+                    
+                    if ai_result.get("top10"):
+                        top10_list = ai_result.get("top10")
+
+                    data_source = f"Google Gemini AI 解析：{uploaded_file.name}"
+                    st.success(f"🎉 AI 解析完成！基金：{fund_name_zh} | ISIN: {fund_isin} | 久期: {duration_val}年 | 現金: {cash_val}%")
+            
+            except Exception as e:
+                st.error(f"⚠️ AI 解析過程發生異常，已啟動安全保護：{e}")
 
 # 動態生成 9 大維度實際數據與得分
 mock_data = {
@@ -144,12 +167,12 @@ mock_data = {
         "從資本派息 (ROC) 比例",
         "投資組合平均信貸評級",
         "衍生工具及總槓桿比率",
-        "修訂存續期 (Duration)",
+        "有效存續期 (Duration)",
         "現金及高流動性資產佔比",
         "前十大持倉總集中比例",
         "非對沖外幣資產曝險",
         "單一國家/區域持倉集中度",
-        "經常性開支比率 (TER)"
+        "每年管理費 / TER"
     ],
     "評分簡準": [
         "ROC < 10% 滿分 (>30% 扣分)",
@@ -163,32 +186,31 @@ mock_data = {
         "TER < 1.0% 滿分 (>1.5% 0分)"
     ],
     "實際數據": [
-        f"{roc_val}% 來自資本", 
+        "月報未揭露 (需查股息表)" if roc_val == 0 else f"{roc_val}% 來自資本", 
         f"平均評級 {rating_val} (高收益債)", 
-        "無過度槓桿 (安全)", 
-        f"存續期 {duration_val} 年 (防禦力強)", 
-        f"現金及等值 {cash_val}% (充裕)", 
-        "最大持倉 2.40% (分散)", 
+        "衍生工具風險淨額最高 50%", 
+        f"有效存續期 {duration_val} 年 (防禦力強)", 
+        f"現金及等值 {cash_val}% (緊湊)" if cash_val < 0 else f"現金及等值 {cash_val}% (充裕)", 
+        "前十持倉合共分散", 
         "基礎貨幣已對沖", 
-        "北美佔比 61.3% (極度集中)", 
-        f"經常性開支比率 {ter_val}%"
+        "國家持倉分散", 
+        f"每年管理費 {ter_val}%"
     ],
     "實際得分": [
-        10 if roc_val > 30 else (15 if roc_val > 10 else 20),
-        8, 15, 
+        15 if roc_val == 0 else (10 if roc_val > 30 else 20),
+        8, 10,
         10 if duration_val < 3 else (7 if duration_val <= 6 else 3),
-        10 if cash_val > 10 else (7 if cash_val >= 5 else 3),
+        3 if cash_val < 5 else 10,
         10, 10, 0,
-        5 if ter_val < 1.0 else (3 if ter_val <= 1.5 else 0)
+        5 if ter_val <= 1.0 else 3
     ],
     "滿分": [20, 15, 15, 10, 10, 10, 10, 5, 5],
     "狀態": [
-        "⚠️ 警示" if roc_val > 30 else "✅ 優秀",
-        "⚠️ 警示", "✅ 優秀", 
+        "⚠️ 需查股息表" if roc_val == 0 else ("⚠️ 警示" if roc_val > 30 else "✅ 優秀"),
+        "⚠️ 警示", "⚠️ 留意槓桿", 
         "✅ 優秀" if duration_val < 3 else "⚠️ 警示",
-        "✅ 優秀" if cash_val > 10 else "⚠️ 警示",
-        "✅ 優秀", "✅ 優秀", "🚨 極高風險",
-        "✅ 優秀" if ter_val < 1.0 else "⚠️ 警示"
+        "🚨 流動性緊湊" if cash_val < 0 else "✅ 優秀",
+        "✅ 優秀", "✅ 優秀", "🚨 極高風險", "✅ 優秀" if ter_val <= 1.0 else "⚠️ 警示"
     ]
 }
 
@@ -223,10 +245,10 @@ with kpi1:
     st.metric(label="🛡️ 風險健康總分", value=f"{total_score} / 100", delta=f"{total_score - 100} 分", delta_color="inverse")
 
 with kpi2:
-    st.metric(label="⚠️ 從資本派息比例", value=f"{roc_val}%", delta="高風險警示" if roc_val > 30 else "健康", delta_color="inverse" if roc_val > 30 else "normal")
+    st.metric(label="⚠️ 平均信用評級", value=f"{rating_val}", delta="高收益(垃圾債)", delta_color="inverse")
 
 with kpi3:
-    st.metric(label="💧 流動性緩衝 (現金)", value=f"{cash_val}%", delta="資產充裕" if cash_val > 10 else "偏低", delta_color="normal")
+    st.metric(label="💧 流動性緩衝 (現金)", value=f"{cash_val}%", delta="現金偏緊" if cash_val < 0 else "充裕", delta_color="inverse" if cash_val < 0 else "normal")
 
 with kpi4:
     st.metric(label="⏳ 利率敏感度 (久期)", value=f"{duration_val} 年", delta="抗加息力強" if duration_val < 3 else "敏感", delta_color="normal")
@@ -237,7 +259,7 @@ st.markdown("---")
 col_chart, col_table = st.columns([1, 1.3], gap="medium")
 
 df_top10 = pd.DataFrame(top10_list)
-top10_total_pct = round(df_top10["佔比 (%)"].sum(), 2)
+top10_total_pct = round(df_top10["佔比 (%)"].sum(), 2) if "佔比 (%)" in df_top10.columns else 0.0
 
 with col_chart:
     tab1, tab2 = st.tabs(["🕸️ 風險維度雷達圖", "📋 前十大持倉清單"])
@@ -254,14 +276,8 @@ with col_chart:
     with tab2:
         st.metric(label="📌 前十大持倉合共佔比 (Top 10 Total)", value=f"{top10_total_pct}%", delta="持倉分散，集中度風險低", delta_color="normal")
         st.dataframe(
-            df_top10[["排名", "持倉名稱", "資產類別", "佔比 (%)"]],
-            use_container_width=True, hide_index=True, height=280,
-            column_config={
-                "排名": st.column_config.NumberColumn("排名", alignment="left"),
-                "持倉名稱": st.column_config.TextColumn("持倉名稱", alignment="left"),
-                "資產類別": st.column_config.TextColumn("資產類別", alignment="left"),
-                "佔比 (%)": st.column_config.NumberColumn("佔比 (%)", alignment="left", format="%.2f%%"),
-            }
+            df_top10,
+            use_container_width=True, hide_index=True, height=280
         )
 
 with col_table:
@@ -272,5 +288,5 @@ with col_table:
         use_container_width=True, hide_index=True, height=350
     )
 
-# 5. 底部：動態系統洞察點評
-st.info(f"**💡 系統智能洞察 ({fund_name_zh})**：【{data_source}】數據已載入！當前資本派息比例為 **{roc_val}%**、久期為 **{duration_val} 年**、現金比例為 **{cash_val}%**。風險分數已即時計算完畢！")
+# 5. 底部：Gemini AI 智能洞察點評
+st.info(f"**💡 AI 智能洞察 ({fund_name_zh})**：{ai_analysis_summary}")
