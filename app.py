@@ -176,10 +176,21 @@ with col_chart:
         
         # 💡 十大持倉純表格清單
         st.dataframe(
-            df_top10[["排名", "持倉名稱", "資產類別", "佔比 (%)"]],
-            use_container_width=True,
-            hide_index=True,
-            height=280
+    df_top10[["排名", "持倉名稱", "資產類別", "佔比 (%)"]],
+    use_container_width=True,
+    hide_index=True,
+    height=280,
+    column_config={
+        "排名": st.column_config.NumberColumn("排名", alignment="left"),
+        "持倉名稱": st.column_config.TextColumn("持倉名稱", alignment="left"),
+        "資產類別": st.column_config.TextColumn("資產類別", alignment="left"),
+        "佔比 (%)": st.column_config.NumberColumn(
+            "佔比 (%)", 
+            alignment="left", 
+            format="%.2f%%"
+        ),
+    }
+)
         )
 
 with col_table:
