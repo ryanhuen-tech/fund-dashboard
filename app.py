@@ -3,26 +3,80 @@ import streamlit.components.v1 as components
 
 # 1. 設定 Streamlit 頁面寬度和標題
 st.set_page_config(
-    page_title="霸菱環球高收益債券基金 - 風險評估 Dashboard",
+    page_title="霸菱 Umbrella Fund - 風險評估 Dashboard",
     page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-# 2. 定義 HTML/CSS/JS 代碼（包在 Python 三引號字串中以避免 SyntaxError）
-dashboard_html = """
+# ---------------------------------------------------------
+# 2. 基金資料庫 (可自由擴充其他霸菱子基金數據)
+# ---------------------------------------------------------
+FUNDS_DATA = {
+    "霸菱環球高收益債券基金 (Barings Global High Yield Bond Fund)": {
+        "score": "82.5 / 100",
+        "status": "🟢 健康 (財務結構良好)",
+        "radar_scores": [75, 66.7, 100, 100, 100, 100, 100, 0, 50],
+        "holdings": [
+            ("1", "Bausch Health Companies Inc.", "2.40%", "最大單一持倉"),
+            ("2", "Charter Communications Inc.", "1.71%", "媒體與電訊業"),
+            ("3", "First Quantum Minerals Ltd", "1.66%", "基礎金屬與採礦"),
+            ("4", "Uniti Group Inc.", "1.46%", "不動產/電訊基建"),
+            ("5", "Radiology Partners", "1.31%", "醫療保健業"),
+            ("6", "LifePoint Health", "1.27%", "醫療保健服務"),
+            ("7", "EchoStar", "1.25%", "衛星與電訊服務"),
+            ("8", "Herbalife Ltd.", "1.10%", "消費品/保健品"),
+            ("9", "PRA Group", "1.06%", "金融服務業"),
+            ("10", "Novolex Holdings, Inc.", "1.02%", "基礎工業/包裝材料"),
+        ],
+        "top10_total": "13.59%",
+    },
+    "霸菱環球優先順位債券基金 (Barings Global Senior Secured Bond Fund)": {
+        "score": "85.0 / 100",
+        "status": "🟢 優秀 (優先受償權/擔保度高)",
+        "radar_scores": [80, 80, 100, 100, 90, 100, 100, 0, 50],
+        "holdings": [
+            ("1", "TransDigm Inc.", "2.10%", "航空航天優先債"),
+            ("2", "Medline Industries", "1.85%", "醫療保健優先債"),
+            ("3", "AthenaHealth", "1.50%", "醫療資訊服務"),
+            ("4", "Mozart Borrower LP", "1.42%", "醫療保健服務"),
+            ("5", "Hub International", "1.35%", "保險經紀服務"),
+        ],
+        "top10_total": "15.20%",
+    },
+}
+
+# ---------------------------------------------------------
+# 3. Streamlit 原生頂部與側邊欄選單
+# ---------------------------------------------------------
+st.sidebar.title("🔍 基金選擇")
+selected_fund_name = st.sidebar.selectbox(
+    "請選擇欲評估的霸菱基金：", list(FUNDS_DATA.keys())
+)
+
+st.title("📊 霸菱 Umbrella Fund Plc - 風險評估 Dashboard")
+st.markdown(f"### 當前檢視：**{selected_fund_name}**")
+
+# 讀取當前選擇基金的數據
+current_fund = FUNDS_DATA[selected_fund_name]
+
+# ---------------------------------------------------------
+# 4. 動態生成 HTML / Chart.js Dashboard
+# ---------------------------------------------------------
+# 組裝前十大持倉的 HTML 表格列
+holdings_html = ""
+for rank, issuer, weight, note in current_fund["holdings"]:
+    holdings_html += f"<tr><td>{rank}</td><td>{issuer}</td><td>{weight}</td><td>{note}</td></tr>"
+
+dashboard_html = f"""
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>霸菱環球高收益債券基金 - 風險評估 Dashboard</title>
-    <!-- 引入 Chart.js 用於繪製雷達圖 -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root {
+        :root {{
             --primary-color: #1f4e78;
-            --secondary-color: #2b6cb0;
             --bg-color: #f4f6f9;
             --card-bg: #ffffff;
             --text-main: #2d3748;
@@ -31,159 +85,35 @@ dashboard_html = """
             --success-color: #38a169;
             --warning-color: #dd6b20;
             --danger-color: #e53e3e;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            padding: 10px;
-            line-height: 1.5;
-        }
-
-        .container {
-            max-width: 100%;
-            margin: 0 auto;
-        }
-
-        header {
-            margin-bottom: 20px;
-            border-bottom: 2px solid var(--primary-color);
-            padding-bottom: 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-        }
-
-        h1 {
-            color: var(--primary-color);
-            font-size: 1.8rem;
-        }
-
-        .subtitle {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-        }
-
-        /* 頂部兩大模組區 (雷達圖 + 前十大持倉) */
-        .top-section {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 24px;
-        }
-
-        @media (max-width: 900px) {
-            .top-section {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .card {
-            background: var(--card-bg);
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            border: 1px solid var(--border-color);
-            margin-bottom: 20px;
-        }
-
-        .card-title {
-            font-size: 1.1rem;
-            color: var(--primary-color);
-            margin-bottom: 16px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .chart-container {
-            position: relative;
-            height: 320px;
-            width: 100%;
-            display: flex;
-            justify-content: center;
-        }
-
-        /* 表格通用樣式 */
-        .table-responsive {
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: left;
-            font-size: 0.88rem;
-        }
-
-        th {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 10px 14px;
-            font-weight: 600;
-        }
-
-        td {
-            padding: 12px 14px;
-            border-bottom: 1px solid var(--border-color);
-            vertical-align: middle;
-        }
-
-        tr:hover {
-            background-color: #f8fafc;
-        }
-
-        /* 標籤與狀態 */
-        .badge {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            font-weight: bold;
-            text-align: center;
-        }
-
-        .badge-good { background-color: #c6f6d5; color: #22543d; }
-        .badge-warn { background-color: #feebc8; color: #742a2a; }
-        .badge-alert { background-color: #fed7d7; color: #9b2c2c; }
-
-        .bullet-list {
-            padding-left: 16px;
-        }
-
-        .bullet-list li {
-            margin-bottom: 2px;
-        }
-
-        .score-pill {
-            font-weight: bold;
-            color: var(--primary-color);
-        }
+        }}
+        * {{ box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }}
+        body {{ background-color: var(--bg-color); color: var(--text-main); padding: 5px; line-height: 1.5; }}
+        
+        .top-section {{ display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }}
+        @media (max-width: 900px) {{ .top-section {{ grid-template-columns: 1fr; }} }}
+        
+        .card {{ background: var(--card-bg); border-radius: 8px; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid var(--border-color); margin-bottom: 20px; }}
+        .card-title {{ font-size: 1.1rem; color: var(--primary-color); margin-bottom: 16px; font-weight: bold; }}
+        .chart-container {{ position: relative; height: 310px; width: 100%; display: flex; justify-content: center; }}
+        
+        table {{ width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem; }}
+        th {{ background-color: var(--primary-color); color: white; padding: 10px 14px; font-weight: 600; }}
+        td {{ padding: 10px 14px; border-bottom: 1px solid var(--border-color); vertical-align: middle; }}
+        tr:hover {{ background-color: #f8fafc; }}
+        
+        .badge {{ display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }}
+        .badge-good {{ background-color: #c6f6d5; color: #22543d; }}
+        .badge-warn {{ background-color: #feebc8; color: #742a2a; }}
+        .badge-alert {{ background-color: #fed7d7; color: #9b2c2c; }}
+        .score-pill {{ font-weight: bold; color: var(--primary-color); }}
+        .bullet-list {{ padding-left: 16px; }}
     </style>
 </head>
 <body>
 
 <div class="container">
-    <!-- 頁頭 -->
-    <header>
-        <div>
-            <h1>霸菱環球高收益債券基金</h1>
-            <p class="subtitle">Barings Global High Yield Bond Fund - 風險評估 Dashboard</p>
-        </div>
-        <div class="subtitle">綜合評分：<strong>82.5 / 100 (🟢 財務結構健康)</strong></div>
-    </header>
-
-    <!-- 1. 上方區域：雷達圖 + 前十大持倉 -->
+    <!-- 1. 上方：雷達圖 + 持倉 -->
     <div class="top-section">
-        <!-- 左側：雷達圖 -->
         <div class="card">
             <div class="card-title">🕸️ 風險維度雷達圖 (得分率 %)</div>
             <div class="chart-container">
@@ -191,34 +121,19 @@ dashboard_html = """
             </div>
         </div>
 
-        <!-- 右側：前十大持倉清單 -->
         <div class="card">
-            <div class="card-title">📋 前十大持倉清單 (佔市值 %)</div>
-            <div class="table-responsive" style="max-height: 320px; overflow-y: auto;">
+            <div class="card-title">📋 前十大持倉清單</div>
+            <div style="max-height: 310px; overflow-y: auto;">
                 <table>
                     <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>發行人 (Issuer)</th>
-                            <th>持倉占比 (%)</th>
-                            <th>風險備註</th>
-                        </tr>
+                        <tr><th>#</th><th>發行人 (Issuer)</th><th>持倉占比 (%)</th><th>風險備註</th></tr>
                     </thead>
                     <tbody>
-                        <tr><td>1</td><td>Bausch Health Companies Inc.</td><td>2.40%</td><td>最大單一持倉</td></tr>
-                        <tr><td>2</td><td>Charter Communications Inc.</td><td>1.71%</td><td>媒體與電訊業</td></tr>
-                        <tr><td>3</td><td>First Quantum Minerals Ltd</td><td>1.66%</td><td>基礎金屬與採礦</td></tr>
-                        <tr><td>4</td><td>Uniti Group Inc.</td><td>1.46%</td><td>不動產/電訊基建</td></tr>
-                        <tr><td>5</td><td>Radiology Partners</td><td>1.31%</td><td>醫療保健業</td></tr>
-                        <tr><td>6</td><td>LifePoint Health</td><td>1.27%</td><td>醫療保健服務</td></tr>
-                        <tr><td>7</td><td>EchoStar</td><td>1.25%</td><td>衛星與電訊服務</td></tr>
-                        <tr><td>8</td><td>Herbalife Ltd.</td><td>1.10%</td><td>消費品/保健品</td></tr>
-                        <tr><td>9</td><td>PRA Group</td><td>1.06%</td><td>金融服務業</td></tr>
-                        <tr><td>10</td><td>Novolex Holdings, Inc.</td><td>1.02%</td><td>基礎工業/包裝材料</td></tr>
+                        {holdings_html}
                         <tr style="background-color: #f7fafc; font-weight: bold;">
                             <td colspan="2">前十大持倉合計</td>
-                            <td>13.59%</td>
-                            <td><span class="badge badge-good">極度分散 (＜20%)</span></td>
+                            <td>{current_fund['top10_total']}</td>
+                            <td><span class="badge badge-good">極度分散</span></td>
                         </tr>
                     </tbody>
                 </table>
@@ -226,17 +141,17 @@ dashboard_html = """
         </div>
     </div>
 
-    <!-- 2. 下方區域：「底層資產」深度風險評估明細表 -->
+    <!-- 2. 下方：深度風險評估明細 -->
     <div class="card">
         <div class="card-title">📋 「底層資產」深度風險評估明細</div>
-        <div class="table-responsive">
+        <div style="overflow-x: auto;">
             <table>
                 <thead>
                     <tr>
                         <th style="width: 12%;">評估維度</th>
                         <th style="width: 16%;">具體檢查指標</th>
                         <th style="width: 25%;">專屬評分簡算規則</th>
-                        <th style="width: 32%;">霸菱基金真實數據與解析</th>
+                        <th style="width: 32%;">真實數據與解析</th>
                         <th style="width: 8%;">得分/滿分</th>
                         <th style="width: 7%;">風險狀態</th>
                     </tr>
@@ -260,7 +175,6 @@ dashboard_html = """
                         <td><span class="score-pill">15</span> / 20</td>
                         <td><span class="badge badge-good">🟢 健康/觀察</span></td>
                     </tr>
-
                     <tr>
                         <td><strong>二、信用風險</strong></td>
                         <td>評級分佈與非投資級占比</td>
@@ -280,7 +194,6 @@ dashboard_html = """
                         <td><span class="score-pill">10</span> / 15</td>
                         <td><span class="badge badge-warn">⚠️ 中等風險</span></td>
                     </tr>
-
                     <tr>
                         <td><strong>三、槓桿水平</strong></td>
                         <td>資產膨脹率 (Total / Net Assets)</td>
@@ -299,7 +212,6 @@ dashboard_html = """
                         <td><span class="score-pill">15</span> / 15</td>
                         <td><span class="badge badge-good">✅ 優秀</span></td>
                     </tr>
-
                     <tr>
                         <td><strong>四、利率敏感度</strong></td>
                         <td>有效存續期 (Duration)</td>
@@ -317,7 +229,6 @@ dashboard_html = """
                         <td><span class="score-pill">10</span> / 10</td>
                         <td><span class="badge badge-good">✅ 優秀</span></td>
                     </tr>
-
                     <tr>
                         <td><strong>五、流動性風險</strong></td>
                         <td>現金儲備與營運現金流</td>
@@ -336,7 +247,6 @@ dashboard_html = """
                         <td><span class="score-pill">10</span> / 10</td>
                         <td><span class="badge badge-good">✅ 優秀</span></td>
                     </tr>
-
                     <tr>
                         <td><strong>六、集中度風險</strong></td>
                         <td>前十大發行人持倉占比</td>
@@ -355,7 +265,6 @@ dashboard_html = """
                         <td><span class="score-pill">10</span> / 10</td>
                         <td><span class="badge badge-good">✅ 優秀</span></td>
                     </tr>
-
                     <tr>
                         <td><strong>七、匯率風險</strong></td>
                         <td>衍生品對衝與未實現損益</td>
@@ -374,7 +283,6 @@ dashboard_html = """
                         <td><span class="score-pill">10</span> / 10</td>
                         <td><span class="badge badge-good">✅ 優秀</span></td>
                     </tr>
-
                     <tr>
                         <td><strong>八、區域風險</strong></td>
                         <td>單一區域/國家持倉集中度</td>
@@ -392,7 +300,6 @@ dashboard_html = """
                         <td><span class="score-pill">0</span> / 5</td>
                         <td><span class="badge badge-alert">🚨 集中度偏高</span></td>
                     </tr>
-
                     <tr>
                         <td><strong>九、總開支比率</strong></td>
                         <td>每年管理費 (Management Fee)</td>
@@ -411,12 +318,10 @@ dashboard_html = """
                         <td><span class="score-pill">2.5</span> / 5</td>
                         <td><span class="badge badge-warn">⚠️ 中等</span></td>
                     </tr>
-
-                    <!-- 加總列 -->
-                    <tr style="background-color: #f7fafc; font-weight: bold; font-size: 0.95rem;">
-                        <td colspan="4" style="text-align: right;">綜合評分 / 得分率：</td>
-                        <td style="color: var(--primary-color);">82.5 / 100</td>
-                        <td><span class="badge badge-good">82.5% (健康)</span></td>
+                    <tr style="background-color: #f7fafc; font-weight: bold;">
+                        <td colspan="4" style="text-align: right;">綜合評分：</td>
+                        <td style="color: var(--primary-color);">{current_fund['score']}</td>
+                        <td><span class="badge badge-good">{current_fund['status']}</span></td>
                     </tr>
                 </tbody>
             </table>
@@ -424,57 +329,33 @@ dashboard_html = """
     </div>
 </div>
 
-<!-- Chart.js 雷達圖腳本 -->
 <script>
     const ctx = document.getElementById('riskRadarChart').getContext('2d');
-    
-    const radarData = {
-        labels: [
-            '一、派息質量', 
-            '二、信用風險', 
-            '三、槓桿水平', 
-            '四、利率敏感度', 
-            '五、流動性風險', 
-            '六、集中度風險', 
-            '七、匯率風險', 
-            '八、區域風險', 
-            '九、總開支比率'
-        ],
-        datasets: [{
-            label: '維度得分率 (%)',
-            data: [75, 66.7, 100, 100, 100, 100, 100, 0, 50],
-            backgroundColor: 'rgba(56, 161, 105, 0.25)',
-            borderColor: '#38a169',
-            borderWidth: 2,
-            pointBackgroundColor: '#1f4e78',
-            pointBorderColor: '#fff'
-        }]
-    };
-
-    new Chart(ctx, {
+    new Chart(ctx, {{
         type: 'radar',
-        data: radarData,
-        options: {
+        data: {{
+            labels: ['一、派息質量', '二、信用風險', '三、槓桿水平', '四、利率敏感度', '五、流動性風險', '六、集中度風險', '七、匯率風險', '八、區域風險', '九、總開支比率'],
+            datasets: [{{
+                label: '維度得分率 (%)',
+                data: {current_fund['radar_scores']},
+                backgroundColor: 'rgba(56, 161, 105, 0.25)',
+                borderColor: '#38a169',
+                borderWidth: 2,
+                pointBackgroundColor: '#1f4e78'
+            }}]
+        }},
+        options: {{
             responsive: true,
             maintainAspectRatio: false,
-            scales: {
-                r: {
-                    angleLines: { color: '#e2e8f0' },
-                    grid: { color: '#cbd5e0' },
-                    suggestedMin: 0,
-                    suggestedMax: 100,
-                    ticks: { stepSize: 20, display: false },
-                    pointLabels: { font: { size: 10, weight: 'bold' }, color: '#2d3748' }
-                }
-            },
-            plugins: { legend: { display: false } }
-        }
-    });
+            scales: {{ r: {{ suggestedMin: 0, suggestedMax: 100, ticks: {{ display: false }} }} }},
+            plugins: {{ legend: {{ display: false }} }}
+        }}
+    }});
 </script>
 
 </body>
 </html>
 """
 
-# 3. 在 Streamlit 頁面上直接呈現 Dashboard (設定適當的容器高度與滾動功能)
+# 在 Streamlit 中渲染 HTML Dashboard
 components.html(dashboard_html, height=1350, scrolling=True)
