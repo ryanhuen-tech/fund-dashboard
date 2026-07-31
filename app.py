@@ -104,28 +104,6 @@ with st.expander("📂 點擊這裡：上傳任一基金月報/股息紀錄 PDF�
                     # 2. 設定 API Key
                     genai.configure(api_key=gemini_api_key)
 
-                    # 💡 自動獲取當前帳號可用的 Gemini 模型，徹底排除 404 錯號問題！
-                    available_models = []
-                    try:
-                        for m in genai.list_models():
-                            if 'generateContent' in m.supported_generation_methods:
-                                available_models.append(m.name)
-                    except Exception:
-                        pass
-                    
-                    # 優先選擇 flash，若無則降級選用可用的第一個模型
-                    target_model = None
-                    for m_name in available_models:
-                        if 'flash' in m_name:
-                            target_model = m_name
-                            break
-                    if not target_model and available_models:
-                        target_model = available_models[0]
-                    if not target_model:
-                        target_model = 'gemini-pro' # 備用預設
-
-                    model = genai.GenerativeModel(target_model)
-
                     prompt = f"""
                     你是一位頂尖的金融量化分析師。請閱讀以下基金報告或股息紀錄內容，精確提取關鍵數據並回傳 JSON 格式。
                     若內容未提及 ROC 派息來自資本，請將 roc 設為 0。
@@ -151,8 +129,24 @@ with st.expander("📂 點擊這裡：上傳任一基金月報/股息紀錄 PDF�
                     {text_content[:6000]}
                     """
 
-                    response = model.generate_content(prompt)
-                    
+                    # 3. 備援模型調用機制：依序嘗試官方正確模型代號，絕不跳 404！
+                    models_to_try = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro"]
+                    response = None
+                    used_model_name = ""
+
+                    for model_name in models_to_try:
+                        try:
+                            model = genai.GenerativeModel(model_name)
+                            response = model.generate_content(prompt)
+                            if response and response.text:
+                                used_model_name = model_name
+                                break
+                        except Exception:
+                            continue
+
+                    if not response or not response.text:
+                        raise ValueError("無法連線至 Gemini API 模型，請檢查 API Key 權限。")
+
                     # 清理 JSON 字串
                     cleaned_json = re.sub(r'```json\s*|\s*```', '', response.text).strip()
                     ai_result = json.loads(cleaned_json)
@@ -170,8 +164,8 @@ with st.expander("📂 點擊這裡：上傳任一基金月報/股息紀錄 PDF�
                     if ai_result.get("top10"):
                         top10_list = ai_result.get("top10")
 
-                    data_source = f"Google Gemini AI ({target_model.replace('models/', '')}) 解析：{uploaded_file.name}"
-                    st.success(f"🎉 AI 解析成功！使用模型 [{target_model}] | 基金：{fund_name_zh} | 久期: {duration_val}年 | 現金: {cash_val}% | 來自資本: {roc_val}%")
+                    data_source = f"Google Gemini AI [{used_model_name}] 解析：{uploaded_file.name}"
+                    st.success(f"🎉 AI 解析成功！(使用 {used_model_name}) | 基金：{fund_name_zh} | 久期: {duration_val}年 | 現金: {cash_val}% | 來自資本: {roc_val}%")
             
             except Exception as e:
                 st.error(f"⚠️ AI 解析過程發生異常，已啟動安全保護：{e}")
