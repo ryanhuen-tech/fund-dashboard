@@ -50,7 +50,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 預設數據範本（當未上傳 PDF 或 AI 尚未執行時）
+# 預設數據範本
 fund_name_zh = "富達基金 - 美元高收益基金"
 fund_name_en = "Fidelity Funds - US High Yield Fund"
 fund_isin = "LU0132282301"
@@ -80,11 +80,10 @@ top10_list = [
 st.title("🛡️ 智能基金風險評估系統")
 
 # 🤖 Google Gemini AI 全自動解析上傳區
-with st.expander("📂 點擊這裡：上傳任一基金月報 PDF（Google Gemini AI 自動理解與解析）", expanded=True):
-    uploaded_file = st.file_uploader("請上傳任意基金月報/概覽 PDF（不限霸菱、富達、聯博或貝萊德）", type=["pdf"])
+with st.expander("📂 點擊這裡：上傳任一基金月報/股息紀錄 PDF（Google Gemini AI 自動理解解析）", expanded=True):
+    uploaded_file = st.file_uploader("請上傳任意基金 PDF 檔案", type=["pdf"])
     
     if uploaded_file is not None and PDF_SUPPORT:
-        # 從 Streamlit Secrets 讀取 API Key
         gemini_api_key = st.secrets.get("GEMINI_API_KEY", "")
         
         if not gemini_api_key:
@@ -102,11 +101,11 @@ with st.expander("📂 點擊這裡：上傳任一基金月報 PDF（Google Gemi
                             if extracted:
                                 text_content += extracted + "\n"
 
-                    # 2. 調用 Gemini API
+                    # 2. 調用 Gemini API (使用修正後的官方模型名稱 gemini-1.5-flash)
                     client = genai.Client(api_key=gemini_api_key)
                     
                     prompt = f"""
-                    你是一位頂尖的金融量化分析師。請閱讀以下基金月報內容，精確提取關鍵數據並回傳 JSON 格式。
+                    你是一位頂尖的金融量化分析師。請閱讀以下基金報告內容，精確提取關鍵數據並回傳 JSON 格式。
                     若內容未提及 ROC 派息來自資本，請將 roc 設為 0。
                     
                     請嚴格只輸出 JSON，格式如下：
@@ -130,13 +129,13 @@ with st.expander("📂 點擊這裡：上傳任一基金月報 PDF（Google Gemi
                     {text_content[:6000]}
                     """
                     
-response = client.models.generate_content(
-    model='gemini-1.5-flash',
-    contents=prompt,
-    config=types.GenerateContentConfig(
-        response_mime_type="application/json",
-    ),
-)
+                    response = client.models.generate_content(
+                        model='gemini-1.5-flash',
+                        contents=prompt,
+                        config=types.GenerateContentConfig(
+                            response_mime_type="application/json",
+                        ),
+                    )
                     
                     # 3. 解析 AI 回傳的 JSON 數據
                     ai_result = json.loads(response.text)
