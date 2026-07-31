@@ -130,13 +130,13 @@ with st.expander("📂 點擊這裡：上傳任一基金月報 PDF（Google Gemi
                     {text_content[:6000]}
                     """
                     
-                    response = client.models.generate_content(
-                        model='gemini-2.5-flash',
-                        contents=prompt,
-                        config=types.GenerateContentConfig(
-                            response_mime_type="application/json",
-                        ),
-                    )
+response = client.models.generate_content(
+    model='gemini-1.5-flash',
+    contents=prompt,
+    config=types.GenerateContentConfig(
+        response_mime_type="application/json",
+    ),
+)
                     
                     # 3. 解析 AI 回傳的 JSON 數據
                     ai_result = json.loads(response.text)
