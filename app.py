@@ -9,7 +9,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# 2. 注入高質感 CSS 樣式（1:1 還原精緻視覺效果）
+# 2. 注入高質感 CSS 樣式
 st.markdown("""
     <style>
     .block-container {
@@ -181,7 +181,7 @@ PRESET_FUNDS = {
         "kpi_leverage": "101.1%",
         "kpi_cash": "11.26%",
         "kpi_roc": "42%~59%",
-        "summary": "霸菱環球高收益債券基金綜合風險評分為 82.5 分 (健康)。資產槓桿率 101.1% 幾乎無借貸槓桿，現金儲備 11.26% 充沛 (約5.5億美元)，最低修訂存續期 2.58 年對利率敏感度低；重倉北美 (61.3%) 區域集中度偏高，但整體財務結構非常穩健。",
+        "summary": "霸菱環球高收益債券基金綜合風險評分為 82.5 分 (健康)。資產槓桿率 101.1% 幾乎無借貸槓桿，現金儲備 11.26% 充沛 (約5.5億美元)，最低修訂存續期 2.58 年對利率敏感度低；重倉北美 (61.3%) 區域集中度偏高，但整體財務結構與避險機制非常穩健。",
         "radar_scores": [15.0, 10.0, 15.0, 10.0, 10.0, 10.0, 10.0, 0.0, 2.5],
         "radar_dimensions": ["一、派息質量", "二、信用風險", "三、槓桿水平", "四、利率敏感度", "五、流動性風險", "六、集中度風險", "七、匯率風險", "八、區域風險", "九、總開支比率"],
         "top10": [
@@ -199,7 +199,7 @@ PRESET_FUNDS = {
     }
 }
 
-# 4. 頂部選擇區（保留三分法：債券型、股票型、股債混合型）
+# 4. 頂部選擇區（三分法：債券型、股票型、股債混合型）
 ctrl_col1, ctrl_col2 = st.columns([1.8, 1.2])
 
 with ctrl_col1:
@@ -261,7 +261,7 @@ else:
         <div class="kpi-card">
             <div class="kpi-title">前十大持倉集中度</div>
             <div class="kpi-value-row"><span class="kpi-value">待核對</span></div>
-            <div class="badge-green"> Top 10 佔比 %</div>
+            <div class="badge-green">Top 10 佔比 %</div>
         </div>
         <div class="kpi-card">
             <div class="kpi-title">風險性價比 (Sharpe Ratio)</div>
@@ -274,7 +274,7 @@ else:
 # 6. 中間核心區域：【左圖】雷達圖與十大持倉 vs 【右圖】「底層資產」深度風險評估
 col_left, col_right = st.columns([1, 1.4], gap="medium")
 
-# 👈 【左欄】：保留風險維度雷達圖與前十大持倉清單
+# 👈 【左欄】：風險維度雷達圖與前十大持倉清單
 with col_left:
     tab1, tab2 = st.tabs(["🕸️ 風險維度雷達圖", "📋 前十大持倉清單"])
     
@@ -299,7 +299,7 @@ with col_left:
         st.metric(label="📌 前十大持倉合共佔比 (Top 10 Total)", value=f"{top10_total_pct}%", delta="持倉高度分散", delta_color="normal")
         st.dataframe(df_top10, use_container_width=True, hide_index=True, height=330)
 
-# 👉 【右欄】：標題更新為「底層資產」深度風險評估，並對齊 HTML 格式
+# 👉 【右欄】：「底層資產」深度風險評估 (字詞已精準修正為「對沖」)
 with col_right:
     st.markdown('### 📋 「底層資產」深度風險評估')
 
@@ -367,9 +367,9 @@ with col_right:
                 </tr>
                 <tr>
                     <td><b>七、匯率風險</b></td>
-                    <td>衍生品對衝與未實現損益</td>
-                    <td>• <b>10分</b>: 全額對衝且衍生品虧損 &lt;1% NAV<br>• <b>5分</b>: 部分對衝<br>• <b>0分</b>: 未對衝且外幣曝險過高</td>
-                    <td>• 各非美元類別均提供衍生品對衝<br>👉 避險機制運作順暢，衍生品風險極低。</td>
+                    <td>衍生品對沖與未實現損益</td>
+                    <td>• <b>10分</b>: 全額對沖且衍生品虧損 &lt;1% NAV<br>• <b>5分</b>: 部分對沖<br>• <b>0分</b>: 未對沖且外幣曝險過高</td>
+                    <td>• 各非美元類別均提供衍生品對沖<br>👉 避險機制運作順暢，衍生品風險極低。</td>
                     <td style="text-align: center; font-weight: bold;">10 / 10</td>
                     <td style="text-align: center;"><span class="status-badge-green">✔ 優秀</span></td>
                 </tr>
@@ -399,7 +399,7 @@ with col_right:
         """
         st.markdown(html_table, unsafe_allow_html=True)
     else:
-        # 📈 股票型 / 股債混合型 專屬「底層資產」深度風險評估表
+        # 📈 股票型 / 股債混合型 專屬「底層資產」深度風險評估表 (含精準對沖字眼)
         html_table = f"""
         <table class="custom-table">
             <thead>
@@ -420,7 +420,7 @@ with col_right:
                 <tr><td><b>六、經理穩定性</b></td><td>任職年限與團隊變更</td><td>&gt; 3年無變更=15分 | 1-3年=9分 | &lt; 1年/頻繁變更=0分</td><td>待上傳 PDF 核對</td><td style="text-align: center;"><span class="status-badge-yellow">📋 待核對</span></td></tr>
                 <tr><td><b>七、規模適中性</b></td><td>基金資產規模 (AUM)</td><td>2億-100億=10分 | 5000萬-2億或&gt;100億=6分 | &lt; 5000萬=0分</td><td>待上傳 PDF 核對</td><td style="text-align: center;"><span class="status-badge-yellow">📋 待核對</span></td></tr>
                 <tr><td><b>八、行業集中度</b></td><td>最大單一行業/資產占比</td><td>&lt; 20%=10分 | 20%-30%=6分 | &gt; 30% 高度集中=0分</td><td>待上傳 PDF 核對</td><td style="text-align: center;"><span class="status-badge-yellow">📋 待核對</span></td></tr>
-                <tr><td><b>九、地區分散度</b></td><td>投資地域/國庫券分佈</td><td>全球分散&lt;40%=10分 | 區域型40%-70%=6分 | 單一國家&gt;70%=0分</td><td>待上傳 PDF 核對</td><td style="text-align: center;"><span class="status-badge-yellow">📋 待核對</span></td></tr>
+                <tr><td><b>九、匯率對沖曝險</b></td><td>外幣資產與對沖狀況</td><td>完全對沖=10分 | 部分對沖=5分 | 未對沖&gt;30%=0分</td><td>待上傳 PDF 核對</td><td style="text-align: center;"><span class="status-badge-yellow">📋 待核對</span></td></tr>
             </tbody>
         </table>
         <div class="summary-footer">
