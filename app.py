@@ -35,34 +35,35 @@ if analyze_btn or fund_code:
     st.markdown("---")
 
     # 4. 核心視覺化與明細
-    col_chart, col_table = st.columns([0.8, 1.2])
+col_chart, col_table = st.columns([1, 1], gap="small")
 
-    with col_chart:
-        st.subheader("🕸️ 風險維度雷達圖")
-        # 繪製 Plotly 互動式雷達圖
-        df_chart = pd.DataFrame(dict(
-            Score=mock_data["實際得分"],
-            Dimension=mock_data["維度"]
-        ))
-        fig = px.line_polar(
-        df_chart, 
-        r='Score', 
-        theta='Dimension', 
+with col_chart:
+    st.subheader("🕸️ 風險維度雷達圖")
+    df_chart = pd.DataFrame(dict(
+        Score=mock_data["實際得分"],
+        Dimension=mock_data["維度"]
+    ))
+    
+    fig = px.line_polar(
+        df_chart,
+        r='Score',
+        theta='Dimension',
         line_close=True,
-        markers=True, 
+        markers=True,
         range_r=[0, 20],
         template="plotly_dark",
         color_discrete_sequence=['#00E676']
     )
     fig.update_traces(
-        fill='toself', 
+        fill='toself',
         fillcolor='rgba(0, 230, 118, 0.3)',
-        line=dict(color='#00E676', width=3),
-        marker=dict(size=8, color='#00E676')
+        line=dict(color='#00E676', width=2),
+        marker=dict(size=6, color='#00E676')
     )
     fig.update_layout(
-        margin=dict(l=30, r=30, t=30, b=30),
-        polar=dict(radialaxis=dict(visible=True, range=[0, 20]))
+        height=380,
+        margin=dict(l=20, r=20, t=20, b=20),
+        polar=dict(radialaxis=dict(visible=True, range=[0, 20], showticklabels=False))
     )
     st.plotly_chart(fig, use_container_width=True)
 
