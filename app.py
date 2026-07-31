@@ -30,6 +30,7 @@ st.markdown("""
 fund_name_zh = "霸菱環球高收益債券基金"
 fund_name_en = "Barings Global High Yield Bond Fund"
 
+# 9大風險維度數據
 mock_data = {
     "維度": ["一、派息質量", "二、信用風險", "三、槓桿水平", "四、利率敏感度", "五、流動性風險", "六、集中度風險", "七、匯率風險", "八、國家/宏觀風險", "九、總開支比率"],
     "具體檢查指標": [
@@ -68,6 +69,24 @@ mock_data = {
     "實際得分": [10, 8, 15, 10, 10, 10, 10, 0, 3],
     "滿分": [20, 15, 15, 10, 10, 10, 10, 5, 5],
     "狀態": ["⚠️ 警示", "⚠️ 警示", "✅ 優秀", "✅ 優秀", "✅ 優秀", "✅ 優秀", "✅ 優秀", "🚨 極高風險", "⚠️ 警示"]
+}
+
+# 🍕 模擬數據：前十大持倉 (Top 10 Holdings)
+top10_holdings = {
+    "持倉名稱": [
+        "現金及等值資產 (Cash Equivalents)",
+        "Charter Communications 4.95%",
+        "TransDigm Inc 6.25%",
+        "Mozart Debt Merger Sub 3.875%",
+        "Ford Motor Credit Co 4.125%",
+        "American Airlines 5.75%",
+        "Carnival Corp 5.75%",
+        "Telecom Italia 5.375%",
+        "Occidental Petroleum 6.375%",
+        "Royal Caribbean Group 5.5%",
+        "其他 200+ 隻小型債券"
+    ],
+    "佔比 (%)": [11.26, 2.40, 2.15, 1.95, 1.85, 1.70, 1.65, 1.50, 1.45, 1.40, 72.69]
 }
 
 # 2. 頂部工具列：主標題與搜尋按鈕並排
@@ -112,44 +131,70 @@ with kpi4:
 
 st.markdown("---")
 
-# 4. 中間核心區：雷達圖與精簡表格並排
+# 4. 中間核心區：使用 Tabs 頁籤切換雷達圖與持倉 Pie Chart
 col_chart, col_table = st.columns([1, 1.3], gap="medium")
 
 with col_chart:
-    st.subheader("🕸️ 風險維度雷達圖")
-    df_chart = pd.DataFrame(dict(
-        Score=mock_data["實際得分"],
-        Dimension=mock_data["維度"]
-    ))
+    # 💡 使用 Tabs 標籤進行動態切換
+    tab1, tab2 = st.tabs(["🕸️ 風險維度雷達圖", "🍰 前十大持倉分佈"])
     
-    fig = px.line_polar(
-        df_chart,
-        r='Score',
-        theta='Dimension',
-        line_close=True,
-        markers=True,
-        range_r=[0, 20],
-        template="plotly_dark",
-        color_discrete_sequence=['#00E676']
-    )
-    fig.update_traces(
-        fill='toself',
-        fillcolor='rgba(0, 230, 118, 0.3)',
-        line=dict(color='#00E676', width=2),
-        marker=dict(size=6, color='#00E676')
-    )
-    fig.update_layout(
-        height=400,
-        margin=dict(l=20, r=20, t=20, b=20),
-        polar=dict(radialaxis=dict(visible=True, range=[0, 20], showticklabels=False))
-    )
-    st.plotly_chart(fig, use_container_width=True)
+    with tab1:
+        df_chart = pd.DataFrame(dict(
+            Score=mock_data["實際得分"],
+            Dimension=mock_data["維度"]
+        ))
+        
+        fig_radar = px.line_polar(
+            df_chart,
+            r='Score',
+            theta='Dimension',
+            line_close=True,
+            markers=True,
+            range_r=[0, 20],
+            template="plotly_dark",
+            color_discrete_sequence=['#00E676']
+        )
+        fig_radar.update_traces(
+            fill='toself',
+            fillcolor='rgba(0, 230, 118, 0.3)',
+            line=dict(color='#00E676', width=2),
+            marker=dict(size=6, color='#00E676')
+        )
+        fig_radar.update_layout(
+            height=370,
+            margin=dict(l=20, r=20, t=20, b=20),
+            polar=dict(radialaxis=dict(visible=True, range=[0, 20], showticklabels=False))
+        )
+        st.plotly_chart(fig_radar, use_container_width=True)
+        
+    with tab2:
+        df_pie = pd.DataFrame(top10_holdings)
+        
+        # 繪製高質感環形 Pie Chart
+        fig_pie = px.pie(
+            df_pie, 
+            values='佔比 (%)', 
+            names='持倉名稱',
+            hole=0.4, # 設定為環形圖，中央呈現質感
+            template="plotly_dark",
+            color_discrete_sequence=px.colors.sequential.Darkmint_r
+        )
+        fig_pie.update_traces(
+            textposition='inside', 
+            textinfo='percent+label',
+            hovertemplate='<b>%{label}</b><br>佔比: %{value}%'
+        )
+        fig_pie.update_layout(
+            height=370,
+            margin=dict(l=10, r=10, t=10, b=10),
+            showlegend=False # 隱藏繁雜圖例，滑鼠或觸控點擊直接看數據
+        )
+        st.plotly_chart(fig_pie, use_container_width=True)
 
 with col_table:
     st.subheader("📋 風險評估項目")
     df_table = pd.DataFrame(mock_data)
     
-    # 精簡後的高質感表格
     st.dataframe(
         df_table[["維度", "具體檢查指標", "評分簡準", "實際數據", "實際得分", "滿分", "狀態"]],
         use_container_width=True,
@@ -157,7 +202,6 @@ with col_table:
         height=350
     )
     
-    # 點擊展開：完整量化評分準則說明
     with st.expander("📖 點擊查看『9大維度完整量化評分扣分細則』"):
         st.markdown("""
         * **一、派息質量 (20分)**：ROC < 10% (20分) | 10%~30% (15分) | > 30% (10分)
