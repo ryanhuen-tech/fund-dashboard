@@ -191,7 +191,6 @@ with col_chart:
         ),
     }
 )
-        )
 
 with col_table:
     st.subheader("📋 風險評估項目")
