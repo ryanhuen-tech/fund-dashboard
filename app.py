@@ -33,7 +33,7 @@ fund_name_en = "Barings Global High Yield Bond Fund"
 mock_data = {
     "維度": ["一、派息質量", "二、信用風險", "三、槓桿水平", "四、利率敏感度", "五、流動性風險", "六、集中度風險", "七、匯率風險", "八、國家/宏觀風險", "九、總開支比率"],
     "具體檢查指標": [
-        "派息來自資本 (ROC) 比例",
+        "從資本派息 (ROC) 比例",
         "投資組合平均信貸評級",
         "衍生工具及總槓桿比率",
         "修訂存續期 (Duration)",
@@ -43,7 +43,7 @@ mock_data = {
         "單一國家/區域持倉集中度",
         "經常性開支比率 (TER)"
     ],
-    "評分簡準" : [
+    "評分簡準": [
         "ROC < 10% 滿分 (>30% 扣分)",
         "評級 BBB 以上滿分 (BB 扣分)",
         "無槓桿滿分 (>20% 扣分)",
@@ -55,7 +55,7 @@ mock_data = {
         "TER < 1.0% 滿分 (>1.5% 0分)"
     ],
     "實際數據": [
-        "47.39% 來自資本 (食老本)", 
+        "47.39% 來自資本", 
         "平均評級 BB (高收益債)", 
         "無過度槓桿 (安全)", 
         "存續期 2.58 年 (防禦力強)", 
@@ -84,7 +84,7 @@ with s_col2:
 with s_col3:
     analyze_btn = st.button("🔄 執行評估", type="primary", use_container_width=True)
 
-# 💡 醒目基金名稱展示區
+# 醒目基金名稱展示區
 st.markdown(f"""
     <div class="fund-header">
         <span style="font-size: 14px; color: #888;">當前分析目標基金：</span><br>
@@ -102,7 +102,7 @@ with kpi1:
     st.metric(label="🛡️ 風險健康總分", value=f"{total_score} / 100", delta="-24 分 (扣分項)", delta_color="inverse")
 
 with kpi2:
-    st.metric(label="⚠️ 派息食老本比例", value="47.39%", delta="高風險警示", delta_color="inverse")
+    st.metric(label="⚠️ 從資本派息比例", value="47.39%", delta="高風險警示", delta_color="inverse")
 
 with kpi3:
     st.metric(label="💧 流動性緩衝 (現金)", value="11.26%", delta="資產充裕", delta_color="normal")
@@ -157,7 +157,7 @@ with col_table:
         height=350
     )
     
-    # 💡 點擊展開：完整量化評分準則說明
+    # 點擊展開：完整量化評分準則說明
     with st.expander("📖 點擊查看『9大維度完整量化評分扣分細則』"):
         st.markdown("""
         * **一、派息質量 (20分)**：ROC < 10% (20分) | 10%~30% (15分) | > 30% (10分)
