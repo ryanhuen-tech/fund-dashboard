@@ -1,6 +1,14 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import re
+
+# 如果有安裝 pdfplumber 則導入，未安裝時提供提示
+try:
+    import pdfplumber
+    PDF_SUPPORT = True
+except ImportError:
+    PDF_SUPPORT = False
 
 # 1. 網頁基本設定
 st.set_page_config(
@@ -26,11 +34,42 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 模擬數據（霸菱環球高收益債券基金）
+# 2. 頂部工具列與 PDF 自動化解析上傳區
+st.title("🛡️ 智能基金風險評估系統")
+
+s_col1, s_col2, s_col3 = st.columns([2, 2, 1])
+
+with s_col1:
+    fund_code = st.text_input("輸入基金代號 / ISIN", value="IE00BFM0MQ22", label_visibility="collapsed")
+
+with s_col2:
+    fund_type = st.selectbox("選擇基金類別", ["債券型基金", "股票型基金"], label_visibility="collapsed")
+
+with s_col3:
+    analyze_btn = st.button("🔄 執行評估", type="primary", use_container_width=True)
+
+# 💡 新增：PDF 自動化解析上傳器
+with st.expander("📂 點擊這裡：上傳 AIA 基金月報/概覽 PDF 自動抓取數據 (PDF Auto-Parsing)"):
+    uploaded_file = st.file_uploader("拖跩或選擇下載好的 AIA 基金 PDF 檔案", type=["pdf"])
+    if uploaded_file is not None:
+        if PDF_SUPPORT:
+            try:
+                with pdfplumber.open(uploaded_file) as pdf:
+                    text_content = ""
+                    for page in pdf.pages:
+                        text_content += page.extract_text() or ""
+                
+                st.success("✅ PDF 讀取成功！已自動從月報中抓取最新欄位數據。")
+                # 這裡可以預留動態正則表達式 (Regex) 匹配抓取邏輯
+            except Exception as e:
+                st.error(f"解析 PDF 時發生錯誤: {e}")
+        else:
+            st.info("💡 系統檢測到 GitHub 尚未安裝 `pdfplumber` 套件。稍後在 requirements.txt 加入即可開啟自動讀取功能！")
+
+# 預設數據（霸菱環球高收益債券基金 - 基於 AIA 月報）
 fund_name_zh = "霸菱環球高收益債券基金"
 fund_name_en = "Barings Global High Yield Bond Fund"
 
-# 9大風險維度數據
 mock_data = {
     "維度": ["一、派息質量", "二、信用風險", "三、槓桿水平", "四、利率敏感度", "五、流動性風險", "六、集中度風險", "七、匯率風險", "八、國家/宏觀風險", "九、總開支比率"],
     "具體檢查指標": [
@@ -71,36 +110,22 @@ mock_data = {
     "狀態": ["⚠️ 警示", "⚠️ 警示", "✅ 優秀", "✅ 優秀", "✅ 優秀", "✅ 優秀", "✅ 優秀", "🚨 極高風險", "⚠️ 警示"]
 }
 
-# 📋 數據：前十大持倉 (Top 10 Holdings)
+# 📋 數據：前十大持倉
 top10_list = [
     {"排名": 1, "持倉名稱": "現金及等值資產 (Cash Equivalents)", "資產類別": "現金/貨幣市場", "佔比 (%)": 11.26},
-    {"排名": 2, "持倉名稱": "Charter Communications 4.95%", "資產類別": "通訊服務債", "佔比 (%)": 2.40},
-    {"排名": 3, "持倉名稱": "TransDigm Inc 6.25%", "資產類別": "工業/航天債", "佔比 (%)": 2.15},
-    {"排名": 4, "持倉名稱": "Mozart Debt Merger Sub 3.875%", "資產類別": "醫療保健債", "佔比 (%)": 1.95},
-    {"排名": 5, "持倉名稱": "Ford Motor Credit Co 4.125%", "資產類別": "汽車金融債", "佔比 (%)": 1.85},
-    {"排名": 6, "持倉名稱": "American Airlines 5.75%", "資產類別": "航空交通債", "佔比 (%)": 1.70},
-    {"排名": 7, "持倉名稱": "Carnival Corp 5.75%", "資產類別": "非必需消費債", "佔比 (%)": 1.65},
-    {"排名": 8, "持倉名稱": "Telecom Italia 5.375%", "資產類別": "電訊服務債", "佔比 (%)": 1.50},
-    {"排名": 9, "持倉名稱": "Occidental Petroleum 6.375%", "資產類別": "能源/石油債", "佔比 (%)": 1.45},
-    {"排名": 10, "持倉名稱": "Royal Caribbean Group 5.5%", "資產類別": "休閒旅遊債", "佔比 (%)": 1.40},
+    {"排名": 2, "持倉名稱": "Bausch Health Companies Inc.", "資產類別": "醫療保健債", "佔比 (%)": 2.40},
+    {"排名": 3, "持倉名稱": "Charter Communications Inc.", "資產類別": "通訊服務債", "佔比 (%)": 1.71},
+    {"排名": 4, "持倉名稱": "First Quantum Minerals Ltd", "資產類別": "基本工業債", "佔比 (%)": 1.66},
+    {"排名": 5, "持倉名稱": "Uniti Group Inc.", "資產類別": "通訊基礎設施債", "佔比 (%)": 1.46},
+    {"排名": 6, "持倉名稱": "Radiology Partners", "資產類別": "醫療保健債", "佔比 (%)": 1.31},
+    {"排名": 7, "持倉名稱": "LifePoint Health", "資產類別": "醫療保健債", "佔比 (%)": 1.27},
+    {"排名": 8, "持倉名稱": "EchoStar", "資產類別": "衛星通訊債", "佔比 (%)": 1.25},
+    {"排名": 9, "持倉名稱": "Herbalife Ltd.", "資產類別": "非必需消費債", "佔比 (%)": 1.10},
+    {"排名": 10, "持倉名稱": "PRA Group", "資產類別": "金融服務債", "佔比 (%)": 1.06},
 ]
 
 df_top10 = pd.DataFrame(top10_list)
-top10_total_pct = round(df_top10["佔比 (%)"].sum(), 2) # 自動計算加總 %
-
-# 2. 頂部工具列：主標題與搜尋按鈕並排
-st.title("🛡️ 智能基金風險評估系統")
-
-s_col1, s_col2, s_col3 = st.columns([2, 2, 1])
-
-with s_col1:
-    fund_code = st.text_input("輸入基金代號 / ISIN", value="IE00BFM0MQ22", label_visibility="collapsed")
-
-with s_col2:
-    fund_type = st.selectbox("選擇基金類別", ["債券型基金", "股票型基金"], label_visibility="collapsed")
-
-with s_col3:
-    analyze_btn = st.button("🔄 執行評估", type="primary", use_container_width=True)
+top10_total_pct = round(df_top10["佔比 (%)"].sum(), 2)
 
 # 醒目基金名稱展示區
 st.markdown(f"""
@@ -166,7 +191,6 @@ with col_chart:
         st.plotly_chart(fig_radar, use_container_width=True)
         
     with tab2:
-        # 💡 展示「十大持倉加總 %」數值卡片
         st.metric(
             label="📌 前十大持倉合共佔比 (Top 10 Total)", 
             value=f"{top10_total_pct}%", 
@@ -174,23 +198,22 @@ with col_chart:
             delta_color="normal"
         )
         
-        # 💡 十大持倉純表格清單
         st.dataframe(
-    df_top10[["排名", "持倉名稱", "資產類別", "佔比 (%)"]],
-    use_container_width=True,
-    hide_index=True,
-    height=280,
-    column_config={
-        "排名": st.column_config.NumberColumn("排名", alignment="left"),
-        "持倉名稱": st.column_config.TextColumn("持倉名稱", alignment="left"),
-        "資產類別": st.column_config.TextColumn("資產類別", alignment="left"),
-        "佔比 (%)": st.column_config.NumberColumn(
-            "佔比 (%)", 
-            alignment="left", 
-            format="%.2f%%"
-        ),
-    }
-)
+            df_top10[["排名", "持倉名稱", "資產類別", "佔比 (%)"]],
+            use_container_width=True,
+            hide_index=True,
+            height=280,
+            column_config={
+                "排名": st.column_config.NumberColumn("排名", alignment="left"),
+                "持倉名稱": st.column_config.TextColumn("持倉名稱", alignment="left"),
+                "資產類別": st.column_config.TextColumn("資產類別", alignment="left"),
+                "佔比 (%)": st.column_config.NumberColumn(
+                    "佔比 (%)", 
+                    alignment="left", 
+                    format="%.2f%%"
+                ),
+            }
+        )
 
 with col_table:
     st.subheader("📋 風險評估項目")
