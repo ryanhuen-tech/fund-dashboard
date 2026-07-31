@@ -1,9 +1,8 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import re
 
-# 如果有安裝 pdfplumber 則導入，未安裝時提供提示
+# 安全導入 pdfplumber
 try:
     import pdfplumber
     PDF_SUPPORT = True
@@ -34,7 +33,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 2. 頂部工具列與 PDF 自動化解析上傳區
+# 2. 頂部工具列與防崩潰 PDF 自動化解析區
 st.title("🛡️ 智能基金風險評估系統")
 
 s_col1, s_col2, s_col3 = st.columns([2, 2, 1])
@@ -48,23 +47,34 @@ with s_col2:
 with s_col3:
     analyze_btn = st.button("🔄 執行評估", type="primary", use_container_width=True)
 
-# 💡 新增：PDF 自動化解析上傳器
+# 💡 防崩潰升級版：PDF 自動化解析上傳器
 with st.expander("📂 點擊這裡：上傳 AIA 基金月報/概覽 PDF 自動抓取數據 (PDF Auto-Parsing)"):
     uploaded_file = st.file_uploader("拖跩或選擇下載好的 AIA 基金 PDF 檔案", type=["pdf"])
     if uploaded_file is not None:
         if PDF_SUPPORT:
             try:
+                # 記憶體安全模式讀取 PDF
+                text_content = ""
                 with pdfplumber.open(uploaded_file) as pdf:
-                    text_content = ""
-                    for page in pdf.pages:
-                        text_content += page.extract_text() or ""
+                    total_pages = len(pdf.pages)
+                    # 💡 記憶體保護：如果頁數超過 10 頁（例如週年報告），只讀取前 10 頁避免伺服器記憶體溢出
+                    max_pages_to_read = min(total_pages, 10)
+                    
+                    for page_num in range(max_pages_to_read):
+                        page_text = pdf.pages[page_num].extract_text()
+                        if page_text:
+                            text_content += page_text + "\n"
                 
-                st.success("✅ PDF 讀取成功！已自動從月報中抓取最新欄位數據。")
-                # 這裡可以預留動態正則表達式 (Regex) 匹配抓取邏輯
+                if text_content.strip():
+                    st.success(f"✅ PDF 讀取成功！已讀取 {max_pages_to_read}/{total_pages} 頁，並自動優化記憶體。")
+                else:
+                    st.warning("⚠️ 檔案讀取完成，但未偵測到可提取的文字（可能是圖片掃描檔或加密檔案）。")
+
             except Exception as e:
-                st.error(f"解析 PDF 時發生錯誤: {e}")
+                # 攔截所有意外錯誤，防止整個 Streamlit 畫面死亡
+                st.error(f"⚠️ 解析此 PDF 檔時發生異常，已自動保護系統運作。錯誤細節: {e}")
         else:
-            st.info("💡 系統檢測到 GitHub 尚未安裝 `pdfplumber` 套件。稍後在 requirements.txt 加入即可開啟自動讀取功能！")
+            st.info("💡 系統檢測到 GitHub 尚未安裝 `pdfplumber` 套件。請檢查 requirements.txt 檔案。")
 
 # 預設數據（霸菱環球高收益債券基金 - 基於 AIA 月報）
 fund_name_zh = "霸菱環球高收益債券基金"
