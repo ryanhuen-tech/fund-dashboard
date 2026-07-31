@@ -11,9 +11,10 @@ try:
 except ImportError:
     PDF_SUPPORT = False
 
-# 安全導入 Google Generative AI
+# 安全導入 Google 最新 SDK (google-genai)
 try:
-    import google.generativeai as genai
+    from google import genai
+    from google.genai import types
     GEMINI_SUPPORT = True
 except ImportError:
     GEMINI_SUPPORT = False
@@ -89,7 +90,7 @@ with st.expander("📂 點擊這裡：上傳任一基金月報/股息紀錄 PDF�
         if not gemini_api_key:
             st.warning("⚠️ 未檢測到 Google Gemini API Key，請至 Streamlit 專案 Settings -> Secrets 設定 `GEMINI_API_KEY`。")
         elif not GEMINI_SUPPORT:
-            st.warning("⚠️ GitHub 尚未完成 Google AI 套件安裝，請檢查 `requirements.txt`。")
+            st.warning("⚠️ GitHub 尚未完成 Google AI (google-genai) 套件安裝，請檢查 requirements.txt。")
         else:
             try:
                 with st.spinner("🤖 Google Gemini AI 正在閱讀 PDF 並進行 9 大維度智能解析中..."):
@@ -101,8 +102,8 @@ with st.expander("📂 點擊這裡：上傳任一基金月報/股息紀錄 PDF�
                             if extracted:
                                 text_content += extracted + "\n"
 
-                    # 2. 設定 API Key
-                    genai.configure(api_key=gemini_api_key)
+                    # 2. 初始化最新 Client
+                    client = genai.Client(api_key=gemini_api_key)
 
                     prompt = f"""
                     你是一位頂尖的金融量化分析師。請閱讀以下基金報告或股息紀錄內容，精確提取關鍵數據並回傳 JSON 格式。
@@ -129,26 +130,14 @@ with st.expander("📂 點擊這裡：上傳任一基金月報/股息紀錄 PDF�
                     {text_content[:6000]}
                     """
 
-                    # 3. 備援模型調用機制：依序嘗試官方正確模型代號，絕不跳 404！
-                    models_to_try = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro"]
-                    response = None
-                    used_model_name = ""
-                    error_logs = []
-
-                    for model_name in models_to_try:
-                        try:
-                            model = genai.GenerativeModel(model_name)
-                            response = model.generate_content(prompt)
-                            if response and response.text:
-                                used_model_name = model_name
-                                break
-                        except Exception as err:
-                            error_logs.append(f"{model_name}: {str(err)}")
-                            continue
-
-                    if not response or not response.text:
-                        st.error(f"❌ API 連線細節說明：{'; '.join(error_logs)}")
-                        raise ValueError("無法連線至 Gemini API 模型，請檢查 API Key 權限。")
+                    # 3. 使用全新 V1 正式版 API 調用方式
+                    response = client.models.generate_content(
+                        model='gemini-1.5-flash',
+                        contents=prompt,
+                        config=types.GenerateContentConfig(
+                            response_mime_type="application/json",
+                        ),
+                    )
 
                     # 清理 JSON 字串
                     cleaned_json = re.sub(r'```json\s*|\s*```', '', response.text).strip()
@@ -167,11 +156,11 @@ with st.expander("📂 點擊這裡：上傳任一基金月報/股息紀錄 PDF�
                     if ai_result.get("top10"):
                         top10_list = ai_result.get("top10")
 
-                    data_source = f"Google Gemini AI [{used_model_name}] 解析：{uploaded_file.name}"
-                    st.success(f"🎉 AI 解析成功！(使用 {used_model_name}) | 基金：{fund_name_zh} | 久期: {duration_val}年 | 現金: {cash_val}% | 來自資本: {roc_val}%")
+                    data_source = f"Google Gemini AI 官方最新版解析：{uploaded_file.name}"
+                    st.success(f"🎉 AI 解析成功！基金：{fund_name_zh} | ISIN: {fund_isin} | 久期: {duration_val}年 | 現金: {cash_val}% | 來自資本: {roc_val}%")
             
             except Exception as e:
-                st.error(f"⚠️ AI 解析過程發生異常，已啟動安全保護：{e}")
+                st.error(f"⚠️ AI 解析過程發生異常：{e}")
 
 # 動態生成 9 大維度實際數據與得分
 mock_data = {
