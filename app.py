@@ -130,9 +130,10 @@ with st.expander("📂 點擊這裡：上傳任一基金月報/股息紀錄 PDF�
                     """
 
                     # 3. 備援模型調用機制：依序嘗試官方正確模型代號，絕不跳 404！
-                    models_to_try = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro"]
+models_to_try = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro"]
                     response = None
                     used_model_name = ""
+                    error_logs = []
 
                     for model_name in models_to_try:
                         try:
@@ -141,10 +142,12 @@ with st.expander("📂 點擊這裡：上傳任一基金月報/股息紀錄 PDF�
                             if response and response.text:
                                 used_model_name = model_name
                                 break
-                        except Exception:
+                        except Exception as err:
+                            error_logs.append(f"{model_name}: {str(err)}")
                             continue
 
                     if not response or not response.text:
+                        st.error(f"❌ API 連線細節說明：{'; '.join(error_logs)}")
                         raise ValueError("無法連線至 Gemini API 模型，請檢查 API Key 權限。")
 
                     # 清理 JSON 字串
