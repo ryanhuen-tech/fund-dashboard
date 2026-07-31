@@ -1,3 +1,16 @@
+import streamlit as st
+import streamlit.components.v1 as components
+
+# 1. 設定 Streamlit 頁面寬度和標題
+st.set_page_config(
+    page_title="霸菱環球高收益債券基金 - 風險評估 Dashboard",
+    page_icon="📊",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
+# 2. 定義 HTML/CSS/JS 代碼（包在 Python 三引號字串中以避免 SyntaxError）
+dashboard_html = """
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -30,12 +43,12 @@
         body {
             background-color: var(--bg-color);
             color: var(--text-main);
-            padding: 20px;
+            padding: 10px;
             line-height: 1.5;
         }
 
         .container {
-            max-width: 1350px;
+            max-width: 100%;
             margin: 0 auto;
         }
 
@@ -78,6 +91,7 @@
             padding: 20px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
             border: 1px solid var(--border-color);
+            margin-bottom: 20px;
         }
 
         .card-title {
@@ -410,11 +424,10 @@
     </div>
 </div>
 
-<!-- Chart.js 雷達圖渲染腳本 -->
+<!-- Chart.js 雷達圖腳本 -->
 <script>
     const ctx = document.getElementById('riskRadarChart').getContext('2d');
     
-    // 計算各項目的得分率 (%)
     const radarData = {
         labels: [
             '一、派息質量', 
@@ -429,18 +442,16 @@
         ],
         datasets: [{
             label: '維度得分率 (%)',
-            data: [75, 66.7, 100, 100, 100, 100, 100, 0, 50], // 各維度實際得分/滿分 的百分比
-            backgroundColor: 'rgba(56, 161, 105, 0.25)', // 半透明綠色填充
-            borderColor: '#38a169', // 綠色邊框
+            data: [75, 66.7, 100, 100, 100, 100, 100, 0, 50],
+            backgroundColor: 'rgba(56, 161, 105, 0.25)',
+            borderColor: '#38a169',
             borderWidth: 2,
             pointBackgroundColor: '#1f4e78',
-            pointBorderColor: '#fff',
-            pointHoverBackgroundColor: '#fff',
-            pointHoverBorderColor: '#1f4e78'
+            pointBorderColor: '#fff'
         }]
     };
 
-    const radarConfig = {
+    new Chart(ctx, {
         type: 'radar',
         data: radarData,
         options: {
@@ -452,25 +463,18 @@
                     grid: { color: '#cbd5e0' },
                     suggestedMin: 0,
                     suggestedMax: 100,
-                    ticks: {
-                        stepSize: 20,
-                        backdropColor: 'transparent',
-                        font: { size: 10 }
-                    },
-                    pointLabels: {
-                        font: { size: 11, weight: 'bold' },
-                        color: '#2d3748'
-                    }
+                    ticks: { stepSize: 20, display: false },
+                    pointLabels: { font: { size: 10, weight: 'bold' }, color: '#2d3748' }
                 }
             },
-            plugins: {
-                legend: { display: false }
-            }
+            plugins: { legend: { display: false } }
         }
-    };
-
-    new Chart(ctx, radarConfig);
+    });
 </script>
 
 </body>
 </html>
+"""
+
+# 3. 在 Streamlit 頁面上直接呈現 Dashboard (設定適當的容器高度與滾動功能)
+components.html(dashboard_html, height=1350, scrolling=True)
