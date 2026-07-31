@@ -4,19 +4,25 @@ import plotly.express as px
 import json
 import re
 
-# 安全導入 pdfplumber 與 google-genai
+# 安全導入 pdfplumber
 try:
     import pdfplumber
     PDF_SUPPORT = True
 except ImportError:
     PDF_SUPPORT = False
 
+# 安全導入 Google Generative AI (同時相容 google-genai 與 google-generativeai)
+GEMINI_SDK_TYPE = None
 try:
     from google import genai
     from google.genai import types
-    GEMINI_SUPPORT = True
+    GEMINI_SDK_TYPE = "NEW" # 新版 google-genai
 except ImportError:
-    GEMINI_SUPPORT = False
+    try:
+        import google.generativeai as genai_old
+        GEMINI_SDK_TYPE = "OLD" # 舊版 google-generativeai
+    except ImportError:
+        GEMINI_SDK_TYPE = None
 
 # 1. 網頁基本設定
 st.set_page_config(
@@ -88,12 +94,12 @@ with st.expander("📂 點擊這裡：上傳任一基金月報/股息紀錄 PDF�
         
         if not gemini_api_key:
             st.warning("⚠️ 未檢測到 Google Gemini API Key，請至 Streamlit 專案 Settings -> Secrets 設定 `GEMINI_API_KEY`。")
-        elif not GEMINI_SUPPORT:
-            st.warning("⚠️ GitHub 尚未完成 `google-genai` 安裝，請確保 `requirements.txt` 中已新增該套件。")
+        elif GEMINI_SDK_TYPE is None:
+            st.warning("⚠️ GitHub 尚未完成 Google AI 套件安裝，請檢查 `requirements.txt`。")
         else:
             try:
                 with st.spinner("🤖 Google Gemini AI 正在閱讀 PDF 並進行 9 大維度智能解析中..."):
-                    # 1. 提取文字
+                    # 1. 提取 PDF 文字
                     text_content = ""
                     with pdfplumber.open(uploaded_file) as pdf:
                         for p in range(min(len(pdf.pages), 5)):
@@ -101,11 +107,8 @@ with st.expander("📂 點擊這裡：上傳任一基金月報/股息紀錄 PDF�
                             if extracted:
                                 text_content += extracted + "\n"
 
-                    # 2. 調用 Gemini API (使用修正後的官方模型名稱 gemini-1.5-flash)
-                    client = genai.Client(api_key=gemini_api_key)
-                    
                     prompt = f"""
-                    你是一位頂尖的金融量化分析師。請閱讀以下基金報告內容，精確提取關鍵數據並回傳 JSON 格式。
+                    你是一位頂尖的金融量化分析師。請閱讀以下基金報告或股息紀錄內容，精確提取關鍵數據並回傳 JSON 格式。
                     若內容未提及 ROC 派息來自資本，請將 roc 設為 0。
                     
                     請嚴格只輸出 JSON，格式如下：
@@ -129,16 +132,28 @@ with st.expander("📂 點擊這裡：上傳任一基金月報/股息紀錄 PDF�
                     {text_content[:6000]}
                     """
                     
-                    response = client.models.generate_content(
-                        model='gemini-1.5-flash',
-                        contents=prompt,
-                        config=types.GenerateContentConfig(
-                            response_mime_type="application/json",
-                        ),
-                    )
+                    response_text = ""
                     
-                    # 3. 解析 AI 回傳的 JSON 數據
-                    ai_result = json.loads(response.text)
+                    # 2. 跨 SDK 相容調用 Gemini API
+                    if GEMINI_SDK_TYPE == "NEW":
+                        client = genai.Client(api_key=gemini_api_key)
+                        response = client.models.generate_content(
+                            model='gemini-1.5-flash',
+                            contents=prompt,
+                            config=types.GenerateContentConfig(
+                                response_mime_type="application/json",
+                            ),
+                        )
+                        response_text = response.text
+                    else:
+                        genai_old.configure(api_key=gemini_api_key)
+                        model = genai_old.GenerativeModel('gemini-1.5-flash')
+                        response = model.generate_content(prompt)
+                        response_text = response.text
+                    
+                    # 清理 JSON 字串 (去除 markdown 標記)
+                    cleaned_json = re.sub(r'```json\s*|\s*```', '', response_text).strip()
+                    ai_result = json.loads(cleaned_json)
                     
                     fund_name_zh = ai_result.get("fund_name_zh", uploaded_file.name)
                     fund_name_en = ai_result.get("fund_name_en", "")
@@ -154,7 +169,7 @@ with st.expander("📂 點擊這裡：上傳任一基金月報/股息紀錄 PDF�
                         top10_list = ai_result.get("top10")
 
                     data_source = f"Google Gemini AI 解析：{uploaded_file.name}"
-                    st.success(f"🎉 AI 解析完成！基金：{fund_name_zh} | ISIN: {fund_isin} | 久期: {duration_val}年 | 現金: {cash_val}%")
+                    st.success(f"🎉 AI 解析成功！基金：{fund_name_zh} | ISIN: {fund_isin} | 久期: {duration_val}年 | 現金: {cash_val}% | 來自資本: {roc_val}%")
             
             except Exception as e:
                 st.error(f"⚠️ AI 解析過程發生異常，已啟動安全保護：{e}")
