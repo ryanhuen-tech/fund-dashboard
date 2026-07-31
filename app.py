@@ -114,6 +114,7 @@ ter_val = curr_fund["ter"]
 ai_analysis_summary = curr_fund["summary"]
 top10_list = curr_fund["top10"]
 data_source = f"預設資料庫: {fund_name_zh}"
+is_custom_pdf = False
 
 # PDF 上傳動態讀取
 with st.expander("📂 點擊上傳新 PDF（自動識別股票型/債券型並更新表單）", expanded=False):
@@ -121,6 +122,7 @@ with st.expander("📂 點擊上傳新 PDF（自動識別股票型/債券型並�
     if uploaded_file is not None and PDF_SUPPORT:
         data_source = f"已上傳 PDF：{uploaded_file.name}"
         fund_name_zh = uploaded_file.name.replace(".pdf", "")
+        is_custom_pdf = True
 
 # 3. 根據【基金類型】自動切換專屬 9 大風險評估表
 if fund_type == "債券型基金":
@@ -133,7 +135,9 @@ if fund_type == "債券型基金":
         "滿分": [20, 15, 15, 10, 10, 10, 10, 5, 5],
         "狀態": ["✅ 優秀" if roc_val < 10 else "⚠️ 警示", "⚠️ 警示", "⚠️ 留意槓桿", "✅ 優秀" if duration_val < 3 else "⚠️ 警示", "🚨 流動性緊湊" if cash_val < 5 else "✅ 優秀", "✅ 優秀", "✅ 優秀", "🚨 極高風險", "✅ 優秀" if ter_val <= 1.0 else "⚠️ 警示"]
     }
-else: # 📈 100% 參照 Excel 的股票型基金 9 大風險維度
+    total_score = sum(mock_data["實際得分"])
+    total_score_str = f"{total_score} / 100"
+else: # 📈 股票型基金：若無資料則全數顯示「待核對 / 0分」，絕不虛構！
     mock_data = {
         "維度": ["一、市場敏感度", "二、極端回撤", "三、持倉集中度", "四、絕對波動控制", "五、風險性價比", "六、經理穩定性", "七、規模適中性", "八、行業集中度", "九、地區分散度"],
         "具體檢查指標": ["貝塔係數 (β)", "最大回撤 (Max Drawdown)", "前十大重倉股佔比", "年度化標準差", "夏普比率 (Sharpe Ratio)", "任職年限與變更", "基金資產規模 (AUM)", "最大單一行業佔比", "投資地域分佈"],
@@ -148,21 +152,13 @@ else: # 📈 100% 參照 Excel 的股票型基金 9 大風險維度
             "< 20%=10分 | 20%-30%=6分 | > 30% 高度集中=0分",
             "全球分散<40%=10分 | 區域型40%-70%=6分 | 單一國家>70%=0分"
         ],
-        "實際數據": [
-            "請對照 FactSheet 核對 β 值",
-            "請對照 FactSheet 最大回撤",
-            "請對照月報 Top 10 持倉比率",
-            "請對照 FactSheet 3年標準差",
-            "請對照 FactSheet 夏普比率",
-            "請對照銷售平台經理任期",
-            "請對照月報基金資產規模 (AUM)",
-            "請對照月報行業分佈 (Sector)",
-            "請對照月報地區分佈 (Geographic)"
-        ],
-        "實際得分": [9, 9, 10, 3, 6, 15, 10, 6, 0], # 範例預設分數
+        "實際數據": ["待上傳 PDF 核對", "待上傳 PDF 核對", "待上傳 PDF 核對", "待上傳 PDF 核對", "待上傳 PDF 核對", "待上傳 PDF 核對", "待上傳 PDF 核對", "待上傳 PDF 核對", "待上傳 PDF 核對"],
+        "實際得分": [0, 0, 0, 0, 0, 0, 0, 0, 0], # 未上傳核對前，分數全數為 0
         "滿分": [15, 15, 10, 5, 10, 15, 10, 10, 10],
-        "狀態": ["📋 待上傳PDF核對", "📋 待上傳PDF核對", "📋 待上傳PDF核對", "📋 待上傳PDF核對", "📋 待上傳PDF核對", "📋 待上傳PDF核對", "📋 待上傳PDF核對", "📋 待上傳PDF核對", "📋 待上傳PDF核對"]
+        "狀態": ["📋 待核對", "📋 待核對", "📋 待核對", "📋 待核對", "📋 待核對", "📋 待核對", "📋 待核對", "📋 待核對", "📋 待核對"]
     }
+    total_score_str = "待核對 (0 / 100)"
+    ai_analysis_summary = "目前切換至股票型基金風險架構。請上傳該股票型基金之 Factsheet / 月報 PDF，系統將自動核對 9 大指標並進行評分。"
 
 # 4. 頂部抬頭與 KPI 指標卡片
 st.markdown(f"""
@@ -174,16 +170,15 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
-total_score = sum(mock_data["實際得分"])
 kpi1, kpi2, kpi3, kpi4 = st.columns(4)
 
 if fund_type == "債券型基金":
-    with kpi1: st.metric(label="🛡️ 風險健康總分", value=f"{total_score} / 100", delta=f"{total_score - 100} 分", delta_color="inverse")
+    with kpi1: st.metric(label="🛡️ 風險健康總分", value=total_score_str, delta=f"{sum(mock_data['實際得分']) - 100} 分", delta_color="inverse")
     with kpi2: st.metric(label="⚠️ 平均信用評級", value=f"{rating_val}", delta="高收益債", delta_color="inverse")
     with kpi3: st.metric(label="💧 流動性緩衝 (現金)", value=f"{cash_val}%", delta="現金偏緊" if cash_val < 5 else "充裕", delta_color="inverse" if cash_val < 5 else "normal")
     with kpi4: st.metric(label="⏳ 利率敏感度 (久期)", value=f"{duration_val} 年", delta="抗加息力強" if duration_val < 3 else "敏感", delta_color="normal")
 else:
-    with kpi1: st.metric(label="🛡️ 股票風險健康總分", value=f"{total_score} / 100", delta=f"{total_score - 100} 分", delta_color="inverse")
+    with kpi1: st.metric(label="🛡️ 股票風險健康總分", value=total_score_str)
     with kpi2: st.metric(label="📈 市場敏感度 (Beta)", value="待對照 PDF", delta="基準係數 1.0")
     with kpi3: st.metric(label="📊 絕對波動 (標準差)", value="待對照 PDF", delta="年化波幅 %")
     with kpi4: st.metric(label="⚖️ 風險性價比 (Sharpe)", value="待對照 PDF", delta="夏普比率")
@@ -198,11 +193,14 @@ df_top10 = pd.DataFrame(top10_list)
 with col_chart:
     tab1, tab2 = st.tabs([f"🕸️ {fund_type}風險雷達圖", "📋 前十大持倉清單"])
     with tab1:
-        df_chart = pd.DataFrame(dict(Score=mock_data["實際得分"], Dimension=mock_data["維度"]))
-        fig_radar = px.line_polar(df_chart, r='Score', theta='Dimension', line_close=True, markers=True, range_r=[0, 15], template="plotly_dark", color_discrete_sequence=['#00E676'])
-        fig_radar.update_traces(fill='toself', fillcolor='rgba(0, 230, 118, 0.3)', line=dict(color='#00E676', width=2))
-        fig_radar.update_layout(height=370, margin=dict(l=20, r=20, t=20, b=20), polar=dict(radialaxis=dict(visible=True, range=[0, 15], showticklabels=False)))
-        st.plotly_chart(fig_radar, use_container_width=True)
+        if fund_type == "股票型基金" and sum(mock_data["實際得分"]) == 0:
+            st.info("💡 目前尚未載入股票型基金數據，請上傳 PDF 後生成風險雷達圖。")
+        else:
+            df_chart = pd.DataFrame(dict(Score=mock_data["實際得分"], Dimension=mock_data["維度"]))
+            fig_radar = px.line_polar(df_chart, r='Score', theta='Dimension', line_close=True, markers=True, range_r=[0, 15], template="plotly_dark", color_discrete_sequence=['#00E676'])
+            fig_radar.update_traces(fill='toself', fillcolor='rgba(0, 230, 118, 0.3)', line=dict(color='#00E676', width=2))
+            fig_radar.update_layout(height=370, margin=dict(l=20, r=20, t=20, b=20), polar=dict(radialaxis=dict(visible=True, range=[0, 15], showticklabels=False)))
+            st.plotly_chart(fig_radar, use_container_width=True)
     with tab2:
         st.dataframe(df_top10, use_container_width=True, hide_index=True, height=280)
 
