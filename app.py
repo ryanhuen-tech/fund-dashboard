@@ -31,32 +31,25 @@ st.markdown("""
         border-left: 5px solid #00E676;
         margin-bottom: 15px;
     }
+    .source-tag {
+        background-color: #00E676;
+        color: #000;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-weight: bold;
+        font-size: 12px;
+    }
     </style>
 """, unsafe_allow_html=True)
 
-# 📚 方案 A：各大基金公司常見欄位關鍵字字典 (Synonym Dictionary)
+# 📚 方案 A：通用關鍵字字典
 KEYWORDS_ISIN = [r'ISIN[:\s]*([A-Z0-9]{12})', r'代號[:\s]*([A-Z0-9]{12})']
+KEYWORDS_DURATION = [r'(?:修訂存續期|存續期|有效久期|久期|Mod\s*Duration|Effective\s*Duration|Duration)[^\d]*([\d\.]+)', r'([\d\.]+)\s*(?:年|Years)\s*(?:久期|存續期|Duration)']
+KEYWORDS_CASH = [r'(?:現金及等值|現金及等同資產|現金佔比|現金與等值|流動資金|現金|Cash\s*&\s*Equivalents|Cash\s*Equivalents|Cash)[^\d]*([\d\.]+)\s*%', r'([\d\.]+)\s*%\s*(?:現金|Cash)']
+KEYWORDS_ROC = [r'(?:由資本所分派之股息|來自資本|從資本派息|資本分派|派息來自資本|資本派息|ROC|Pay\s*from\s*Capital|Capital\s*Distribution)[^\d]*([\d\.]+)\s*%', r'([\d\.]+)\s*%\s*(?:來自資本|來自本金|ROC)']
+KEYWORDS_TER = [r'(?:經常性開支比率|總開支比率|總管理費|經常性開支|TER|Total\s*Expense\s*Ratio|Ongoing\s*Charges)[^\d]*([\d\.]+)\s*%']
 
-KEYWORDS_DURATION = [
-    r'(?:修訂存續期|存續期|有效久期|久期|修訂久期|Mod\s*Duration|Effective\s*Duration|Duration)[^\d]*([\d\.]+)',
-    r'([\d\.]+)\s*(?:年|Years)\s*(?:久期|存續期|Duration)'
-]
-
-KEYWORDS_CASH = [
-    r'(?:現金及等值|現金及等同資產|現金佔比|現金與等值|流動資金|現金|Cash\s*&\s*Equivalents|Cash\s*Equivalents|Cash)[^\d]*([\d\.]+)\s*%',
-    r'([\d\.]+)\s*%\s*(?:現金|Cash)'
-]
-
-KEYWORDS_ROC = [
-    r'(?:由資本所分派之股息|來自資本|從資本派息|資本分派|派息來自資本|資本派息|ROC|Pay\s*from\s*Capital|Capital\s*Distribution)[^\d]*([\d\.]+)\s*%',
-    r'([\d\.]+)\s*%\s*(?:來自資本|來自本金|ROC)'
-]
-
-KEYWORDS_TER = [
-    r'(?:經常性開支比率|總開支比率|總管理費|經常性開支|TER|Total\s*Expense\s*Ratio|Ongoing\s*Charges)[^\d]*([\d\.]+)\s*%'
-]
-
-# 預設數據範本（當未上傳 PDF 或未匹配到時顯示）
+# 預設數據範本 (未上傳時的預設值)
 fund_name_zh = "霸菱環球高收益債券基金"
 fund_name_en = "Barings Global High Yield Bond Fund"
 fund_isin = "IE00BFM0MQ22"
@@ -66,11 +59,25 @@ duration_val = 2.58
 cash_val = 11.26
 rating_val = "BB"
 ter_val = 1.33
+data_source = "預設範本"
+
+# 預設霸菱十大持倉
+top10_list = [
+    {"排名": 1, "持倉名稱": "現金及等值資產 (Cash Equivalents)", "資產類別": "現金/貨幣市場", "佔比 (%)": 11.26},
+    {"排名": 2, "持倉名稱": "Bausch Health Companies Inc.", "資產類別": "醫療保健債", "佔比 (%)": 2.40},
+    {"排名": 3, "持倉名稱": "Charter Communications Inc.", "資產類別": "通訊服務債", "佔比 (%)": 1.71},
+    {"排名": 4, "持倉名稱": "First Quantum Minerals Ltd", "資產類別": "基本工業債", "佔比 (%)": 1.66},
+    {"排名": 5, "持倉名稱": "Uniti Group Inc.", "資產類別": "通訊基礎設施債", "佔比 (%)": 1.46},
+    {"排名": 6, "持倉名稱": "Radiology Partners", "資產類別": "醫療保健債", "佔比 (%)": 1.31},
+    {"排名": 7, "持倉名稱": "LifePoint Health", "資產類別": "醫療保健債", "佔比 (%)": 1.27},
+    {"排名": 8, "持倉名稱": "EchoStar", "資產類別": "衛星通訊債", "佔比 (%)": 1.25},
+    {"排名": 9, "持倉名稱": "Herbalife Ltd.", "資產類別": "非必需消費債", "佔比 (%)": 1.10},
+    {"排名": 10, "持倉名稱": "PRA Group", "資產類別": "金融服務債", "佔比 (%)": 1.06},
+]
 
 # 2. 頂部工具列與 PDF 自動化解析區
 st.title("🛡️ 智能基金風險評估系統")
 
-# 💡 方案 A 全自動通用解析上傳區
 with st.expander("📂 點擊這裡：上傳任一基金月報/概覽 PDF (已啟動全公司關鍵字對照)", expanded=True):
     uploaded_file = st.file_uploader("拖跩或選擇 PDF 檔案（支援霸菱、聯博、貝萊德等各大基金格式）", type=["pdf"])
     
@@ -78,48 +85,54 @@ with st.expander("📂 點擊這裡：上傳任一基金月報/概覽 PDF (已�
         try:
             text_content = ""
             with pdfplumber.open(uploaded_file) as pdf:
-                # 記憶體安全模式：讀取前 5 頁（足夠涵蓋月報與概覽）
                 for p in range(min(len(pdf.pages), 5)):
                     extracted = pdf.pages[p].extract_text()
                     if extracted:
                         text_content += extracted + "\n"
             
-            # 🔍 1. 自動匹配 ISIN 代號
+            # 🔍 自動抓取基金名稱 (取第一行文字或檔名)
+            file_title = uploaded_file.name.replace(".pdf", "")
+            fund_name_zh = f"已分析基金 ({file_title})"
+            fund_name_en = f"Uploaded PDF: {uploaded_file.name}"
+            data_source = f"PDF 解析自: {uploaded_file.name}"
+
+            # 🔍 1. ISIN
             for pattern in KEYWORDS_ISIN:
                 match = re.search(pattern, text_content, re.IGNORECASE)
                 if match:
                     fund_isin = match.group(1)
                     break
             
-            # 🔍 2. 自動匹配 存續期/久期 (Duration)
+            # 🔍 2. Duration
             for pattern in KEYWORDS_DURATION:
                 match = re.search(pattern, text_content, re.IGNORECASE)
                 if match:
                     duration_val = float(match.group(1))
                     break
 
-            # 🔍 3. 自動匹配 現金比例 (Cash)
+            # 🔍 3. Cash
             for pattern in KEYWORDS_CASH:
                 match = re.search(pattern, text_content, re.IGNORECASE)
                 if match:
                     cash_val = float(match.group(1))
+                    top10_list[0]["佔比 (%)"] = cash_val  # 自動連動現金持倉比率
                     break
 
-            # 🔍 4. 自動匹配 資本派息比例 (ROC)
+            # 🔍 4. ROC
             for pattern in KEYWORDS_ROC:
                 match = re.search(pattern, text_content, re.IGNORECASE)
                 if match:
                     roc_val = float(match.group(1))
                     break
 
-            # 🔍 5. 自動匹配 經常性開支比率 (TER)
+            # 🔍 5. TER
             for pattern in KEYWORDS_TER:
                 match = re.search(pattern, text_content, re.IGNORECASE)
                 if match:
                     ter_val = float(match.group(1))
                     break
 
-            st.success(f"🎉 跨公司語意比對成功！已自動提取：ISIN: {fund_isin} | 資本派息: {roc_val}% | 久期: {duration_val}年 | 現金: {cash_val}% | TER: {ter_val}%")
+            st.success(f"🎉 數據更新成功！已載入檔案《{uploaded_file.name}》| ISIN: {fund_isin} | 資本派息: {roc_val}% | 久期: {duration_val}年 | 現金: {cash_val}%")
         
         except Exception as e:
             st.error(f"⚠️ 解析 PDF 時出現微小異常，已保護系統運作：{e}")
@@ -191,10 +204,11 @@ with s_col2:
 with s_col3:
     st.button("🔄 重新評估", type="primary", use_container_width=True)
 
-# 醒目基金名稱展示區
+# 醒目基金名稱與數據源標籤展示區
 st.markdown(f"""
     <div class="fund-header">
-        <span style="font-size: 14px; color: #888;">當前分析目標基金：</span><br>
+        <span style="font-size: 14px; color: #888;">當前分析目標基金：</span> 
+        <span class="source-tag">📍 {data_source}</span><br>
         <span style="font-size: 20px; font-weight: bold; color: #FFF;">{fund_name_zh}</span> 
         <span style="font-size: 14px; color: #AAA;">({fund_name_en})</span>
     </div>
@@ -222,19 +236,6 @@ st.markdown("---")
 # 4. 中間核心區：雷達圖與持倉清單
 col_chart, col_table = st.columns([1, 1.3], gap="medium")
 
-# 持倉資料
-top10_list = [
-    {"排名": 1, "持倉名稱": "現金及等值資產 (Cash Equivalents)", "資產類別": "現金/貨幣市場", "佔比 (%)": cash_val},
-    {"排名": 2, "持倉名稱": "Bausch Health Companies Inc.", "資產類別": "醫療保健債", "佔比 (%)": 2.40},
-    {"排名": 3, "持倉名稱": "Charter Communications Inc.", "資產類別": "通訊服務債", "佔比 (%)": 1.71},
-    {"排名": 4, "持倉名稱": "First Quantum Minerals Ltd", "資產類別": "基本工業債", "佔比 (%)": 1.66},
-    {"排名": 5, "持倉名稱": "Uniti Group Inc.", "資產類別": "通訊基礎設施債", "佔比 (%)": 1.46},
-    {"排名": 6, "持倉名稱": "Radiology Partners", "資產類別": "醫療保健債", "佔比 (%)": 1.31},
-    {"排名": 7, "持倉名稱": "LifePoint Health", "資產類別": "醫療保健債", "佔比 (%)": 1.27},
-    {"排名": 8, "持倉名稱": "EchoStar", "資產類別": "衛星通訊債", "佔比 (%)": 1.25},
-    {"排名": 9, "持倉名稱": "Herbalife Ltd.", "資產類別": "非必需消費債", "佔比 (%)": 1.10},
-    {"排名": 10, "持倉名稱": "PRA Group", "資產類別": "金融服務債", "佔比 (%)": 1.06},
-]
 df_top10 = pd.DataFrame(top10_list)
 top10_total_pct = round(df_top10["佔比 (%)"].sum(), 2)
 
@@ -272,4 +273,4 @@ with col_table:
     )
 
 # 5. 底部：動態系統洞察點評
-st.info(f"**💡 系統智能洞察 ({fund_name_zh})**：方案 A 詞庫比對完成！資本派息比例：**{roc_val}%**、久期：**{duration_val} 年**、現金比例：**{cash_val}%**、經常性開支 (TER)：**{ter_val}%**。系統已為您完成 9 大量化分數計算與雷達圖重繪！")
+st.info(f"**💡 系統智能洞察 ({fund_name_zh})**：【{data_source}】數據已載入！當前資本派息比例為 **{roc_val}%**、久期為 **{duration_val} 年**、現金比例為 **{cash_val}%**。風險分數已即時計算完畢！")
