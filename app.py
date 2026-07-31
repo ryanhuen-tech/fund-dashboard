@@ -35,7 +35,7 @@ if analyze_btn or fund_code:
     st.markdown("---")
 
     # 4. 核心視覺化與明細
-    col_chart, col_table = st.columns([1, 1.2])
+    col_chart, col_table = st.columns([0.8, 1.2])
 
     with col_chart:
         st.subheader("🕸️ 風險維度雷達圖")
