@@ -9,25 +9,36 @@ st.set_page_config(
     layout="wide"
 )
 
-# 2. 注入高質感 CSS 樣式（1:1 還原右圖視覺效果）
+# 2. 注入高質感 CSS 樣式（1:1 還原右圖視覺效果與排版）
 st.markdown("""
     <style>
     /* 全局背景 */
-    .main {
-        background-color: #F8FAFC;
-    }
     .block-container {
-        padding-top: 1.5rem;
+        padding-top: 1.2rem;
         padding-bottom: 2rem;
-        max-width: 1200px;
     }
-    
+    .fund-header {
+        background-color: #1E222D;
+        padding: 12px 20px;
+        border-radius: 8px;
+        border-left: 5px solid #00E676;
+        margin-bottom: 15px;
+    }
+    .source-tag {
+        background-color: #00E676;
+        color: #000;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-weight: bold;
+        font-size: 12px;
+    }
+
     /* 頂部 4 大 KPI 卡片樣式 */
     .kpi-container {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
         gap: 15px;
-        margin-bottom: 25px;
+        margin-bottom: 20px;
     }
     .kpi-card {
         background-color: #FFFFFF;
@@ -71,7 +82,7 @@ st.markdown("""
         display: inline-block;
     }
 
-    /* 右圖 9 大維度表格專用 HTML/CSS */
+    /* 9 大維度表格專用 HTML/CSS */
     .custom-table {
         width: 100%;
         border-collapse: collapse;
@@ -81,55 +92,55 @@ st.markdown("""
         box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         border: 1px solid #E2E8F0;
         margin-top: 10px;
-        font-size: 13px;
+        font-size: 12px;
     }
     .custom-table th {
         background-color: #1E3A8A;
         color: #FFFFFF;
         font-weight: 700;
         text-align: left;
-        padding: 12px 14px;
+        padding: 10px 12px;
         border-bottom: 2px solid #1E293B;
     }
     .custom-table td {
-        padding: 12px 14px;
+        padding: 10px 12px;
         border-bottom: 1px solid #E2E8F0;
         vertical-align: top;
         color: #334155;
-        line-height: 1.6;
+        line-height: 1.5;
     }
     .custom-table tr:hover {
         background-color: #F8FAFC;
     }
 
-    /* 右圖右側得分與狀態標籤 */
+    /* 狀態標籤 */
     .status-badge-green {
         background-color: #D1FAE5;
         color: #065F46;
-        padding: 4px 10px;
+        padding: 3px 8px;
         border-radius: 4px;
         font-weight: 700;
-        font-size: 12px;
+        font-size: 11px;
         display: inline-block;
         text-align: center;
     }
     .status-badge-yellow {
         background-color: #FEF3C7;
         color: #92400E;
-        padding: 4px 10px;
+        padding: 3px 8px;
         border-radius: 4px;
         font-weight: 700;
-        font-size: 12px;
+        font-size: 11px;
         display: inline-block;
         text-align: center;
     }
     .status-badge-red {
         background-color: #FEE2E2;
         color: #991B1B;
-        padding: 4px 10px;
+        padding: 3px 8px;
         border-radius: 4px;
         font-weight: 700;
-        font-size: 12px;
+        font-size: 11px;
         display: inline-block;
         text-align: center;
     }
@@ -137,7 +148,7 @@ st.markdown("""
     /* 底部總分欄 */
     .summary-footer {
         background-color: #F1F5F9;
-        padding: 14px 24px;
+        padding: 12px 20px;
         border-radius: 0 0 8px 8px;
         display: flex;
         justify-content: flex-end;
@@ -145,35 +156,75 @@ st.markdown("""
         gap: 15px;
         border: 1px solid #E2E8F0;
         border-top: none;
-        margin-bottom: 25px;
+        margin-top: -1px;
     }
     .summary-title {
-        font-size: 14px;
+        font-size: 13px;
         font-weight: 700;
         color: #334155;
     }
     .summary-score {
-        font-size: 18px;
+        font-size: 16px;
         font-weight: 800;
         color: #1E3A8A;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# 3. 頂部抬頭與選擇區
 st.title("🛡️ 智能基金風險評估系統")
 
+# 3. 客觀真實資料庫
+PRESET_FUNDS = {
+    "霸菱環球高收益債券基金 (債券型)": {
+        "type": "債券型基金",
+        "zh": "霸菱環球高收益債券基金",
+        "en": "Barings Global High Yield Bond Fund",
+        "score": "82.5",
+        "status_tag": "🟢 健康 (整體財務結構良好)",
+        "kpi_leverage": "101.1%",
+        "kpi_cash": "11.26%",
+        "kpi_roc": "42%~59%",
+        "summary": "霸菱環球高收益債券基金綜合風險評分為 82.5 分 (健康)。資產槓桿率 101.1% 幾乎無借貸槓桿，現金儲備 11.26% 充沛 (約5.5億美元)，最低修訂存續期 2.58 年對利率敏感度低；重倉北美 (61.3%) 區域集中度偏高，但整體財務結構非常穩健。",
+        "radar_scores": [15.0, 10.0, 15.0, 10.0, 10.0, 10.0, 10.0, 0.0, 2.5],
+        "radar_dimensions": ["一、派息質量", "二、信用風險", "三、槓桿水平", "四、利率敏感度", "五、流動性風險", "六、集中度風險", "七、匯率風險", "八、區域風險", "九、總開支比率"],
+        "top10": [
+            {"排名": 1, "持倉名稱": "現金及等值資產 (Cash Equivalents)", "資產類別": "現金/貨幣市場", "佔比 (%)": 11.26},
+            {"排名": 2, "持倉名稱": "Bausch Health Companies Inc.", "資產類別": "醫療保健債", "佔比 (%)": 2.40},
+            {"排名": 3, "持倉名稱": "Charter Communications Inc.", "資產類別": "通訊服務債", "佔比 (%)": 1.71},
+            {"排名": 4, "持倉名稱": "First Quantum Minerals Ltd", "資產類別": "基本工業債", "佔比 (%)": 1.66},
+            {"排名": 5, "持倉名稱": "Uniti Group Inc.", "資產類別": "通訊基礎設施債", "佔比 (%)": 1.46},
+            {"排名": 6, "持倉名稱": "Radiology Partners", "資產類別": "醫療保健債", "佔比 (%)": 1.31},
+            {"排名": 7, "持倉名稱": "LifePoint Health", "資產類別": "醫療保健債", "佔比 (%)": 1.27},
+            {"排名": 8, "持倉名稱": "EchoStar", "資產類別": "衛星通訊債", "佔比 (%)": 1.25},
+            {"排名": 9, "持倉名稱": "Herbalife Ltd.", "資產類別": "非必需消費債", "佔比 (%)": 1.10},
+            {"排名": 10, "持倉名稱": "PRA Group", "資產類別": "金融服務債", "佔比 (%)": 1.06},
+        ]
+    }
+}
+
+# 4. 頂部選擇與抬頭
 ctrl_col1, ctrl_col2 = st.columns([2, 1])
 with ctrl_col1:
-    selected_fund = st.selectbox("📌 選擇評估標的基金：", ["霸菱環球高收益債券基金 (債券型)", "富達基金 - 美元高收益基金 (債券型)"])
+    selected_preset = st.selectbox("📌 選擇評估標的基金：", list(PRESET_FUNDS.keys()))
 
-# 4. 頂部 4 大 KPI 卡片 (1:1 對齊右圖頂部)
-st.markdown("""
+curr_fund = PRESET_FUNDS[selected_preset]
+
+st.markdown(f"""
+    <div class="fund-header">
+        <span style="font-size: 14px; color: #888;">當前分析目標基金：</span> 
+        <span class="source-tag">📍 客觀真實數據源 : {curr_fund['zh']}</span><br>
+        <span style="font-size: 20px; font-weight: bold; color: #FFF;">{curr_fund['zh']}</span> 
+        <span style="font-size: 14px; color: #AAA;">({curr_fund['en']})</span>
+    </div>
+""", unsafe_allow_html=True)
+
+# 5. 頂部 4 大 KPI 卡片 (1:1 還原右圖頂部)
+st.markdown(f"""
 <div class="kpi-container">
     <div class="kpi-card">
         <div class="kpi-title">綜合風險評分</div>
         <div class="kpi-value-row">
-            <span class="kpi-value">82.5</span>
+            <span class="kpi-value">{curr_fund['score']}</span>
             <span class="kpi-subtext">/ 100</span>
         </div>
         <div class="badge-green">✔ 健康 (整體財務結構良好)</div>
@@ -181,194 +232,223 @@ st.markdown("""
     <div class="kpi-card">
         <div class="kpi-title">資產槓桿水平</div>
         <div class="kpi-value-row">
-            <span class="kpi-value">101.1%</span>
+            <span class="kpi-value">{curr_fund['kpi_leverage']}</span>
         </div>
         <div class="badge-green">✔ 優秀 (無顯著借貸槓桿)</div>
     </div>
     <div class="kpi-card">
         <div class="kpi-title">現金與流動性</div>
         <div class="kpi-value-row">
-            <span class="kpi-value">11.26%</span>
+            <span class="kpi-value">{curr_fund['kpi_cash']}</span>
         </div>
         <div class="badge-green">✔ 優秀 (~5.5億美元現金儲備)</div>
     </div>
     <div class="kpi-card">
         <div class="kpi-title">從資本派息 (ROC) 狀況</div>
         <div class="kpi-value-row">
-            <span class="kpi-value">42%~59%</span>
+            <span class="kpi-value">{curr_fund['kpi_roc']}</span>
         </div>
         <div class="badge-green">🟢 總回報覆蓋率佳 (緩衝池擴大)</div>
     </div>
 </div>
 """, unsafe_allow_html=True)
 
-# 5. 右圖 1:1 精準 HTML/CSS 9 大維度風險評估明細表
-st.markdown('### 📋 9 大維度風險評估明細表')
+# 6. 中間核心區域：【左圖】雷達圖與十大持倉 vs 【右圖】1:1 HTML 明細表
+col_left, col_right = st.columns([1, 1.4], gap="medium")
 
-html_table = """
-<table class="custom-table">
-    <thead>
-        <tr>
-            <th style="width: 12%;">評估維度</th>
-            <th style="width: 18%;">具體檢查指標</th>
-            <th style="width: 25%;">專屬評分簡算規則</th>
-            <th style="width: 27%;">霸菱基金真實數據與解析</th>
-            <th style="width: 8%; text-align: center;">得分 / 滿分</th>
-            <th style="width: 10%; text-align: center;">風險狀態</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td><b>一、派息質量</b></td>
-            <td>從資本派息 (ROC) 與總回報覆蓋率</td>
-            <td>
-                • <b>20分</b>: ROC &lt; 10% 或 總回報 ≥ 派息率<br>
-                • <b>10分</b>: ROC 10%~50% 且總回報覆蓋率 &gt; 70%<br>
-                • <b>0分</b>: ROC &gt; 50% 且 總回報為負
-            </td>
-            <td>
-                • ROC 比例：<b>42.2% ~ 59.2%</b><br>
-                • 2025總回報：<b>+9.19%</b> | 派息率：<b>~9.87%</b><br>
-                👉 2025帳面營運淨利 (3.74億美元) 遠高於派息總額 (1.0億美元)，總回報幾乎完全覆蓋派息，緩衝池實質擴大。
-            </td>
-            <td style="text-align: center; font-weight: bold;">15 / 20</td>
-            <td style="text-align: center;"><span class="status-badge-green">🟢 健康/觀察</span></td>
-        </tr>
-        <tr>
-            <td><b>二、信用風險</b></td>
-            <td>評級分佈與非投資級占比</td>
-            <td>
-                • <b>15分</b>: 平均評級 BBB 以上<br>
-                • <b>10分</b>: 平均評級 BB 級<br>
-                • <b>5分</b>: Caa/CCC級 &gt; 10% 或未評級 &gt; 15%
-            </td>
-            <td>
-                • 平均評級：<b>BB</b><br>
-                • Ba 級 <b>37.91%</b>、B 級 <b>33.75%</b><br>
-                • Caa1 及以下占 <b>9.69%</b><br>
-                👉 標準高收益債配備，一次投資風險適中可控。
-            </td>
-            <td style="text-align: center; font-weight: bold;">10 / 15</td>
-            <td style="text-align: center;"><span class="status-badge-yellow">⚠️ 中等風險</span></td>
-        </tr>
-        <tr>
-            <td><b>三、槓桿水平</b></td>
-            <td>資產膨脹率 (Total / Net Assets)</td>
-            <td>
-                • <b>15分</b>: 比率 &lt; 105% (無顯著槓桿)<br>
-                • <b>10分</b>: 比率 105%~120%<br>
-                • <b>0分</b>: 比率 &gt; 120% (槓桿過高)
-            </td>
-            <td>
-                • 總資產 / 淨資產：<b>101.1%</b><br>
-                • Amounts due to broker 僅占 NAV <b>0.4%</b><br>
-                👉 幾乎無借貸槓桿，結構非常安全透明。
-            </td>
-            <td style="text-align: center; font-weight: bold;">15 / 15</td>
-            <td style="text-align: center;"><span class="status-badge-green">✔ 優秀</span></td>
-        </tr>
-        <tr>
-            <td><b>四、利率敏感度</b></td>
-            <td>有效存續期 (Duration)</td>
-            <td>
-                • <b>10分</b>: 存續期 &lt; 3年 (抗升息)<br>
-                • <b>5分</b>: 存續期 3~6年<br>
-                • <b>0分</b>: 存續期 &gt; 6年
-            </td>
-            <td>
-                • 最低修訂存續期：<b>2.58 年</b><br>
-                👉 存續期極短，對央行利率变化的敏感度與衝擊較低。
-            </td>
-            <td style="text-align: center; font-weight: bold;">10 / 10</td>
-            <td style="text-align: center;"><span class="status-badge-green">✔ 優秀</span></td>
-        </tr>
-        <tr>
-            <td><b>五、流動性風險</b></td>
-            <td>現金儲備與營運現金流</td>
-            <td>
-                • <b>10分</b>: 現金 &gt; 10% 且營運 Cash Flow 為正<br>
-                • <b>5分</b>: 現金 5%~10%<br>
-                • <b>0分</b>: 現金 &lt; 5% 或流動性緊縮
-            </td>
-            <td>
-                • 現金及等值：<b>11.26%</b> (約 5.5 億美元)<br>
-                • 2025營運現金流轉正 (+ $2.11 億美元)<br>
-                👉 現金充沛，足以支應短期贖回需求。
-            </td>
-            <td style="text-align: center; font-weight: bold;">10 / 10</td>
-            <td style="text-align: center;"><span class="status-badge-green">✔ 優秀</span></td>
-        </tr>
-        <tr>
-            <td><b>六、集中度風險</b></td>
-            <td>前十大發行人持倉占比</td>
-            <td>
-                • <b>10分</b>: 前持倉 &lt; 20% (極分散)<br>
-                • <b>5分</b>: 前持倉 20%~30%<br>
-                • <b>0分</b>: 前持倉 &gt; 30%
-            </td>
-            <td>
-                • 前十大發行人合計占：<b>13.59%</b><br>
-                • 最大單一發行人 (Bausch Health) 僅占 <b>2.40%</b><br>
-                👉 極度分散，有效避免單一公司黑天鵝事件。
-            </td>
-            <td style="text-align: center; font-weight: bold;">10 / 10</td>
-            <td style="text-align: center;"><span class="status-badge-green">✔ 優秀</span></td>
-        </tr>
-        <tr>
-            <td><b>七、匯率風險</b></td>
-            <td>衍生品對衝與未實現損益</td>
-            <td>
-                • <b>10分</b>: 全額對衝且衍生品虧損 &lt; 1% NAV<br>
-                • <b>5分</b>: 部分對衝<br>
-                • <b>0分</b>: 未對衝且外幣曝險過高
-            </td>
-            <td>
-                • 各非美元類別均提供衍生品對衝<br>
-                • 2025衍生品未實現淨利益 <b>+$1,224 萬美元</b> (占 NAV <b>0.28%</b>)<br>
-                👉 避險機制運作順暢，衍生品風險極低。
-            </td>
-            <td style="text-align: center; font-weight: bold;">10 / 10</td>
-            <td style="text-align: center;"><span class="status-badge-green">✔ 優秀</span></td>
-        </tr>
-        <tr>
-            <td><b>八、區域風險</b></td>
-            <td>單一區域/國家持倉集中度</td>
-            <td>
-                • <b>5分</b>: 單一區域 &lt; 40%<br>
-                • <b>2.5分</b>: 單一區域 40%~60%<br>
-                • <b>0分</b>: 單一區域 &gt; 60%
-            </td>
-            <td>
-                • 北美地區：<b>61.3%</b> | 歐洲地區：<b>23.8%</b><br>
-                👉 重倉北美/美國市場，受美國宏觀經濟與信用週期影響深遠。
-            </td>
-            <td style="text-align: center; font-weight: bold;">0 / 5</td>
-            <td style="text-align: center;"><span class="status-badge-red">🚨 集中度偏高</span></td>
-        </tr>
-        <tr>
-            <td><b>九、總開支比率</b></td>
-            <td>每年管理費 (Management Fee)</td>
-            <td>
-                • <b>5分</b>: 管理費 &lt; 1.0%<br>
-                • <b>2.5分</b>: 管理費 1.0%~1.5%<br>
-                • <b>0分</b>: 管理費 &gt; 1.5%
-            </td>
-            <td>
-                • G類別 (零售)：<b>1.25% / 年</b><br>
-                • F類別 (法人)：<b>0% / 年</b><br>
-                👉 屬於市場高收益債券基金的標準收費區間。
-            </td>
-            <td style="text-align: center; font-weight: bold;">2.5 / 5</td>
-            <td style="text-align: center;"><span class="status-badge-yellow">⚠️ 中等</span></td>
-        </tr>
-    </tbody>
-</table>
+# 👈 【左欄】：保留風險維度雷達圖與前十大持倉清單
+with col_left:
+    tab1, tab2 = st.tabs(["🕸️ 風險維度雷達圖", "📋 前十大持倉清單"])
+    
+    with tab1:
+        df_chart = pd.DataFrame(dict(
+            Score=curr_fund["radar_scores"], 
+            Dimension=curr_fund["radar_dimensions"]
+        ))
+        fig_radar = px.line_polar(
+            df_chart, r='Score', theta='Dimension', line_close=True, markers=True, range_r=[0, 20], template="plotly_dark", color_discrete_sequence=['#00E676']
+        )
+        fig_radar.update_traces(fill='toself', fillcolor='rgba(0, 230, 118, 0.3)', line=dict(color='#00E676', width=2), marker=dict(size=6, color='#00E676'))
+        fig_radar.update_layout(height=420, margin=dict(l=20, r=20, t=20, b=20), polar=dict(radialaxis=dict(visible=True, range=[0, 20], showticklabels=False)))
+        st.plotly_chart(fig_radar, use_container_width=True)
+        
+    with tab2:
+        df_top10 = pd.DataFrame(curr_fund["top10"])
+        top10_total_pct = round(df_top10["佔比 (%)"].sum(), 2)
+        st.metric(label="📌 前十大持倉合共佔比 (Top 10 Total)", value=f"{top10_total_pct}%", delta="持倉高度分散", delta_color="normal")
+        st.dataframe(df_top10, use_container_width=True, hide_index=True, height=330)
 
-<div class="summary-footer">
-    <span class="summary-title">總得分 / 得分率：</span>
-    <span class="summary-score">82.5 / 100</span>
-    <span class="status-badge-green" style="font-size: 13px; padding: 5px 12px;">82.5% (健康)</span>
-</div>
-"""
+# 👉 【右欄】：1:1 還原右圖精緻 9 大維度風險明細表
+with col_right:
+    st.markdown('### 📋 9 大維度風險評估明細表')
 
-st.markdown(html_table, unsafe_allow_html=True)
+    html_table = """
+    <table class="custom-table">
+        <thead>
+            <tr>
+                <th style="width: 14%;">評估維度</th>
+                <th style="width: 18%;">具體檢查指標</th>
+                <th style="width: 25%;">專屬評分簡算規則</th>
+                <th style="width: 27%;">霸菱基金真實數據與解析</th>
+                <th style="width: 8%; text-align: center;">得分/滿分</th>
+                <th style="width: 8%; text-align: center;">風險狀態</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><b>一、派息質量</b></td>
+                <td>從資本派息 (ROC) 與總回報覆蓋率</td>
+                <td>
+                    • <b>20分</b>: ROC &lt;10% 或 總回報 ≥ 派息率<br>
+                    • <b>10分</b>: ROC 10%~50% 且總回報覆蓋率 &gt;70%<br>
+                    • <b>0分</b>: ROC &gt;50% 且 總回報為負
+                </td>
+                <td>
+                    • ROC 比例：<b>42.2% ~ 59.2%</b><br>
+                    • 2025總回報：<b>+9.19%</b> | 派息率：<b>~9.87%</b><br>
+                    👉 2025帳面營運淨利 (3.74億美元) 遠高於派息總額 (1.0億美元)，總回報幾乎完全覆蓋派息，緩衝池實質擴大。
+                </td>
+                <td style="text-align: center; font-weight: bold;">15 / 20</td>
+                <td style="text-align: center;"><span class="status-badge-green">🟢 健康/觀察</span></td>
+            </tr>
+            <tr>
+                <td><b>二、信用風險</b></td>
+                <td>評級分佈與非投資級占比</td>
+                <td>
+                    • <b>15分</b>: 平均評級 BBB 以上<br>
+                    • <b>10分</b>: 平均評級 BB 級<br>
+                    • <b>5分</b>: Caa/CCC級 &gt;10% 或未評級 &gt;15%
+                </td>
+                <td>
+                    • 平均評級：<b>BB</b><br>
+                    • Ba 級 <b>37.91%</b>、B 級 <b>33.75%</b><br>
+                    • Caa1 及以下占 <b>9.69%</b><br>
+                    👉 標準高收益債配備，一次投資風險適中可控。
+                </td>
+                <td style="text-align: center; font-weight: bold;">10 / 15</td>
+                <td style="text-align: center;"><span class="status-badge-yellow">⚠️ 中等風險</span></td>
+            </tr>
+            <tr>
+                <td><b>三、槓桿水平</b></td>
+                <td>資產膨脹率 (Total / Net Assets)</td>
+                <td>
+                    • <b>15分</b>: 比率 &lt;105% (無顯著槓桿)<br>
+                    • <b>10分</b>: 比率 105%~120%<br>
+                    • <b>0分</b>: 比率 &gt;120% (槓桿過高)
+                </td>
+                <td>
+                    • 總資產 / 淨資產：<b>101.1%</b><br>
+                    • Amounts due to broker 僅占 NAV <b>0.4%</b><br>
+                    👉 幾乎無借貸槓桿，結構非常安全透明。
+                </td>
+                <td style="text-align: center; font-weight: bold;">15 / 15</td>
+                <td style="text-align: center;"><span class="status-badge-green">✔ 優秀</span></td>
+            </tr>
+            <tr>
+                <td><b>四、利率敏感度</b></td>
+                <td>有效存續期 (Duration)</td>
+                <td>
+                    • <b>10分</b>: 存續期 &lt;3 年 (抗升息)<br>
+                    • <b>5分</b>: 存續期 3~6 年<br>
+                    • <b>0分</b>: 存續期 &gt;6 年
+                </td>
+                <td>
+                    • 最低修訂存續期：<b>2.58 年</b><br>
+                    👉 存續期極短，對央行利率變化的敏感度與衝擊較低。
+                </td>
+                <td style="text-align: center; font-weight: bold;">10 / 10</td>
+                <td style="text-align: center;"><span class="status-badge-green">✔ 優秀</span></td>
+            </tr>
+            <tr>
+                <td><b>五、流動性風險</b></td>
+                <td>現金儲備與營運現金流</td>
+                <td>
+                    • <b>10分</b>: 現金 &gt;10% 且營運 Cash Flow 為正<br>
+                    • <b>5分</b>: 現金 5%~10%<br>
+                    • <b>0分</b>: 現金 &lt;5% 或流動性緊縮
+                </td>
+                <td>
+                    • 現金及等值：<b>11.26%</b> (約 5.5 億美元)<br>
+                    • 2025營運現金流轉正 (+ $2.11 億美元)<br>
+                    👉 現金充沛，足以支應短期贖回需求。
+                </td>
+                <td style="text-align: center; font-weight: bold;">10 / 10</td>
+                <td style="text-align: center;"><span class="status-badge-green">✔ 優秀</span></td>
+            </tr>
+            <tr>
+                <td><b>六、集中度風險</b></td>
+                <td>前十大發行人持倉占比</td>
+                <td>
+                    • <b>10分</b>: 前持倉 &lt;20% (極分散)<br>
+                    • <b>5分</b>: 前持倉 20%~30%<br>
+                    • <b>0分</b>: 前持倉 &gt;30%
+                </td>
+                <td>
+                    • 前十大發行人合計占：<b>13.59%</b><br>
+                    • 最大單一發行人 (Bausch Health) 僅占 <b>2.40%</b><br>
+                    👉 極度分散，有效避免單一公司黑天鵝事件。
+                </td>
+                <td style="text-align: center; font-weight: bold;">10 / 10</td>
+                <td style="text-align: center;"><span class="status-badge-green">✔ 優秀</span></td>
+            </tr>
+            <tr>
+                <td><b>七、匯率風險</b></td>
+                <td>衍生品對衝與未實現損益</td>
+                <td>
+                    • <b>10分</b>: 全額對衝且衍生品虧損 &lt;1% NAV<br>
+                    • <b>5分</b>: 部分對衝<br>
+                    • <b>0分</b>: 未對衝且外幣曝險過高
+                </td>
+                <td>
+                    • 各非美元類別均提供衍生品對衝<br>
+                    • 2025衍生品未實現淨利益 <b>+$1,224 萬美元</b> (占 NAV <b>0.28%</b>)<br>
+                    👉 避險機制運作順暢，衍生品風險極低。
+                </td>
+                <td style="text-align: center; font-weight: bold;">10 / 10</td>
+                <td style="text-align: center;"><span class="status-badge-green">✔ 優秀</span></td>
+            </tr>
+            <tr>
+                <td><b>八、區域風險</b></td>
+                <td>單一區域/國家持倉集中度</td>
+                <td>
+                    • <b>5分</b>: 單一區域 &lt;40%<br>
+                    • <b>2.5分</b>: 單一區域 40%~60%<br>
+                    • <b>0分</b>: 單一區域 &gt;60%
+                </td>
+                <td>
+                    • 北美地區：<b>61.3%</b> | 歐洲地區：<b>23.8%</b><br>
+                    👉 重倉北美/美國市場，受美國宏觀經濟與信用週期影響深遠。
+                </td>
+                <td style="text-align: center; font-weight: bold;">0 / 5</td>
+                <td style="text-align: center;"><span class="status-badge-red">🚨 集中度偏高</span></td>
+            </tr>
+            <tr>
+                <td><b>九、總開支比率</b></td>
+                <td>每年管理費 (Management Fee)</td>
+                <td>
+                    • <b>5分</b>: 管理費 &lt;1.0%<br>
+                    • <b>2.5分</b>: 管理費 1.0%~1.5%<br>
+                    • <b>0分</b>: 管理費 &gt;1.5%
+                </td>
+                <td>
+                    • G類別 (零售)：<b>1.25% / 年</b><br>
+                    • F類別 (法人)：<b>0% / 年</b><br>
+                    👉 屬於市場高收益債券基金的標準收費區間。
+                </td>
+                <td style="text-align: center; font-weight: bold;">2.5 / 5</td>
+                <td style="text-align: center;"><span class="status-badge-yellow">⚠️ 中等</span></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="summary-footer">
+        <span class="summary-title">總得分 / 得分率：</span>
+        <span class="summary-score">82.5 / 100</span>
+        <span class="status-badge-green" style="font-size: 12px; padding: 4px 10px;">82.5% (健康)</span>
+    </div>
+    """
+
+    st.markdown(html_table, unsafe_allow_html=True)
+
+# 7. 底部智能洞察點評
+st.info(f"**💡 AI 智能洞察 ({curr_fund['zh']})**：{curr_fund['summary']}")
