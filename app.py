@@ -71,23 +71,22 @@ mock_data = {
     "狀態": ["⚠️ 警示", "⚠️ 警示", "✅ 優秀", "✅ 優秀", "✅ 優秀", "✅ 優秀", "✅ 優秀", "🚨 極高風險", "⚠️ 警示"]
 }
 
-# 🍕 模擬數據：前十大持倉 (Top 10 Holdings)
-top10_holdings = {
-    "持倉名稱": [
-        "現金及等值資產 (Cash Equivalents)",
-        "Charter Communications 4.95%",
-        "TransDigm Inc 6.25%",
-        "Mozart Debt Merger Sub 3.875%",
-        "Ford Motor Credit Co 4.125%",
-        "American Airlines 5.75%",
-        "Carnival Corp 5.75%",
-        "Telecom Italia 5.375%",
-        "Occidental Petroleum 6.375%",
-        "Royal Caribbean Group 5.5%",
-        "其他 200+ 隻小型債券"
-    ],
-    "佔比 (%)": [11.26, 2.40, 2.15, 1.95, 1.85, 1.70, 1.65, 1.50, 1.45, 1.40, 72.69]
-}
+# 📋 數據：前十大持倉 (Top 10 Holdings)
+top10_list = [
+    {"排名": 1, "持倉名稱": "現金及等值資產 (Cash Equivalents)", "資產類別": "現金/貨幣市場", "佔比 (%)": 11.26},
+    {"排名": 2, "持倉名稱": "Charter Communications 4.95%", "資產類別": "通訊服務債", "佔比 (%)": 2.40},
+    {"排名": 3, "持倉名稱": "TransDigm Inc 6.25%", "資產類別": "工業/航天債", "佔比 (%)": 2.15},
+    {"排名": 4, "持倉名稱": "Mozart Debt Merger Sub 3.875%", "資產類別": "醫療保健債", "佔比 (%)": 1.95},
+    {"排名": 5, "持倉名稱": "Ford Motor Credit Co 4.125%", "資產類別": "汽車金融債", "佔比 (%)": 1.85},
+    {"排名": 6, "持倉名稱": "American Airlines 5.75%", "資產類別": "航空交通債", "佔比 (%)": 1.70},
+    {"排名": 7, "持倉名稱": "Carnival Corp 5.75%", "資產類別": "非必需消費債", "佔比 (%)": 1.65},
+    {"排名": 8, "持倉名稱": "Telecom Italia 5.375%", "資產類別": "電訊服務債", "佔比 (%)": 1.50},
+    {"排名": 9, "持倉名稱": "Occidental Petroleum 6.375%", "資產類別": "能源/石油債", "佔比 (%)": 1.45},
+    {"排名": 10, "持倉名稱": "Royal Caribbean Group 5.5%", "資產類別": "休閒旅遊債", "佔比 (%)": 1.40},
+]
+
+df_top10 = pd.DataFrame(top10_list)
+top10_total_pct = round(df_top10["佔比 (%)"].sum(), 2) # 自動計算加總 %
 
 # 2. 頂部工具列：主標題與搜尋按鈕並排
 st.title("🛡️ 智能基金風險評估系統")
@@ -131,12 +130,11 @@ with kpi4:
 
 st.markdown("---")
 
-# 4. 中間核心區：使用 Tabs 頁籤切換雷達圖與持倉 Pie Chart
+# 4. 中間核心區：使用 Tabs 頁籤切換雷達圖與持倉表格
 col_chart, col_table = st.columns([1, 1.3], gap="medium")
 
 with col_chart:
-    # 💡 使用 Tabs 標籤進行動態切換
-    tab1, tab2 = st.tabs(["🕸️ 風險維度雷達圖", "🍰 前十大持倉分佈"])
+    tab1, tab2 = st.tabs(["🕸️ 風險維度雷達圖", "📋 前十大持倉清單"])
     
     with tab1:
         df_chart = pd.DataFrame(dict(
@@ -168,28 +166,21 @@ with col_chart:
         st.plotly_chart(fig_radar, use_container_width=True)
         
     with tab2:
-        df_pie = pd.DataFrame(top10_holdings)
+        # 💡 展示「十大持倉加總 %」數值卡片
+        st.metric(
+            label="📌 前十大持倉合共佔比 (Top 10 Total)", 
+            value=f"{top10_total_pct}%", 
+            delta="持倉分散，集中度風險低", 
+            delta_color="normal"
+        )
         
-        # 繪製高質感環形 Pie Chart
-        fig_pie = px.pie(
-            df_pie, 
-            values='佔比 (%)', 
-            names='持倉名稱',
-            hole=0.4, # 設定為環形圖，中央呈現質感
-            template="plotly_dark",
-            color_discrete_sequence=px.colors.sequential.Darkmint_r
+        # 💡 十大持倉純表格清單
+        st.dataframe(
+            df_top10[["排名", "持倉名稱", "資產類別", "佔比 (%)"]],
+            use_container_width=True,
+            hide_index=True,
+            height=280
         )
-        fig_pie.update_traces(
-            textposition='inside', 
-            textinfo='percent+label',
-            hovertemplate='<b>%{label}</b><br>佔比: %{value}%'
-        )
-        fig_pie.update_layout(
-            height=370,
-            margin=dict(l=10, r=10, t=10, b=10),
-            showlegend=False # 隱藏繁雜圖例，滑鼠或觸控點擊直接看數據
-        )
-        st.plotly_chart(fig_pie, use_container_width=True)
 
 with col_table:
     st.subheader("📋 風險評估項目")
