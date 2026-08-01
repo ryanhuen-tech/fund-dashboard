@@ -9,39 +9,62 @@ st.set_page_config(
     layout="wide"
 )
 
-# 2. 注入自訂 CSS 樣式
-st.markdown("""
+# 💡 新增：側邊欄「全螢幕/滿版模式」切換開關
+with st.sidebar:
+    st.header("⚙️ 顯示設定")
+    fullscreen_mode = st.toggle("🖥️ 啟用超寬全螢幕視角 (100% Wide)", value=True)
+
+# 2. 注入自訂 CSS 樣式 (根據全螢幕選擇動態調整)
+padding_top = "0.5rem" if fullscreen_mode else "1.2rem"
+max_width_css = "max-width: 98% !important;" if fullscreen_mode else ""
+
+st.markdown(f"""
     <style>
-    .block-container {
-        padding-top: 1.2rem;
+    .block-container {{
+        padding-top: {padding_top};
         padding-bottom: 2rem;
-    }
-    .fund-header {
+        {max_width_css}
+    }}
+    .fund-header {{
         background-color: #1E222D;
         padding: 16px 22px;
         border-radius: 8px;
         border-left: 5px solid #00E676;
         margin-bottom: 15px;
-    }
-    .source-tag {
+    }}
+    .source-tag {{
         background-color: #00E676;
         color: #000;
         padding: 3px 8px;
         border-radius: 4px;
         font-weight: bold;
         font-size: 12px;
-    }
+    }}
     
-    /* 基金公司簡介內部樣式 */
-    .company-profile-list {
+    /* 基金公司簡介卡片樣式 */
+    .company-profile-card {{
+        background-color: #F1F5F9;
+        border: 1px solid #CBD5E1;
+        border-left: 4px solid #1E3A8A;
+        padding: 12px 18px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+    }}
+    .company-profile-title {{
+        font-size: 13px;
+        font-weight: 700;
+        color: #1E3A8A;
+        margin-bottom: 6px;
+    }}
+    .company-profile-list {{
         font-size: 12px;
         color: #334155;
         margin: 0;
         padding-left: 18px;
         line-height: 1.6;
-    }
+    }}
 
-    .data-disclaimer-note {
+    .data-disclaimer-note {{
         background-color: #FFFFFF;
         border: 1px solid #E2E8F0;
         border-left: 4px solid #059669;
@@ -50,10 +73,10 @@ st.markdown("""
         font-size: 12px;
         color: #475569;
         margin-bottom: 20px;
-    }
+    }}
 
     /* 統一 HTML 表格樣式 (靠左對齊 + 深藍標頭) */
-    .custom-table {
+    .custom-table {{
         width: 100%;
         border-collapse: collapse;
         background-color: #FFFFFF;
@@ -63,29 +86,29 @@ st.markdown("""
         border: 1px solid #E2E8F0;
         margin-top: 10px;
         font-size: 13px;
-    }
-    .custom-table th {
+    }}
+    .custom-table th {{
         background-color: #1E3A8A;
         color: #FFFFFF;
         font-weight: 700;
         text-align: left;
         padding: 12px 14px;
         border-bottom: 2px solid #1E293B;
-    }
-    .custom-table td {
+    }}
+    .custom-table td {{
         padding: 12px 14px;
         border-bottom: 1px solid #E2E8F0;
         vertical-align: middle;
         color: #334155;
         line-height: 1.6;
         text-align: left;
-    }
-    .custom-table tr:hover {
+    }}
+    .custom-table tr:hover {{
         background-color: #F8FAFC;
-    }
+    }}
 
     /* 狀態標籤 */
-    .status-badge-green {
+    .status-badge-green {{
         background-color: #D1FAE5;
         color: #065F46;
         padding: 4px 10px;
@@ -94,8 +117,8 @@ st.markdown("""
         font-size: 12px;
         display: inline-block;
         text-align: center;
-    }
-    .status-badge-yellow {
+    }}
+    .status-badge-yellow {{
         background-color: #FEF3C7;
         color: #92400E;
         padding: 4px 10px;
@@ -104,8 +127,8 @@ st.markdown("""
         font-size: 12px;
         display: inline-block;
         text-align: center;
-    }
-    .status-badge-red {
+    }}
+    .status-badge-red {{
         background-color: #FEE2E2;
         color: #991B1B;
         padding: 4px 10px;
@@ -114,10 +137,10 @@ st.markdown("""
         font-size: 12px;
         display: inline-block;
         text-align: center;
-    }
+    }}
 
     /* 底部總分欄 */
-    .summary-footer {
+    .summary-footer {{
         background-color: #F1F5F9;
         padding: 14px 24px;
         border-radius: 0 0 8px 8px;
@@ -129,23 +152,23 @@ st.markdown("""
         border-top: none;
         margin-top: -1px;
         margin-bottom: 25px;
-    }
-    .summary-title {
+    }}
+    .summary-title {{
         font-size: 14px;
         font-weight: 700;
         color: #334155;
-    }
-    .summary-score {
+    }}
+    .summary-score {{
         font-size: 18px;
         font-weight: 800;
         color: #1E3A8A;
-    }
+    }}
     </style>
 """, unsafe_allow_html=True)
 
 st.title("🛡️ 智能基金風險評估系統")
 
-# 3. 預設資料庫 (包含霸菱與富達真實 PDF 數據 + 含資料出處之公司簡介)
+# 3. 預設資料庫
 PRESET_FUNDS = {
     "富達基金 - 美元高收益基金": {
         "zh": "富達基金 - 美元高收益基金",
@@ -343,7 +366,7 @@ PRESET_FUNDS = {
             ["六、集中度風險", "前十大發行人持倉占比", "• 10分: 前持倉 <20% (極分散)<br>• 5分: 前持倉 20%-30%<br>• 0分: 前持倉 >30%", "• 前十大發行人合計占：13.59%<br>• 最大單一發行人僅占 2.40%<br>👉 極度分散，有效避免單一公司黑天鵝事件。", "10 / 10", "<span class='status-badge-green'>✔ 優秀</span>"],
             ["七、匯率風險", "衍生品對沖與未實現損益", "• 10分: 全額對沖且衍生品虧損 <1% NAV<br>• 5分: 部分對沖<br>• 0分: 未對沖且外幣曝險過高", "• 各非美元類別均提供衍生品對沖<br>👉 避險機制運作順暢，衍生品風險極低。", "10 / 10", "<span class='status-badge-green'>✔ 優秀</span>"],
             ["八、區域風險", "單一區域/國家持倉集中度", "• 5分: 單一區域 <40%<br>• 2.5分: 單一區域 40%-60%<br>• 0分: 單一區域 >60%", "• 北美地區：61.3% | 歐洲地區：23.8%<br>👉 重倉北美/美國市場，受美國信用週期影響深遠。", "0 / 5", "<span class='status-badge-red'>🚨 集中度偏高</span>"],
-            ["九、總開支比率", "每年管理費 (Management Fee)", "• 5分: 管理費 <1.0%<br>• 2.5分: 管理費 1.0%-1.5%<br>• 0分: 管理費 >1.5%", "• G類別 (零售)：1.25% / 年<br>👉 屬於市場高收益債券基金的標準收費區間。", "2.5 / 5", "<span class='status-badge-yellow'>⚠️ 中等</span>"]
+            ["九、總開支比率", "每年管理費 (Management Fee)", "• 5分: 管理費 <1.0%<br>• 2.5分: 管理費 1.0%-1.5%<br>• 0分: Management Fee >1.5%", "• G類別 (零售)：1.25% / 年<br>👉 屬於市場高收益債券基金的標準收費區間。", "2.5 / 5", "<span class='status-badge-yellow'>⚠️ 中等</span>"]
         ]
     }
 }
