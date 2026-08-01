@@ -32,21 +32,7 @@ st.markdown("""
         font-size: 12px;
     }
     
-    /* 基金公司簡介卡片樣式 */
-    .company-profile-card {
-        background-color: #F1F5F9;
-        border: 1px solid #CBD5E1;
-        border-left: 4px solid #1E3A8A;
-        padding: 12px 18px;
-        border-radius: 8px;
-        margin-bottom: 15px;
-    }
-    .company-profile-title {
-        font-size: 13px;
-        font-weight: 700;
-        color: #1E3A8A;
-        margin-bottom: 6px;
-    }
+    /* 基金公司簡介內部樣式 */
     .company-profile-list {
         font-size: 12px;
         color: #334155;
@@ -165,7 +151,6 @@ PRESET_FUNDS = {
         "zh": "富達基金 - 美元高收益基金",
         "en": "Fidelity Funds - US High Yield Fund",
         "company_name": "富達國際 (Fidelity International)",
-        # 💡 含資料出處之富達公司簡介
         "company_profile": [
             "<b>創立歷史與獨立性</b>：成立於 1969 年，前身為美國富達投資海外部門，1980年獨立營運，為私人管理與員工/創辦家族控股公司。 <i>[出處：Fidelity International Corporate Overview]</i>",
             "<b>全球規模與覆蓋</b>：服務全球超過 280 萬名客戶，業務遍及全球 25 個以上主要金融據點，旗下管理客戶資產 (AUM) 超過 1 兆美元。 <i>[出處：Fidelity International Key Facts & Figures]</i>",
@@ -264,7 +249,7 @@ PRESET_FUNDS = {
             ["六、集中度風險", "前十大發行人持倉占比", "• 10分: 前持倉 <20% (極分散)<br>• 5分: 前持倉 20%-30%<br>• 0分: 前持倉 >30%", "• 前十大持倉/發行人合計占：11.27%<br>• 最大單一公司債僅占 0.89%<br>👉 持倉極度分散，可徹底防範單一企業違約黑天鵝事件。", "10 / 10", "<span class='status-badge-green'>✔ 優秀</span>"],
             ["七、匯率風險", "衍生品對沖與未實現損益", "• 10分: 全額對沖且衍生品虧損 <1% NAV<br>• 5分: 部分對沖<br>• 0分: 未對沖且外幣曝險過高", "• 基礎貨幣為美元 (USD)<br>• 提供對沖股份類別 (RMB H / EUR H / JPY H)<br>👉 避險機制完善，匯率曝險極低。", "10 / 10", "<span class='status-badge-green'>✔ 優秀</span>"],
             ["八、區域風險", "單一區域/國家持倉集中度", "• 5分: 單一區域 <40%<br>• 2.5分: 單一區域 40%-60%<br>• 0分: 單一區域 >60%", "• 美國地區占比：79.60%<br>• 英國占 2.77%、加拿大占 2.58%<br>👉 高度重倉美國市場，受美國宏觀經濟與信用週期影響深遠。", "0 / 5", "<span class='status-badge-red'>🚨 集中度偏高</span>"],
-            ["九、總開支比率", "每年管理費 (Management Fee)", "• 5分: 管理費 <1.0%<br>• 2.5分: 管理費 1.0%-1.5%<br>• 0分: 管理費 >1.5%", "• 每年管理費：1.00% / 年<br>👉 屬於市場高收益債券基金的標準合理收費區間。", "2.5 / 5", "<span class='status-badge-yellow'>⚠️ 中等</span>"]
+            ["九、總開支比率", "每年管理費 (Management Fee)", "• 5分: 管理費 <1.0%<br>• 2.5分: 管理費 1.0%-1.5%<br>• 0分: Management Fee >1.5%", "• 每年管理費：1.00% / 年<br>👉 屬於市場高收益債券基金的標準合理收費區間。", "2.5 / 5", "<span class='status-badge-yellow'>⚠️ 中等</span>"]
         ]
     },
     
@@ -272,7 +257,6 @@ PRESET_FUNDS = {
         "zh": "霸菱環球高收益債券基金",
         "en": "Barings Global High Yield Bond Fund",
         "company_name": "霸菱資產管理 (Barings LLC)",
-        # 💡 含資料出處之霸菱公司簡介
         "company_profile": [
             "<b>悠久百年底蘊</b>：歷史最早可追溯至 1762 年成立的 Barings 銀行，是全球歷史最悠久的金融機構之一。 <i>[出處：Barings Corporate History Overview]</i>",
             "<b>母集團實力雄厚</b>：為美國百年壽險巨人 MassMutual (美國萬通人壽) 旗下的全資資產管理子公司。 <i>[出處：MassMutual Financial Group Annual Report]</i>",
@@ -385,16 +369,16 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
-# 💡 基金公司簡介卡片 (4大關鍵 Points，含資料出處)
+# 💡 基金公司背景簡介：加入可摺疊隱藏 (st.expander) 功能
 company_profile_html = "".join([f"<li>{item}</li>" for item in curr_fund['company_profile']])
-st.markdown(f"""
-    <div class="company-profile-card">
-        <div class="company-profile-title">🏢 基金公司背景簡介 — {curr_fund['company_name']}</div>
+with st.expander(f"🏢 點擊展開 / 折疊：基金公司背景簡介 — {curr_fund['company_name']}", expanded=False):
+    st.markdown(f"""
         <ul class="company-profile-list">
             {company_profile_html}
         </ul>
-    </div>
-""", unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
+
+st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
 
 # 官方數據源聲明備註
 st.markdown("""
