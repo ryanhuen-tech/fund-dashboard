@@ -47,6 +47,14 @@ st.markdown("""
         border: 1px solid #E2E8F0;
         border-top: 4px solid #1E3A8A;
     }
+    .kpi-card-custom-warning {
+        background-color: #FFFFFF;
+        border-radius: 8px;
+        padding: 12px 14px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        border: 1px solid #E2E8F0;
+        border-top: 4px solid #F59E0B; /* 橘黃色警示邊框 */
+    }
     .kpi-card-title {
         font-size: 11px;
         color: #64748B;
@@ -60,9 +68,20 @@ st.markdown("""
         color: #1E3A8A;
         margin-bottom: 2px;
     }
+    .kpi-card-value-warning {
+        font-size: 18px;
+        font-weight: 800;
+        color: #D97706; /* 橘黃色警告文字 */
+        margin-bottom: 2px;
+    }
     .kpi-card-sub {
         font-size: 10px;
         color: #059669;
+        font-weight: 600;
+    }
+    .kpi-card-sub-warning {
+        font-size: 10px;
+        color: #D97706;
         font-weight: 600;
     }
 
@@ -164,7 +183,7 @@ PRESET_FUNDS = {
         "zh": "霸菱環球高收益債券基金",
         "en": "Barings Global High Yield Bond Fund",
         "score": "82.5",
-        "summary": "霸菱環球高收益債券基金綜合風險評分為 82.5 分 (健康)。資產槓桿率 101.1% 幾乎無借貸槓桿，現金儲備 11.26% 充沛 (約5.5億美元)，最低修訂存續期 2.58 年對利率敏感度低；重倉北美 (61.3%) 區域集中度偏高，但整體財務結構與避險機制非常穩健。",
+        "summary": "霸菱環球高收益債券基金綜合風險評分為 82.5 分 (健康)。資產槓桿率 101.1% 幾乎無借貸槓桿，現金儲備 11.26% 充沛 (約5.5億美元)，最低修訂存續期 2.58 年對利率敏感度低；但需留意平均評級為 BB 級 (高收益債/非投資級)，且派息率 (9.87%) 高於底層到期收益率，存在本金補貼缺口。",
         "kpis": {
             "p1": "9.87%",
             "p2": "+2.64%",
@@ -212,13 +231,26 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
-# 5. 核心數據名片 (7 大 KPI 名片卡片列)
+# 5. 核心數據名片 (7 大 KPI 名片卡片列 - 已將「息差」與「債務評級」修正為警示樣式)
 if fund_type == "債券基金":
     st.markdown(f"""
     <div class="kpi-grid-7">
         <div class="kpi-card-custom"><div class="kpi-card-title">現時派息率</div><div class="kpi-card-value">{curr_fund['kpis']['p1']}</div><div class="kpi-card-sub">年化分派</div></div>
-        <div class="kpi-card-custom"><div class="kpi-card-title">派息率與加權收益息差</div><div class="kpi-card-value">{curr_fund['kpis']['p2']}</div><div class="kpi-card-sub">派息覆蓋佳</div></div>
-        <div class="kpi-card-custom"><div class="kpi-card-title">平均持有債務評級</div><div class="kpi-card-value">{curr_fund['kpis']['p3']}</div><div class="kpi-card-sub">高收益債</div></div>
+        
+        <!-- 💡 息差：警示邊框與警告文字 -->
+        <div class="kpi-card-custom-warning">
+            <div class="kpi-card-title">派息與收益息差</div>
+            <div class="kpi-card-value-warning">{curr_fund['kpis']['p2']}</div>
+            <div class="kpi-card-sub-warning">⚠️ 存在本金補貼風險</div>
+        </div>
+        
+        <!-- 💡 精準修正：平均持有債務評級改為橘黃色 (BB級非投資級/高收益債) -->
+        <div class="kpi-card-custom-warning">
+            <div class="kpi-card-title">平均持有債務評級</div>
+            <div class="kpi-card-value-warning">{curr_fund['kpis']['p3']}</div>
+            <div class="kpi-card-sub-warning">⚠️ 高收益債 (非投資級)</div>
+        </div>
+        
         <div class="kpi-card-custom"><div class="kpi-card-title">續存率 / 有效期</div><div class="kpi-card-value">{curr_fund['kpis']['p4']}</div><div class="kpi-card-sub">存續期 (久期)</div></div>
         <div class="kpi-card-custom"><div class="kpi-card-title">手持現金比率</div><div class="kpi-card-value">{curr_fund['kpis']['p5']}</div><div class="kpi-card-sub">流動性充沛</div></div>
         <div class="kpi-card-custom"><div class="kpi-card-title">前十大發行人佔比</div><div class="kpi-card-value">{curr_fund['kpis']['p6']}</div><div class="kpi-card-sub">極度分散</div></div>
@@ -252,7 +284,6 @@ with tab1:
             Dimension=curr_fund["radar_dimensions"]
         ))
         
-        # 💡 精準設定：雷達圖中間為質感黑底 (#1E222D)，四周文字為【黑色加粗 (#000000)】
         fig_radar = px.line_polar(
             df_chart, 
             r='Score', 
@@ -271,12 +302,12 @@ with tab1:
         fig_radar.update_layout(
             height=480, 
             margin=dict(l=60, r=60, t=30, b=30),
-            paper_bgcolor="rgba(0,0,0,0)", # 外圍透明融入網頁
+            paper_bgcolor="rgba(0,0,0,0)",
             polar=dict(
-                bgcolor="#1E222D", # 💡 雷達圖中間恢復黑色底色！
+                bgcolor="#1E222D",
                 radialaxis=dict(visible=True, range=[0, 20], showticklabels=False, gridcolor="#334155"),
                 angularaxis=dict(
-                    tickfont=dict(size=13, color="#000000", family="Arial, sans-serif"), # 周圍文字維持清晰黑色！
+                    tickfont=dict(size=13, color="#000000", family="Arial, sans-serif"),
                     gridcolor="#334155"
                 )
             )
