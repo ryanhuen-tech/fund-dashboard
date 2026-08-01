@@ -9,12 +9,17 @@ st.set_page_config(
     layout="wide"
 )
 
-# 💡 新增：側邊欄「全螢幕/滿版模式」切換開關
-with st.sidebar:
-    st.header("⚙️ 顯示設定")
-    fullscreen_mode = st.toggle("🖥️ 啟用超寬全螢幕視角 (100% Wide)", value=True)
+# 💡 在主頁面最上方建立「標題 + 右上角顯示設定」兩欄佈局
+title_col, settings_col = st.columns([3.2, 1.2])
 
-# 2. 注入自訂 CSS 樣式 (根據全螢幕選擇動態調整)
+with title_col:
+    st.title("🛡️ 智能基金風險評估系統")
+
+with settings_col:
+    st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
+    fullscreen_mode = st.toggle("🖥️ 全螢幕 / 100% 超寬視角", value=True)
+
+# 2. 注入自訂 CSS 樣式 (根據右上角的切換動態調整頁面邊距)
 padding_top = "0.5rem" if fullscreen_mode else "1.2rem"
 max_width_css = "max-width: 98% !important;" if fullscreen_mode else ""
 
@@ -41,21 +46,7 @@ st.markdown(f"""
         font-size: 12px;
     }}
     
-    /* 基金公司簡介卡片樣式 */
-    .company-profile-card {{
-        background-color: #F1F5F9;
-        border: 1px solid #CBD5E1;
-        border-left: 4px solid #1E3A8A;
-        padding: 12px 18px;
-        border-radius: 8px;
-        margin-bottom: 15px;
-    }}
-    .company-profile-title {{
-        font-size: 13px;
-        font-weight: 700;
-        color: #1E3A8A;
-        margin-bottom: 6px;
-    }}
+    /* 基金公司簡介內部樣式 */
     .company-profile-list {{
         font-size: 12px;
         color: #334155;
@@ -166,9 +157,7 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-st.title("🛡️ 智能基金風險評估系統")
-
-# 3. 預設資料庫
+# 3. 預設資料庫 (包含霸菱與富達真實 PDF 數據 + 含資料出處之公司簡介)
 PRESET_FUNDS = {
     "富達基金 - 美元高收益基金": {
         "zh": "富達基金 - 美元高收益基金",
