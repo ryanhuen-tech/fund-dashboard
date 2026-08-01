@@ -66,7 +66,7 @@ st.markdown("""
         font-weight: 600;
     }
 
-    /* HTML 右側表格樣式 */
+    /* HTML 表格樣式 */
     .custom-table {
         width: 100%;
         border-collapse: collapse;
@@ -238,7 +238,7 @@ else:
     </div>
     """, unsafe_allow_html=True)
 
-# 6. 【上區】：將「雷達圖」與「前十大持倉清單」放在風險評估表格上方！
+# 6. 【上區】：雷達圖（黑底 + 周圍黑色粗體字）與前十大持倉清單
 st.markdown("### 🕸️ 風險維度分析與持倉分佈")
 
 tab1, tab2 = st.tabs(["🕸️ 風險維度雷達圖", "📋 前十大持倉清單"])
@@ -251,7 +251,8 @@ with tab1:
             Score=curr_fund["radar_scores"], 
             Dimension=curr_fund["radar_dimensions"]
         ))
-        # 💡 雷達圖文字徹底優化：文字使用【黑色 + 加粗 (#000000)】，背景改為亮色，清晰可見！
+        
+        # 💡 精準設定：雷達圖中間為質感黑底 (#1E222D)，四周文字為【黑色加粗 (#000000)】
         fig_radar = px.line_polar(
             df_chart, 
             r='Score', 
@@ -259,23 +260,24 @@ with tab1:
             line_close=True, 
             markers=True, 
             range_r=[0, 20], 
-            template="plotly_white",  # 使用白底以凸顯黑色文字
-            color_discrete_sequence=['#10B981']
+            color_discrete_sequence=['#00E676']
         )
         fig_radar.update_traces(
             fill='toself', 
-            fillcolor='rgba(16, 185, 129, 0.25)', 
-            line=dict(color='#10B981', width=2.5), 
-            marker=dict(size=7, color='#10B981')
+            fillcolor='rgba(0, 230, 118, 0.35)', 
+            line=dict(color='#00E676', width=2.5), 
+            marker=dict(size=7, color='#00E676')
         )
         fig_radar.update_layout(
             height=480, 
-            margin=dict(l=60, r=60, t=30, b=30), 
+            margin=dict(l=60, r=60, t=30, b=30),
+            paper_bgcolor="rgba(0,0,0,0)", # 外圍透明融入網頁
             polar=dict(
-                radialaxis=dict(visible=True, range=[0, 20], showticklabels=False, gridcolor="#E2E8F0"),
+                bgcolor="#1E222D", # 💡 雷達圖中間恢復黑色底色！
+                radialaxis=dict(visible=True, range=[0, 20], showticklabels=False, gridcolor="#334155"),
                 angularaxis=dict(
-                    tickfont=dict(size=13, color="#000000", family="Arial, sans-serif"), # 黑色加粗字體！
-                    gridcolor="#E2E8F0"
+                    tickfont=dict(size=13, color="#000000", family="Arial, sans-serif"), # 周圍文字維持清晰黑色！
+                    gridcolor="#334155"
                 )
             )
         )
@@ -289,7 +291,7 @@ with tab2:
 
 st.markdown("---")
 
-# 7. 【下區】：正式更名為「📋 基金深度風險評估」表格
+# 7. 【下區】：📋 基金深度風險評估 表格
 st.markdown('### 📋 基金深度風險評估')
 
 if fund_type == "債券基金":
