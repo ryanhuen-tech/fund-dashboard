@@ -18,7 +18,7 @@ st.markdown("""
     }
     .fund-header {
         background-color: #1E222D;
-        padding: 14px 22px;
+        padding: 16px 22px;
         border-radius: 8px;
         border-left: 5px solid #00E676;
         margin-bottom: 20px;
@@ -30,6 +30,16 @@ st.markdown("""
         border-radius: 4px;
         font-weight: bold;
         font-size: 12px;
+    }
+    .data-disclaimer-note {
+        background-color: #F8FAFC;
+        border: 1px solid #E2E8F0;
+        border-left: 4px solid #1E3A8A;
+        padding: 8px 14px;
+        border-radius: 6px;
+        font-size: 12px;
+        color: #475569;
+        margin-bottom: 20px;
     }
 
     /* 統一 HTML 表格樣式 (靠左對齊 + 深藍標頭) */
@@ -131,7 +141,7 @@ PRESET_FUNDS = {
         "zh": "富達基金 - 美元高收益基金",
         "en": "Fidelity Funds - US High Yield Fund",
         "score": "82.5",
-        "summary": "富達美元高收益基金綜合風險評分為 82.5 分 (健康)。過往一年申購 $12.65億 vs 贖回 $15.30億，出現 -$2,647.5 萬美元淨流出 (需關注資金流向)；但淨營運收益達 +$154.03M，完全覆蓋全年度股息分派 $74.28M；基金總資產達 $2,527 Million 美元，到期收益率為 7.23%，派息率約 7.42%；有效存續期僅 2.8 年抗升息力強[cite: 2]。",
+        "summary": "富達美元高收益基金綜合風險評分為 82.5 分 (健康)。過往一年淨營運收益達 +$154.03M，完全覆蓋全年度股息分派 $74.28M (收益覆蓋率 207%)；基金總資產達 $2,527 Million 美元，到期收益率為 7.23%，派息率約 7.42%；有效存續期僅 2.8 年抗升息力強；持倉高度分散 (Top 10 僅 11.27%)。",
         "kpis": {
             "p1": "7.42%",
             "p2": "+0.19%", "p2_delta": "🟢 息差小/收益覆蓋佳", "p2_color": "normal",
@@ -143,7 +153,7 @@ PRESET_FUNDS = {
             "p8": "$2,527 M",
             "p9": "+$154.03 M", "p9_delta": "🟢 總收入-總支出", "p9_color": "normal",
             "p10": "$74.28 M", "p10_delta": "🟢 淨收益 207% 覆蓋", "p10_color": "normal",
-            "p11": "-$264.75 M", "p11_delta": "⚠️ 申購 - 贖回 (淨流出)", "p11_color": "inverse" # 💡 新增 申購/贖回差距名片
+            "p11": "-$264.75 M", "p11_delta": "⚠️ 申購 - 贖回 (淨流出)", "p11_color": "inverse"
         },
         "radar_scores": [15.0, 10.0, 15.0, 10.0, 10.0, 10.0, 10.0, 0.0, 2.5],
         "radar_dimensions": ["一、派息質量", "二、信用風險", "三、槓桿水平", "四、利率敏感度", "五、流動性風險", "六、集中度風險", "七、匯率風險", "八、區域風險", "九、總開支比率"],
@@ -335,6 +345,13 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
+# 💡 官方數據源聲明備註
+st.markdown("""
+    <div class="data-disclaimer-note">
+        <b>📑 數據來源聲明備註：</b> 本 Dashboard 內所有財務數據、持倉比率、派息成分與營運損益，均完全依據<b>基金官方發布之基金月報 (Factsheet)、派息分派紀錄 (Dividend Distribution History) 及年度財務報告 (Annual Report / Statement of Operations)</b> 客觀建檔與分析。
+    </div>
+""", unsafe_allow_html=True)
+
 # 5. 核心數據名片 (第一排 7 大結構名片)
 kpi_c1, kpi_c2, kpi_c3, kpi_c4, kpi_c5, kpi_c6, kpi_c7 = st.columns(7)
 
@@ -373,7 +390,7 @@ if fund_type == "債券基金":
     with fin_c1: st.metric(label="總基金資產值 (AUM)", value=curr_fund['kpis']['p8'], delta="百萬美元 (USD Million)", delta_color="normal")
     with fin_c2: st.metric(label="過往一年淨收益 (總收入-總支出)", value=curr_fund['kpis']['p9'], delta=p9_delta, delta_color=p9_color)
     with fin_c3: st.metric(label="過往一年總派息金額", value=curr_fund['kpis']['p10'], delta=p10_delta, delta_color=p10_color)
-    with fin_c4: st.metric(label="申購與贖回差距 (淨資金流向)", value=curr_fund['kpis']['p11'], delta=p11_delta, delta_color=p11_color) # 💡 新增 申購與贖回差距 名片
+    with fin_c4: st.metric(label="申購與贖回差距 (淨資金流向)", value=curr_fund['kpis']['p11'], delta=p11_delta, delta_color=p11_color)
 else:
     with fin_c1: st.metric(label="總基金資產值 (AUM)", value="待核對", delta="請上傳PDF")
     with fin_c2: st.metric(label="過往一年淨收益", value="待核對", delta="請上傳PDF")
