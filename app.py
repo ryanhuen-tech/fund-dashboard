@@ -9,65 +9,53 @@ st.set_page_config(
     layout="wide"
 )
 
-# 💡 在側邊欄設置全螢幕模式切換
-with st.sidebar:
-    st.header("⚙️ 顯示設定")
-    fullscreen_mode = st.toggle("🖥️ 啟用超寬全螢幕視角 (Wide Mode)", value=True)
-
-# 2. 注入自訂 CSS 樣式 (徹底修復頂部遮擋與名片卡片排版)
-max_width_css = "max-width: 96% !important;" if fullscreen_mode else "max-width: 1200px;"
-
-st.markdown(f"""
+# 2. 注入自訂 CSS 樣式
+st.markdown("""
     <style>
-    /* 修復最頂部被系統切掉的問題，加大上邊距 */
-    .block-container {{
+    .block-container {
         padding-top: 2.5rem !important;
         padding-bottom: 2rem !important;
-        {max_width_css}
-    }}
-    .main-title {{
+    }
+    .main-title {
         font-size: 26px;
         font-weight: 800;
         color: #1E3A8A;
         margin-bottom: 15px;
-    }}
-    .fund-header {{
+    }
+    .fund-header {
         background-color: #1E222D;
         padding: 16px 22px;
         border-radius: 8px;
         border-left: 5px solid #00E676;
         margin-bottom: 15px;
-    }}
-    .source-tag {{
+    }
+    .source-tag {
         background-color: #00E676;
         color: #000;
         padding: 3px 8px;
         border-radius: 4px;
         font-weight: bold;
         font-size: 12px;
-    }}
+    }
     
     /* 歸類卡片區塊標題 */
-    .metric-group-header {{
+    .metric-group-title {
         font-size: 15px;
         font-weight: 700;
         color: #1E3A8A;
-        border-bottom: 2px solid #E2E8F0;
-        padding-bottom: 6px;
-        margin-top: 15px;
-        margin-bottom: 12px;
-    }}
+        margin: 0;
+    }
 
     /* 基金公司簡介內部樣式 */
-    .company-profile-list {{
+    .company-profile-list {
         font-size: 12px;
         color: #334155;
         margin: 0;
         padding-left: 18px;
         line-height: 1.6;
-    }}
+    }
 
-    .data-disclaimer-note {{
+    .data-disclaimer-note {
         background-color: #FFFFFF;
         border: 1px solid #E2E8F0;
         border-left: 4px solid #059669;
@@ -76,10 +64,10 @@ st.markdown(f"""
         font-size: 12px;
         color: #475569;
         margin-bottom: 20px;
-    }}
+    }
 
-    /* 統一 HTML 表格樣式 (靠左對齊 + 深藍標頭) */
-    .custom-table {{
+    /* 統一 HTML 表格樣式 */
+    .custom-table {
         width: 100%;
         border-collapse: collapse;
         background-color: #FFFFFF;
@@ -89,29 +77,29 @@ st.markdown(f"""
         border: 1px solid #E2E8F0;
         margin-top: 10px;
         font-size: 13px;
-    }}
-    .custom-table th {{
+    }
+    .custom-table th {
         background-color: #1E3A8A;
         color: #FFFFFF;
         font-weight: 700;
         text-align: left;
         padding: 12px 14px;
         border-bottom: 2px solid #1E293B;
-    }}
-    .custom-table td {{
+    }
+    .custom-table td {
         padding: 12px 14px;
         border-bottom: 1px solid #E2E8F0;
         vertical-align: middle;
         color: #334155;
         line-height: 1.6;
         text-align: left;
-    }}
-    .custom-table tr:hover {{
+    }
+    .custom-table tr:hover {
         background-color: #F8FAFC;
-    }}
+    }
 
     /* 狀態標籤 */
-    .status-badge-green {{
+    .status-badge-green {
         background-color: #D1FAE5;
         color: #065F46;
         padding: 4px 10px;
@@ -120,8 +108,8 @@ st.markdown(f"""
         font-size: 12px;
         display: inline-block;
         text-align: center;
-    }}
-    .status-badge-yellow {{
+    }
+    .status-badge-yellow {
         background-color: #FEF3C7;
         color: #92400E;
         padding: 4px 10px;
@@ -130,8 +118,8 @@ st.markdown(f"""
         font-size: 12px;
         display: inline-block;
         text-align: center;
-    }}
-    .status-badge-red {{
+    }
+    .status-badge-red {
         background-color: #FEE2E2;
         color: #991B1B;
         padding: 4px 10px;
@@ -140,10 +128,10 @@ st.markdown(f"""
         font-size: 12px;
         display: inline-block;
         text-align: center;
-    }}
+    }
 
     /* 底部總分欄 */
-    .summary-footer {{
+    .summary-footer {
         background-color: #F1F5F9;
         padding: 14px 24px;
         border-radius: 0 0 8px 8px;
@@ -155,17 +143,17 @@ st.markdown(f"""
         border-top: none;
         margin-top: -1px;
         margin-bottom: 25px;
-    }}
-    .summary-title {{
+    }
+    .summary-title {
         font-size: 14px;
         font-weight: 700;
         color: #334155;
-    }}
-    .summary-score {{
+    }
+    .summary-score {
         font-size: 18px;
         font-weight: 800;
         color: #1E3A8A;
-    }}
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -396,7 +384,7 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
-# 💡 基金公司背景簡介：加入可摺疊隱藏 (st.expander) 功能
+# 基金公司背景簡介
 company_profile_html = "".join([f"<li>{item}</li>" for item in curr_fund['company_profile']])
 with st.expander(f"🏢 點擊展開 / 折疊：基金公司背景簡介 — {curr_fund['company_name']}", expanded=False):
     st.markdown(f"""
@@ -412,7 +400,7 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# 5. 💡 重新精細歸類名片（三大結構區塊）
+# 5. 💡 帶有「小眼仔 👁️ 隱藏/顯示功能」的三大歸類名片區塊
 if fund_type == "債券基金":
     p2_delta = curr_fund['kpis'].get('p2_delta', '⚠️ 存在本金補貼風險')
     p2_color = curr_fund['kpis'].get('p2_color', 'inverse')
@@ -428,27 +416,49 @@ if fund_type == "債券基金":
     p11_color = curr_fund['kpis'].get('p11_color', 'inverse')
 
     # --- 區塊一：📈 收益與分派指標 ---
-    st.markdown('<div class="metric-group-header">📈 收益與分派指標 (Income & Dividend Metrics)</div>', unsafe_allow_html=True)
-    g1_c1, g1_c2, g1_c3, g1_c4 = st.columns(4)
-    with g1_c1: st.metric(label="現時派息率", value=curr_fund['kpis']['p1'], delta="年化分派", delta_color="normal")
-    with g1_c2: st.metric(label="派息與收益息差", value=curr_fund['kpis']['p2'], delta=p2_delta, delta_color=p2_color)
-    with g1_c3: st.metric(label="過往一年總派息金額", value=curr_fund['kpis']['p10'], delta=p10_delta, delta_color=p10_color)
-    with g1_c4: st.metric(label="過往一年淨收益 (總收入-總支出)", value=curr_fund['kpis']['p9'], delta=p9_delta, delta_color=p9_color)
+    header_col1, eye_col1 = st.columns([4, 1])
+    with header_col1:
+        st.markdown('<div class="metric-group-title">📈 收益與分派指標 (Income & Dividend Metrics)</div>', unsafe_allow_html=True)
+    with eye_col1:
+        show_g1 = st.toggle("👁️ 顯示名片", value=True, key="eye_g1")
+    
+    if show_g1:
+        g1_c1, g1_c2, g1_c3, g1_c4 = st.columns(4)
+        with g1_c1: st.metric(label="現時派息率", value=curr_fund['kpis']['p1'], delta="年化分派", delta_color="normal")
+        with g1_c2: st.metric(label="派息與收益息差", value=curr_fund['kpis']['p2'], delta=p2_delta, delta_color=p2_color)
+        with g1_c3: st.metric(label="過往一年總派息金額", value=curr_fund['kpis']['p10'], delta=p10_delta, delta_color=p10_color)
+        with g1_c4: st.metric(label="過往一年淨收益 (總收入-總支出)", value=curr_fund['kpis']['p9'], delta=p9_delta, delta_color=p9_color)
+
+    st.markdown("<hr style='margin: 10px 0; border: none; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
 
     # --- 區塊二：🛡️ 風險與信用結構 ---
-    st.markdown('<div class="metric-group-header">🛡️ 風險與信用結構 (Risk & Credit Structure)</div>', unsafe_allow_html=True)
-    g2_c1, g2_c2, g2_c3, g2_c4, g2_c5 = st.columns(5)
-    with g2_c1: st.metric(label="平均持有債務評級", value=curr_fund['kpis']['p3'], delta=p3_delta, delta_color=p3_color)
-    with g2_c2: st.metric(label="續存率 / 有效存續期", value=curr_fund['kpis']['p4'], delta="存續期 (久期)", delta_color="normal")
-    with g2_c3: st.metric(label="手持現金比率", value=curr_fund['kpis']['p5'], delta=p5_delta, delta_color=p5_color)
-    with g2_c4: st.metric(label="前十大發行人佔比", value=curr_fund['kpis']['p6'], delta="極度分散", delta_color="normal")
-    with g2_c5: st.metric(label="槓桿比率", value=curr_fund['kpis']['p7'], delta="無顯著借貸", delta_color="normal")
+    header_col2, eye_col2 = st.columns([4, 1])
+    with header_col2:
+        st.markdown('<div class="metric-group-title">🛡️ 風險與信用結構 (Risk & Credit Structure)</div>', unsafe_allow_html=True)
+    with eye_col2:
+        show_g2 = st.toggle("👁️ 顯示名片", value=True, key="eye_g2")
+
+    if show_g2:
+        g2_c1, g2_c2, g2_c3, g2_c4, g2_c5 = st.columns(5)
+        with g2_c1: st.metric(label="平均持有債務評級", value=curr_fund['kpis']['p3'], delta=p3_delta, delta_color=p3_color)
+        with g2_c2: st.metric(label="續存率 / 有效存續期", value=curr_fund['kpis']['p4'], delta="存續期 (久期)", delta_color="normal")
+        with g2_c3: st.metric(label="手持現金比率", value=curr_fund['kpis']['p5'], delta=p5_delta, delta_color=p5_color)
+        with g2_c4: st.metric(label="前十大發行人佔比", value=curr_fund['kpis']['p6'], delta="極度分散", delta_color="normal")
+        with g2_c5: st.metric(label="槓桿比率", value=curr_fund['kpis']['p7'], delta="無顯著借貸", delta_color="normal")
+
+    st.markdown("<hr style='margin: 10px 0; border: none; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
 
     # --- 區塊三：💵 規模與資金流向 (USD Million) ---
-    st.markdown('<div class="metric-group-header">💵 規模與資金流向 (Capital & AUM Flow - USD Million)</div>', unsafe_allow_html=True)
-    g3_c1, g3_c2 = st.columns(2)
-    with g3_c1: st.metric(label="總基金資產值 (AUM)", value=curr_fund['kpis']['p8'], delta="百萬美元 (USD Million)", delta_color="normal")
-    with g3_c2: st.metric(label="申購與贖回差距 (淨資金流向)", value=curr_fund['kpis']['p11'], delta=p11_delta, delta_color=p11_color)
+    header_col3, eye_col3 = st.columns([4, 1])
+    with header_col3:
+        st.markdown('<div class="metric-group-title">💵 規模與資金流向 (Capital & AUM Flow - USD Million)</div>', unsafe_allow_html=True)
+    with eye_col3:
+        show_g3 = st.toggle("👁️ 顯示名片", value=True, key="eye_g3")
+
+    if show_g3:
+        g3_c1, g3_c2 = st.columns(2)
+        with g3_c1: st.metric(label="總基金資產值 (AUM)", value=curr_fund['kpis']['p8'], delta="百萬美元 (USD Million)", delta_color="normal")
+        with g3_c2: st.metric(label="申購與贖回差距 (淨資金流向)", value=curr_fund['kpis']['p11'], delta=p11_delta, delta_color=p11_color)
 
 else:
     st.info("請選擇對應的風險評估類別以載入名片數據。")
