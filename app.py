@@ -32,14 +32,38 @@ st.markdown("""
         font-size: 12px;
     }
 
-    /* 7 大核心名片專用 Container 樣式 */
-    [data-testid="stMetricValue"] {
-        font-size: 20px !important;
-        font-weight: 800 !important;
-        color: #1E3A8A !important;
+    /* 頂部 7 大核心數據名片網格 */
+    .kpi-grid-7 {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 10px;
+        margin-bottom: 25px;
     }
-    
-    /* HTML 表格樣式 */
+    .kpi-card-custom {
+        background-color: #FFFFFF;
+        border-radius: 8px;
+        padding: 12px 14px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        border: 1px solid #E2E8F0;
+        border-top: 4px solid #1E3A8A;
+    }
+    .kpi-card-custom-warning {
+        background-color: #FFFFFF;
+        border-radius: 8px;
+        padding: 12px 14px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        border: 1px solid #E2E8F0;
+        border-top: 4px solid #F59E0B;
+    }
+    .kpi-card-title {
+        font-size: 11px;
+        color: #64748B;
+        font-weight: 700;
+        margin-bottom: 4px;
+        white-space: nowrap;
+    }
+
+    /* 統一 HTML 表格樣式 (靠左對齊 + 深藍標頭) */
     .custom-table {
         width: 100%;
         border-collapse: collapse;
@@ -55,16 +79,17 @@ st.markdown("""
         background-color: #1E3A8A;
         color: #FFFFFF;
         font-weight: 700;
-        text-align: left;
+        text-align: left; /* 靠左顯示 */
         padding: 12px 14px;
         border-bottom: 2px solid #1E293B;
     }
     .custom-table td {
         padding: 12px 14px;
         border-bottom: 1px solid #E2E8F0;
-        vertical-align: top;
+        vertical-align: middle;
         color: #334155;
         line-height: 1.6;
+        text-align: left; /* 靠左顯示 */
     }
     .custom-table tr:hover {
         background-color: #F8FAFC;
@@ -150,16 +175,16 @@ PRESET_FUNDS = {
         "radar_scores": [15.0, 10.0, 15.0, 10.0, 10.0, 10.0, 10.0, 0.0, 2.5],
         "radar_dimensions": ["一、派息質量", "二、信用風險", "三、槓桿水平", "四、利率敏感度", "五、流動性風險", "六、集中度風險", "七、匯率風險", "八、區域風險", "九、總開支比率"],
         "top10": [
-            {"排名": 1, "持倉名稱": "現金及等值資產 (Cash Equivalents)", "資產類別": "現金/貨幣市場", "佔比 (%)": 11.26},
-            {"排名": 2, "持倉名稱": "Bausch Health Companies Inc.", "資產類別": "醫療保健債", "佔比 (%)": 2.40},
-            {"排名": 3, "持倉名稱": "Charter Communications Inc.", "資產類別": "通訊服務債", "佔比 (%)": 1.71},
-            {"排名": 4, "持倉名稱": "First Quantum Minerals Ltd", "資產類別": "基本工業債", "佔比 (%)": 1.66},
-            {"排名": 5, "持倉名稱": "Uniti Group Inc.", "資產類別": "通訊基礎設施債", "佔比 (%)": 1.46},
-            {"排名": 6, "持倉名稱": "Radiology Partners", "資產類別": "醫療保健債", "佔比 (%)": 1.31},
-            {"排名": 7, "持倉名稱": "LifePoint Health", "資產類別": "醫療保健債", "佔比 (%)": 1.27},
-            {"排名": 8, "持倉名稱": "EchoStar", "資產類別": "衛星通訊債", "佔比 (%)": 1.25},
-            {"排名": 9, "持倉名稱": "Herbalife Ltd.", "資產類別": "非必需消費債", "佔比 (%)": 1.10},
-            {"排名": 10, "持倉名稱": "PRA Group", "資產類別": "金融服務債", "佔比 (%)": 1.06},
+            {"排名": 1, "持倉名稱": "現金及等值資產 (Cash Equivalents)", "資產類別": "現金/貨幣市場", "佔比 (%)": "11.26%"},
+            {"排名": 2, "持倉名稱": "Bausch Health Companies Inc.", "資產類別": "醫療保健債", "佔比 (%)": "2.40%"},
+            {"排名": 3, "持倉名稱": "Charter Communications Inc.", "資產類別": "通訊服務債", "佔比 (%)": "1.71%"},
+            {"排名": 4, "持倉名稱": "First Quantum Minerals Ltd", "資產類別": "基本工業債", "佔比 (%)": "1.66%"},
+            {"排名": 5, "持倉名稱": "Uniti Group Inc.", "資產類別": "通訊基礎設施債", "佔比 (%)": "1.46%"},
+            {"排名": 6, "持倉名稱": "Radiology Partners", "資產類別": "醫療保健債", "佔比 (%)": "1.31%"},
+            {"排名": 7, "持倉名稱": "LifePoint Health", "資產類別": "醫療保健債", "佔比 (%)": "1.27%"},
+            {"排名": 8, "持倉名稱": "EchoStar", "資產類別": "衛星通訊債", "佔比 (%)": "1.25%"},
+            {"排名": 9, "持倉名稱": "Herbalife Ltd.", "資產類別": "非必需消費債", "佔比 (%)": "1.10%"},
+            {"排名": 10, "持倉名稱": "PRA Group", "資產類別": "金融服務債", "佔比 (%)": "1.06%"},
         ]
     }
 }
@@ -185,7 +210,7 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
-# 5. 核心數據名片 (7 大 KPI 名片卡片列 - 改用安全 Native Metrics 元件，永不報錯)
+# 5. 核心數據名片 (7 大 KPI 名片卡片列)
 kpi_c1, kpi_c2, kpi_c3, kpi_c4, kpi_c5, kpi_c6, kpi_c7 = st.columns(7)
 
 if fund_type == "債券基金":
@@ -211,7 +236,7 @@ else:
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# 6. 【上區】：雷達圖（黑底 + 周圍黑色粗體字）與前十大持倉清單
+# 6. 【上區】：雷達圖與前十大持倉清單
 st.markdown("### 🕸️ 風險維度分析與持倉分佈")
 
 tab1, tab2 = st.tabs(["🕸️ 風險維度雷達圖", "📋 前十大持倉清單"])
@@ -256,10 +281,31 @@ with tab1:
         st.plotly_chart(fig_radar, use_container_width=True)
 
 with tab2:
-    df_top10 = pd.DataFrame(curr_fund["top10"])
-    top10_total_pct = round(df_top10["佔比 (%)"].sum(), 2)
-    st.metric(label="📌 前十大持倉合共佔比 (Top 10 Total)", value=f"{top10_total_pct}%", delta="持倉高度分散", delta_color="normal")
-    st.dataframe(df_top10, use_container_width=True, hide_index=True, height=360)
+    # 💡 美化前十大持倉表格：採用與深度風險評估一模一樣的深藍標頭、全靠左對齊 HTML 表格
+    top10_rows_html = "".join([
+        f"<tr><td style='width: 10%; text-align: left;'><b>{row['排名']}</b></td>"
+        f"<td style='width: 45%; text-align: left;'><b>{row['持倉名稱']}</b></td>"
+        f"<td style='width: 30%; text-align: left;'>{row['資產類別']}</td>"
+        f"<td style='width: 15%; text-align: left; font-weight: bold;'>{row['佔比 (%)']}</td></tr>"
+        for row in curr_fund["top10"]
+    ])
+    
+    top10_table_html = f"""
+    <table class="custom-table">
+        <thead>
+            <tr>
+                <th style="width: 10%; text-align: left;">排名</th>
+                <th style="width: 45%; text-align: left;">持倉名稱</th>
+                <th style="width: 30%; text-align: left;">資產類別</th>
+                <th style="width: 15%; text-align: left;">佔比 (%)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {top10_rows_html}
+        </tbody>
+    </table>
+    """
+    st.markdown(top10_table_html, unsafe_allow_html=True)
 
 st.markdown("---")
 
