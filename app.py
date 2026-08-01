@@ -160,8 +160,114 @@ st.markdown("""
 # 標題獨立呈現
 st.markdown('<div class="main-title">🛡️ 智能基金風險評估系統</div>', unsafe_allow_html=True)
 
-# 3. 預設資料庫
+# 3. 預設資料庫 (包含富蘭克林入息基金、霸菱與富達真實數據)
 PRESET_FUNDS = {
+    "富蘭克林入息基金": {
+        "zh": "富蘭克林鄧普頓 - 富蘭克林入息基金",
+        "en": "Franklin Templeton - Franklin Income Fund",
+        "company_name": "富蘭克林鄧普頓 (Franklin Templeton)",
+        "company_profile": [
+            "<b>百年巨擘與全球覆蓋</b>：成立於 1931 年，總部位於美國加州，為紐約證券交易所上市公司 (NYSE: BEN)，服務全球超過 160 個國家客戶。 <i>[出處：Franklin Templeton Corporate Overview]</i>",
+            "<b>資產規模與實力</b>：全球管理資產總額 (AUM) 超過 1.5 兆美元，名列全球前十大資產管理集團之一。 <i>[出處：Franklin Templeton Global AUM Factsheet]</i>",
+            "<b>多品牌頂尖團隊</b>：旗下整合 Templeton、Western Asset、ClearBridge 及 Brandywine Global 等國際頂尖投資團隊。 <i>[出處：Franklin Templeton Investment Platform]</i>",
+            "<b>深耕入息多元資產</b>：旗艦「入息基金 (Income Fund)」長年榮獲多項《指標》傑出基金大獎，專精於股債混合收益最佳化。 <i>[出處：Benchmark Fund Awards]</i>"
+        ],
+        "score": "85.0",
+        "summary": "富蘭克林入息基金綜合風險評分為 85.0 分 (健康)。過往一年申購 $66.73 億 vs 贖回 $34.23 億，展現極為強勁的 +$3,249.83M 美元淨資金流入 (投資者信心高)；營運淨收益達 +$350.67M；基金總資產達 $8,817 Million 美元；採用股債混合策略，年化派息率約 8.37%，到期收益率為 6.11%，整體結構非常穩健。",
+        "kpis": {
+            "p1": "8.37%",
+            "p2": "+2.26%", "p2_delta": "🟢 股債混合/收益覆蓋佳", "p2_color": "normal",
+            "p3": "BB 級 / 股債混合", "p3_delta": "🟢 多元資產配置", "p3_color": "normal",
+            "p4": "4.24 年",
+            "p5": "5.97%", "p5_delta": "流動資產充沛", "p5_color": "normal",
+            "p6": "23.27%",
+            "p7": "100.7%",
+            "p8": "$8,817 M",
+            "p9": "+$350.67 M", "p9_delta": "🟢 總收入-總支出", "p9_color": "normal",
+            "p10": "$573.57 M", "p10_delta": "🟢 營運現金流充沛", "p10_color": "normal",
+            "p11": "+$3,249.83 M", "p11_delta": "🟢 申購 - 贖回 (強勁淨流入)", "p11_color": "normal"
+        },
+        "radar_scores": [15.0, 12.0, 15.0, 8.0, 10.0, 10.0, 10.0, 2.5, 2.5],
+        "radar_dimensions": ["一、派息質量", "二、信用風險", "三、槓桿水平", "四、利率敏感度", "五、流動性風險", "六、集中度風險", "七、匯率風險", "八、區域風險", "九、總開支比率"],
+        "top10": [
+            {"排名": 1, "持倉名稱": "UNITED STATES TREASURY BOND (美國國庫券)", "資產類別": "政府債券", "佔比 (%)": "6.50%"},
+            {"排名": 2, "持倉名稱": "CHS/COMMUNITY HEALTH SYSTEMS INC", "資產類別": "醫療保健債", "佔比 (%)": "2.47%"},
+            {"排名": 3, "持倉名稱": "GOVT NATL MORTG ASSN (GNMA 按揭債)", "資產類別": "抵押證券", "佔比 (%)": "2.11%"},
+            {"排名": 4, "持倉名稱": "HOME DEPOT INC/THE (家得寶)", "資產類別": "非必需消費股", "佔比 (%)": "1.93%"},
+            {"排名": 5, "持倉名稱": "PROCTER & GAMBLE CO/THE (寶僑)", "資產類別": "必需消費股", "佔比 (%)": "1.81%"},
+            {"排名": 6, "持倉名稱": "ORACLE CORP (甲骨文)", "資產類別": "科技股/債", "佔比 (%)": "1.76%"},
+            {"排名": 7, "持倉名稱": "MICROSOFT CORP (微軟)", "資產類別": "資訊科技股", "佔比 (%)": "1.63%"},
+            {"排名": 8, "持倉名稱": "SOUTHERN CO/THE (南方電力)", "資產類別": "公用事業股", "佔比 (%)": "1.61%"},
+            {"排名": 9, "持倉名稱": "EXXON MOBIL CORP (埃克森美孚)", "資產類別": "能源股", "佔比 (%)": "1.59%"},
+            {"排名": 10, "持倉名稱": "CISCO SYSTEMS INC (思科)", "資產類別": "資訊科技股", "佔比 (%)": "1.55%"},
+        ],
+        "history_div": [
+            ["29/05/2026", "01/06/2026", "08/06/2026", "0.067000", "9.97", "8.37%"],
+            ["30/04/2026", "01/05/2026", "08/05/2026", "0.067000", "9.96", "8.38%"],
+            ["31/03/2026", "01/04/2026", "08/04/2026", "0.067000", "9.78", "8.54%"],
+            ["27/02/2026", "02/03/2026", "09/03/2026", "0.067000", "10.02", "8.33%"],
+            ["30/01/2026", "02/02/2026", "09/02/2026", "0.067000", "9.96", "8.38%"],
+            ["31/12/2025", "02/01/2026", "09/01/2026", "0.067000", "9.77", "8.55%"],
+            ["28/11/2025", "01/12/2025", "08/12/2025", "0.067000", "9.70", "8.61%"],
+            ["31/10/2025", "03/11/2025", "10/11/2025", "0.067000", "9.64", "8.67%"],
+            ["30/09/2025", "01/10/2025", "08/10/2025", "0.067000", "9.74", "8.57%"],
+            ["29/08/2025", "02/09/2025", "09/09/2025", "0.067000", "9.68", "8.63%"],
+            ["31/07/2025", "01/08/2025", "08/08/2025", "0.067000", "9.51", "8.79%"],
+            ["07/07/2025", "08/07/2025", "15/07/2025", "0.067000", "9.65", "8.66%"]
+        ],
+        "composition_div": [
+            ["06-2026", "0.067000", "100.00%", "0.00%"],
+            ["05-2026", "0.067000", "100.00%", "0.00%"],
+            ["04-2026", "0.067000", "100.00%", "0.00%"],
+            ["03-2026", "0.067000", "100.00%", "0.00%"],
+            ["02-2026", "0.067000", "100.00%", "0.00%"],
+            ["01-2026", "0.067000", "100.00%", "0.00%"],
+            ["12-2025", "0.067000", "89.00%", "11.00%"],
+            ["11-2025", "0.067000", "95.00%", "5.00%"],
+            ["10-2025", "0.067000", "86.00%", "14.00%"],
+            ["09-2025", "0.067000", "100.00%", "0.00%"],
+            ["08-2025", "0.067000", "88.00%", "12.00%"],
+            ["07-2025", "0.067000", "58.00%", "42.00%"]
+        ],
+        "sector_dist": [
+            ["資訊科技 (Information Tech)", "12.18%"],
+            ["高收益企業債券 (High Yield Bond)", "19.17%"],
+            ["投資級企業債券 (IG Bond)", "11.37%"],
+            ["美國國庫券 (US Treasury)", "8.67%"],
+            ["健康護理 (Healthcare)", "6.18%"],
+            ["非必需消費品 (Consumer Cyclical)", "5.07%"],
+            ["工業 (Industrials)", "4.72%"],
+            ["必需消費品 (Consumer Staples)", "4.70%"],
+            ["按揭抵押證券 (MBS)", "4.68%"],
+            ["能源 (Energy)", "4.44%"]
+        ],
+        "rating_dist": [
+            ["美國國庫券 / AAA 級", "8.67%"],
+            ["投資級債券 (BBB/Baa)", "11.37%"],
+            ["高收益企業債 (BB/B/CCC)", "19.17%"],
+            ["按揭及國際債券", "4.80%"],
+            ["可換股證券 / 票據", "25.33%"],
+            ["股票資產", "24.69%"],
+            ["現金及等值 (Cash)", "5.97%"]
+        ],
+        "geo_dist_history": [
+            {"月份": "2024年6月", "北美": 82.1, "歐洲": 10.2, "其他地區": 2.5, "現金及等值": 5.2},
+            {"月份": "2025年6月", "北美": 81.5, "歐洲": 10.8, "其他地區": 2.1, "現金及等值": 5.6},
+            {"月份": "2026年6月", "北美": 80.8, "歐洲": 11.2, "其他地區": 2.0, "現金及等值": 6.0}
+        ],
+        "eval_table": [
+            ["一、派息質量", "從資本派息 (ROC) 與總回報覆蓋率", "• 20分: ROC <10% 或 總回報 ≥ 派息率<br>• 10分: ROC 10%-50% 且總回報覆蓋率 >70%<br>• 0分: ROC >50% 且 總回報為負", "• 月報到期收益率：6.11% | 現時派息率：~8.37%<br>• 近半數月份 100% 來自營運收益，少數月份 ROC 僅 5%~42%<br>👉 營運淨收益達 $3.5 億，派息質量優秀健康。", "15 / 20", "<span class='status-badge-green'>🟢 健康/觀察</span>"],
+            ["二、信用風險", "評級分佈與非投資級占比", "• 15分: 平均評級 BBB 以上<br>• 10分: 平均評級 BB 級<br>• 5分: Caa/CCC級 >10% 或未評級 >15%", "• 股票/可換股/國債/投資級債占比逾 70%<br>• 高收益債僅占 19.17%<br>👉 股債混合配置，大幅降低純高收益債之違約信用風險。", "12 / 15", "<span class='status-badge-green'>🟢 良好配置</span>"],
+            ["三、槓桿水平", "資產膨脹率 (Total / Net Assets)", "• 15分: 比率 <105% (無顯著槓桿)<br>• 10分: 比率 105%-120%<br>• 0分: 比率 >120% (槓桿過高)", "• 總資產 $8,878.70M / 淨資產 $8,817.35M<br>• 資產膨脹率：100.69%<br>👉 幾乎無借貸槓桿，結構極度透明安全。", "15 / 15", "<span class='status-badge-green'>✔ 優秀</span>"],
+            ["四、利率敏感度", "有效存續期 (Duration)", "• 10分: 存續期 <3 年 (抗升息)<br>• 5分: 存續期 3-6 年<br>• 0分: 存續期 >6 年", "• 有效存續期 (Effective Duration)：4.24 年<br>👉 存續期適中 (3-6年區間)，兼顧利息收益與抗升息能力。", "8 / 10", "<span class='status-badge-green'>🟢 適中良好</span>"],
+            ["五、流動性風險", "現金儲備與營運現金流", "• 10分: 現金 >10% 且營運 Cash Flow 為正<br>• 5分: 現金 5%-10%<br>• 0分: 現金 <5% 或流動性緊縮", "• 現金及現金等值：5.97% (約 $5.26 億美元)<br>• 申購淨流入達 +$32.5 億美元<br>👉 手頭現金充沛，資金大幅淨流入，流動性極其優異。", "10 / 10", "<span class='status-badge-green'>✔ 優秀</span>"],
+            ["六、集中度風險", "前十大發行人持倉占比", "• 10分: 前持倉 <20% (極分散)<br>• 5分: 前持倉 20%-30%<br>• 0分: 前持倉 >30%", "• 前十大發行人持倉合計占：23.27%<br>• 第一大持倉為美國國債 (6.50%)，單一公司僅 1.5%~2.5%<br>👉 持倉高度分散，有效規避個股/單一企業黑天鵝風險。", "10 / 10", "<span class='status-badge-green'>✔ 優秀</span>"],
+            ["七、匯率風險", "衍生品對沖與未實現損益", "• 10分: 全額對沖且衍生品虧損 <1% NAV<br>• 5分: 部分對沖<br>• 0分: 未對沖且外幣曝險過高", "• 基礎貨幣為美元 (USD)<br>• 提供對沖股份類別 (AUD H / EUR H / GBP H / JPY H)<br>👉 避險機制完善，外匯風險極低。", "10 / 10", "<span class='status-badge-green'>✔ 優秀</span>"],
+            ["八、區域風險", "單一區域/國家持倉集中度", "• 5分: 單一區域 <40%<br>• 2.5分: 單一區域 40%-60%<br>• 0分: 單一區域 >60%", "• 北美/美國企業占比：80.8%<br>👉 重倉美國優質企業與國債，受美國宏觀景氣影響較深。", "2.5 / 5", "<span class='status-badge-yellow'>⚠️ 區域集中</span>"],
+            ["九、總開支比率", "每年管理費 (Management Fee)", "• 5分: 管理費 <1.0%<br>• 2.5分: 管理費 1.0%-1.5%<br>• 0分: Management Fee >1.5%", "• 零售 A 類別總開支率 (TER)：約 1.35% / 年<br>👉 屬於主動型股債混合基金之合理收費範疇。", "2.5 / 5", "<span class='status-badge-yellow'>⚠️ 中等</span>"]
+        ]
+    },
+
     "霸菱環球高收益債券基金": {
         "zh": "霸菱環球高收益債券基金",
         "en": "Barings Global High Yield Bond Fund",
@@ -401,7 +507,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # 5. 💡 帶有「小眼仔 👁️ 隱藏/顯示功能」的三大歸類名片區塊
-if fund_type == "債券基金":
+if fund_type == "債券基金" or fund_type == "股債混合基金":
     p2_delta = curr_fund['kpis'].get('p2_delta', '⚠️ 存在本金補貼風險')
     p2_color = curr_fund['kpis'].get('p2_color', 'inverse')
     p3_delta = curr_fund['kpis'].get('p3_delta', '⚠️ 高收益債 (非投資級)')
@@ -480,17 +586,14 @@ main_tab1, main_tab2, main_tab3, main_tab4, main_tab5, main_tab6, main_tab7 = st
 
 # Tab 1: 風險維度雷達圖
 with main_tab1:
-    if fund_type != "債券基金":
-        st.info(f"💡 目前切換至【{fund_type}】，請上傳對應 Factsheet / 月報 PDF 後生成專屬風險雷達圖。")
-    else:
-        df_chart = pd.DataFrame(dict(Score=curr_fund["radar_scores"], Dimension=curr_fund["radar_dimensions"]))
-        fig_radar = px.line_polar(df_chart, r='Score', theta='Dimension', line_close=True, markers=True, range_r=[0, 20], color_discrete_sequence=['#00E676'])
-        fig_radar.update_traces(fill='toself', fillcolor='rgba(0, 230, 118, 0.35)', line=dict(color='#00E676', width=2.5), marker=dict(size=7, color='#00E676'))
-        fig_radar.update_layout(
-            height=480, margin=dict(l=60, r=60, t=30, b=30), paper_bgcolor="rgba(0,0,0,0)",
-            polar=dict(bgcolor="#1E222D", radialaxis=dict(visible=True, range=[0, 20], showticklabels=False, gridcolor="#334155"), angularaxis=dict(tickfont=dict(size=13, color="#000000", family="Arial, sans-serif"), gridcolor="#334155"))
-        )
-        st.plotly_chart(fig_radar, use_container_width=True)
+    df_chart = pd.DataFrame(dict(Score=curr_fund["radar_scores"], Dimension=curr_fund["radar_dimensions"]))
+    fig_radar = px.line_polar(df_chart, r='Score', theta='Dimension', line_close=True, markers=True, range_r=[0, 20], color_discrete_sequence=['#00E676'])
+    fig_radar.update_traces(fill='toself', fillcolor='rgba(0, 230, 118, 0.35)', line=dict(color='#00E676', width=2.5), marker=dict(size=7, color='#00E676'))
+    fig_radar.update_layout(
+        height=480, margin=dict(l=60, r=60, t=30, b=30), paper_bgcolor="rgba(0,0,0,0)",
+        polar=dict(bgcolor="#1E222D", radialaxis=dict(visible=True, range=[0, 20], showticklabels=False, gridcolor="#334155"), angularaxis=dict(tickfont=dict(size=13, color="#000000", family="Arial, sans-serif"), gridcolor="#334155"))
+    )
+    st.plotly_chart(fig_radar, use_container_width=True)
 
 # Tab 2: 底層資產清單
 with main_tab2:
@@ -579,67 +682,34 @@ st.markdown("---")
 
 # 7. 隱藏摺疊：基金深度風險評估明細表
 with st.expander("📋 點擊展開 / 折疊：基金深度風險評估明細表", expanded=True):
-    if fund_type == "債券基金":
-        eval_rows_html = "".join([
-            f"<tr><td><b>{r[0]}</b></td><td>{r[1]}</td><td>{r[2]}</td><td>{r[3]}</td><td style='text-align:center; font-weight:bold;'>{r[4]}</td><td style='text-align:center;'>{r[5]}</td></tr>"
-            for r in curr_fund["eval_table"]
-        ])
-        
-        html_table = f"""
-        <table class="custom-table">
-            <thead>
-                <tr>
-                    <th style="width: 14%;">評估維度</th>
-                    <th style="width: 18%;">具體檢查指標</th>
-                    <th style="width: 25%;">專屬評分簡算規則</th>
-                    <th style="width: 27%;">基金真實數據與解析</th>
-                    <th style="width: 8%; text-align: center;">得分/滿分</th>
-                    <th style="width: 8%; text-align: center;">風險狀態</th>
-                </tr>
-            </thead>
-            <tbody>
-                {eval_rows_html}
-            </tbody>
-        </table>
-        <div class="summary-footer">
-            <span class="summary-title">總得分 / 得分率：</span>
-            <span class="summary-score">{curr_fund['score']} / 100</span>
-            <span class="status-badge-green" style="font-size: 13px; padding: 5px 12px;">{curr_fund['score']}% (健康)</span>
-        </div>
-        """
-        st.markdown(html_table, unsafe_allow_html=True)
-    else:
-        # 📈 股票基金 / 股債混合基金 專屬「基金深度風險評估」表
-        html_table = f"""
-        <table class="custom-table">
-            <thead>
-                <tr>
-                    <th style="width: 16%;">評估維度</th>
-                    <th style="width: 22%;">具體檢查指標</th>
-                    <th style="width: 32%;">專屬評分簡算規則</th>
-                    <th style="width: 18%;">底層資產數據與解析</th>
-                    <th style="width: 12%; text-align: center;">風險狀態</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr><td><b>一、市場敏感度</b></td><td>貝塔係數 (β) / 股票比率</td><td>β &lt; 0.8 防禦=15分 | 0.8-1.2 適中=9分 | &gt;1.2 高波動=0分</td><td>待上傳 PDF 核對</td><td style="text-align: center;"><span class="status-badge-yellow">📋 待核對</span></td></tr>
-                <tr><td><b>二、極端回撤</b></td><td>最大回撤 (Max Drawdown)</td><td>回撤 &lt; 15%=15分 | 15%-25%=9分 | &gt; 25%=0分</td><td>待上傳 PDF 核對</td><td style="text-align: center;"><span class="status-badge-yellow">📋 待核對</span></td></tr>
-                <tr><td><b>三、持倉集中度</b></td><td>前十大重倉標的佔比</td><td>&lt; 30% 分散=10分 | 30%-50%=6分 | &gt; 50% 集中=0分</td><td>待上傳 PDF 核對</td><td style="text-align: center;"><span class="status-badge-yellow">📋 待核對</span></td></tr>
-                <tr><td><b>四、絕對波動控制</b></td><td>年度化標準差 / 組合久期</td><td>&lt; 10% 穩健=5分 | 10%-20%=3分 | &gt; 20% 高波動=0分</td><td>待上傳 PDF 核對</td><td style="text-align: center;"><span class="status-badge-yellow">📋 待核對</span></td></tr>
-                <tr><td><b>五、風險性價比</b></td><td>夏普比率 (Sharpe Ratio)</td><td>&gt; 1.0 優秀=10分 | 0.5-1.0 良好=6分 | &lt; 0.5 差=0分</td><td>待上傳 PDF 核對</td><td style="text-align: center;"><span class="status-badge-yellow">📋 待核對</span></td></tr>
-                <tr><td><b>六、經理穩定性</b></td><td>任職年限與團隊變更</td><td>&gt; 3年無變更=15分 | 1-3年=9分 | &lt; 1年/頻繁變更=0分</td><td>待上傳 PDF 核對</td><td style="text-align: center;"><span class="status-badge-yellow">📋 待核對</span></td></tr>
-                <tr><td><b>七、規模適中性</b></td><td>基金資產規模 (AUM)</td><td>2億-100億=10分 | 5000萬-2億或&gt;100億=6分 | &lt; 5000萬=0分</td><td>待上傳 PDF 核對</td><td style="text-align: center;"><span class="status-badge-yellow">📋 待核對</span></td></tr>
-                <tr><td><b>八、行業集中度</b></td><td>最大單一行業/資產占比</td><td>&lt; 20%=10分 | 20%-30%=6分 | &gt; 30% 高度集中=0分</td><td>待上傳 PDF 核對</td><td style="text-align: center;"><span class="status-badge-yellow">📋 待核對</span></td></tr>
-                <tr><td><b>九、匯率對沖曝險</b></td><td>外幣資產與對沖狀況</td><td>完全對沖=10分 | 部分對沖=5分 | 未對沖&gt;30%=0分</td><td>待上傳 PDF 核對</td><td style="text-align: center;"><span class="status-badge-yellow">📋 待核對</span></td></tr>
-            </tbody>
-        </table>
-        <div class="summary-footer">
-            <span class="summary-title">總得分 / 得分率：</span>
-            <span class="summary-score">待核對 (0 / 100)</span>
-            <span class="status-badge-yellow" style="font-size: 12px; padding: 4px 10px;">請上傳月報 PDF</span>
-        </div>
-        """
-        st.markdown(html_table, unsafe_allow_html=True)
+    eval_rows_html = "".join([
+        f"<tr><td><b>{r[0]}</b></td><td>{r[1]}</td><td>{r[2]}</td><td>{r[3]}</td><td style='text-align:center; font-weight:bold;'>{r[4]}</td><td style='text-align:center;'>{r[5]}</td></tr>"
+        for r in curr_fund["eval_table"]
+    ])
+    
+    html_table = f"""
+    <table class="custom-table">
+        <thead>
+            <tr>
+                <th style="width: 14%;">評估維度</th>
+                <th style="width: 18%;">具體檢查指標</th>
+                <th style="width: 25%;">專屬評分簡算規則</th>
+                <th style="width: 27%;">基金真實數據與解析</th>
+                <th style="width: 8%; text-align: center;">得分/滿分</th>
+                <th style="width: 8%; text-align: center;">風險狀態</th>
+            </tr>
+        </thead>
+        <tbody>
+            {eval_rows_html}
+        </tbody>
+    </table>
+    <div class="summary-footer">
+        <span class="summary-title">總得分 / 得分率：</span>
+        <span class="summary-score">{curr_fund['score']} / 100</span>
+        <span class="status-badge-green" style="font-size: 13px; padding: 5px 12px;">{curr_fund['score']}% (健康)</span>
+    </div>
+    """
+    st.markdown(html_table, unsafe_allow_html=True)
 
 # 8. 底部智能洞察點評
 st.info(f"**💡 AI 智能洞察 ({curr_fund['zh']})**：{curr_fund['summary']}")
