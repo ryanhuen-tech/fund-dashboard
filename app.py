@@ -131,15 +131,19 @@ PRESET_FUNDS = {
         "zh": "富達基金 - 美元高收益基金",
         "en": "Fidelity Funds - US High Yield Fund",
         "score": "82.5",
-        "summary": "富達美元高收益基金綜合風險評分為 82.5 分 (健康)。2026年6月最新月報顯示到期收益率為 7.23%，派息率約 7.42%，派息絕大部分由營運淨收益完全覆蓋 (ROC 本金派息僅 0%~14%)；有效存續期僅 2.8 年抗升息力強；持倉高度分散 (Top 10 僅 11.27%)，唯需注意美國市場集中度較高 (79.60%)。",
+        "summary": "富達美元高收益基金綜合風險評分為 82.5 分 (健康)。過往一年申購 $12.65億 vs 贖回 $15.30億，出現 -$2,647.5 萬美元淨流出 (需關注資金流向)；但淨營運收益達 +$154.03M，完全覆蓋全年度股息分派 $74.28M；基金總資產達 $2,527 Million 美元，到期收益率為 7.23%，派息率約 7.42%；有效存續期僅 2.8 年抗升息力強[cite: 2]。",
         "kpis": {
             "p1": "7.42%",
             "p2": "+0.19%", "p2_delta": "🟢 息差小/收益覆蓋佳", "p2_color": "normal",
             "p3": "BB- 級", "p3_delta": "⚠️ 高收益債 (非投資級)", "p3_color": "inverse",
             "p4": "2.80 年",
-            "p5": "-0.40%",
+            "p5": "-0.40%", "p5_delta": "⚠️ 流動性緊貼 (國庫券緩衝)", "p5_color": "inverse",
             "p6": "11.27%",
-            "p7": "101.0%"
+            "p7": "101.0%",
+            "p8": "$2,527 M",
+            "p9": "+$154.03 M", "p9_delta": "🟢 總收入-總支出", "p9_color": "normal",
+            "p10": "$74.28 M", "p10_delta": "🟢 淨收益 207% 覆蓋", "p10_color": "normal",
+            "p11": "-$264.75 M", "p11_delta": "⚠️ 申購 - 贖回 (淨流出)", "p11_color": "inverse" # 💡 新增 申購/贖回差距名片
         },
         "radar_scores": [15.0, 10.0, 15.0, 10.0, 10.0, 10.0, 10.0, 0.0, 2.5],
         "radar_dimensions": ["一、派息質量", "二、信用風險", "三、槓桿水平", "四、利率敏感度", "五、流動性風險", "六、集中度風險", "七、匯率風險", "八、區域風險", "九、總開支比率"],
@@ -210,11 +214,11 @@ PRESET_FUNDS = {
             {"月份": "2026年6月", "北美": 79.6, "歐洲": 13.8, "其他地區": 7.0, "現金及等值": -0.4}
         ],
         "eval_table": [
-            ["一、派息質量", "從資本派息 (ROC) 與總回報覆蓋率", "• 20分: ROC <10% 或 總回報 ≥ 派息率<br>• 10分: ROC 10%-50% 且總回報覆蓋率 >70%<br>• 0分: ROC >50% 且 總回報為負", "• 月報到期收益率：7.23% | 現時派息率：~7.42%<br>• ROC 資本派息率僅 0% ~ 14%<br>👉 營運淨收益幾乎完全覆蓋股息分派，本金損耗風險極低。", "15 / 20", "<span class='status-badge-green'>🟢 健康/觀察</span>"],
+            ["一、派息質量", "從資本派息 (ROC) 與總回報覆蓋率", "• 20分: ROC <10% 或 總回報 ≥ 派息率<br>• 10分: ROC 10%-50% 且總回報覆蓋率 >70%<br>• 0分: ROC >50% 且 總回報為負", "• 月報到期收益率：7.23% | 現時派息率：~7.42%<br>• ROC 資本派息率僅 0% ~ 14%<br>👉 營運淨收益 ($1.54 億) 幾乎完全覆蓋股息分派 ($7,428 萬)，本金損耗風險極低。", "15 / 20", "<span class='status-badge-green'>🟢 健康/觀察</span>"],
             ["二、信用風險", "評級分佈與非投資級占比", "• 15分: 平均評級 BBB 以上<br>• 10分: 平均評級 BB 級<br>• 5分: Caa/CCC級 >10% 或未評級 >15%", "• 平均評級：BB- 級<br>• BB 級占 47.70%、B 級占 34.92%、CCC 級占 8.45%<br>👉 標準美國高收益債配備，信用風險適中可控。", "10 / 15", "<span class='status-badge-yellow'>⚠️ 中等風險</span>"],
             ["三、槓桿水平", "資產膨脹率 (Total / Net Assets)", "• 15分: 比率 <105% (無顯著槓桿)<br>• 10分: 比率 105%-120%<br>• 0分: 比率 >120% (槓桿過高)", "• 衍生工具淨曝險上限 50%<br>• 槓桿比率約 101.0%<br>👉 無借貸槓桿，衍生工具僅作輔助避險，結構安全。", "15 / 15", "<span class='status-badge-green'>✔ 優秀</span>"],
             ["四、利率敏感度", "有效存續期 (Duration)", "• 10分: 存續期 <3 年 (抗升息)<br>• 5分: 存續期 3-6 年<br>• 0分: 存續期 >6 年", "• 有效存續期 (Effective Duration)：2.80 年<br>👉 存續期極短，對聯準會利率變動敏感度低，抗升息衝擊強。", "10 / 10", "<span class='status-badge-green'>✔ 優秀</span>"],
-            ["五、流動性風險", "現金儲備與營運現金流", "• 10分: 現金 >10% 且營運 Cash Flow 為正<br>• 5分: 現金 5%-10%<br>• 0分: 現金 <5% 或流動性緊縮", "• 現金及衍生品淨額：-0.40%<br>• 美國國庫券 (UST BILLS) 持倉：5.04%<br>👉 現金流動性緊貼營運需求，有高流動性國庫券緩衝。", "10 / 10", "<span class='status-badge-green'>✔ 優秀</span>"],
+            ["五、流動性風險", "現金儲備與營運現金流", "• 10分: 現金 >10% 且營運 Cash Flow 為正<br>• 5分: 現金 5%-10%<br>• 0分: 現金 <5% 或流動性緊縮", "• 現金及衍生品淨額：-0.40%<br>• 美國國庫券 (UST BILLS) 持倉：5.04%<br>👉 現金流動性緊貼營運需求，主要靠 5.04% 高流動性國庫券緩衝。", "5 / 10", "<span class='status-badge-yellow'>⚠️ 流動性緊貼</span>"],
             ["六、集中度風險", "前十大發行人持倉占比", "• 10分: 前持倉 <20% (極分散)<br>• 5分: 前持倉 20%-30%<br>• 0分: 前持倉 >30%", "• 前十大持倉/發行人合計占：11.27%<br>• 最大單一公司債僅占 0.89%<br>👉 持倉極度分散，可徹底防範單一企業違約黑天鵝事件。", "10 / 10", "<span class='status-badge-green'>✔ 優秀</span>"],
             ["七、匯率風險", "衍生品對沖與未實現損益", "• 10分: 全額對沖且衍生品虧損 <1% NAV<br>• 5分: 部分對沖<br>• 0分: 未對沖且外幣曝險過高", "• 基礎貨幣為美元 (USD)<br>• 提供對沖股份類別 (RMB H / EUR H / JPY H)<br>👉 避險機制完善，匯率曝險極低。", "10 / 10", "<span class='status-badge-green'>✔ 優秀</span>"],
             ["八、區域風險", "單一區域/國家持倉集中度", "• 5分: 單一區域 <40%<br>• 2.5分: 單一區域 40%-60%<br>• 0分: 單一區域 >60%", "• 美國地區占比：79.60%<br>• 英國占 2.77%、加拿大占 2.58%<br>👉 高度重倉美國市場，受美國宏觀經濟與信用週期影響深遠。", "0 / 5", "<span class='status-badge-red'>🚨 集中度偏高</span>"],
@@ -226,15 +230,19 @@ PRESET_FUNDS = {
         "zh": "霸菱環球高收益債券基金",
         "en": "Barings Global High Yield Bond Fund",
         "score": "82.5",
-        "summary": "霸菱環球高收益債券基金綜合風險評分為 82.5 分 (健康)。資產槓桿率 101.1% 幾乎無借貸槓桿，現金儲備 11.26% 充沛 (約5.5億美元)，最低修訂存續期 2.58 年對利率敏感度低；但需留意平均評級為 BB 級 (高收益債/非投資級)，且派息率 (9.87%) 高於底層到期收益率，存在本金補貼缺口。",
+        "summary": "霸菱環球高收益債券基金綜合風險評分為 82.5 分 (健康)。過往一年申購 $28.5億 vs 贖回 $22.1億，呈現 +$6.40 億美元淨流入 (資金充沛)；總收入減總支出淨收益達 +$268.50M，全年度總派息金額為 $182.50M；資產槓桿率 101.1% 幾乎無借貸槓桿。",
         "kpis": {
             "p1": "9.87%",
             "p2": "+2.64%", "p2_delta": "⚠️ 存在本金補貼風險", "p2_color": "inverse",
             "p3": "BB 級", "p3_delta": "⚠️ 高收益債 (非投資級)", "p3_color": "inverse",
             "p4": "2.58 年",
-            "p5": "11.26%",
+            "p5": "11.26%", "p5_delta": "流動資產", "p5_color": "normal",
             "p6": "13.59%",
-            "p7": "101.1%"
+            "p7": "101.1%",
+            "p8": "$4,380 M",
+            "p9": "+$268.50 M", "p9_delta": "🟢 總收入-總支出", "p9_color": "normal",
+            "p10": "$182.50 M", "p10_delta": "🟢 淨收益 147% 覆蓋", "p10_color": "normal",
+            "p11": "+$640.00 M", "p11_delta": "🟢 申購 - 贖回 (淨流入)", "p11_color": "normal"
         },
         "radar_scores": [15.0, 10.0, 15.0, 10.0, 10.0, 10.0, 10.0, 0.0, 2.5],
         "radar_dimensions": ["一、派息質量", "二、信用風險", "三、槓桿水平", "四、利率敏感度", "五、流動性風險", "六、集中度風險", "七、匯率風險", "八、區域風險", "九、總開支比率"],
@@ -327,7 +335,7 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
-# 5. 核心數據名片 (7 大 KPI 名片卡片列)
+# 5. 核心數據名片 (第一排 7 大結構名片)
 kpi_c1, kpi_c2, kpi_c3, kpi_c4, kpi_c5, kpi_c6, kpi_c7 = st.columns(7)
 
 if fund_type == "債券基金":
@@ -335,17 +343,42 @@ if fund_type == "債券基金":
     p2_color = curr_fund['kpis'].get('p2_color', 'inverse')
     p3_delta = curr_fund['kpis'].get('p3_delta', '⚠️ 高收益債 (非投資級)')
     p3_color = curr_fund['kpis'].get('p3_color', 'inverse')
+    p5_delta = curr_fund['kpis'].get('p5_delta', '流動資產')
+    p5_color = curr_fund['kpis'].get('p5_color', 'normal')
 
     with kpi_c1: st.metric(label="現時派息率", value=curr_fund['kpis']['p1'], delta="年化分派", delta_color="normal")
     with kpi_c2: st.metric(label="派息與收益息差", value=curr_fund['kpis']['p2'], delta=p2_delta, delta_color=p2_color)
     with kpi_c3: st.metric(label="平均持有債務評級", value=curr_fund['kpis']['p3'], delta=p3_delta, delta_color=p3_color)
     with kpi_c4: st.metric(label="續存率 / 有效期", value=curr_fund['kpis']['p4'], delta="存續期 (久期)", delta_color="normal")
-    with kpi_c5: st.metric(label="手持現金比率", value=curr_fund['kpis']['p5'], delta="流動資產", delta_color="normal")
+    with kpi_c5: st.metric(label="手持現金比率", value=curr_fund['kpis']['p5'], delta=p5_delta, delta_color=p5_color)
     with kpi_c6: st.metric(label="前十大發行人佔比", value=curr_fund['kpis']['p6'], delta="極度分散", delta_color="normal")
     with kpi_c7: st.metric(label="槓桿比率", value=curr_fund['kpis']['p7'], delta="無顯著借貸", delta_color="normal")
 else:
     for c, title in zip([kpi_c1, kpi_c2, kpi_c3, kpi_c4, kpi_c5, kpi_c6, kpi_c7], ["現時派息率", "息差 / Beta", "平均持股/債評級", "續存率 / 波動率", "手持現金比率", "前十大發行人佔比", "槓桿比率"]):
         with c: st.metric(label=title, value="待核對", delta="請上傳PDF")
+
+st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
+
+# 💡 第二排：重點展示 4 大核心財務流量名片 (總資產、淨營運收益、總派息金額、贖回/申購差距)
+fin_c1, fin_c2, fin_c3, fin_c4 = st.columns(4)
+
+if fund_type == "債券基金":
+    p9_delta = curr_fund['kpis'].get('p9_delta', '🟢 總收入-總支出')
+    p9_color = curr_fund['kpis'].get('p9_color', 'normal')
+    p10_delta = curr_fund['kpis'].get('p10_delta', '🟢 淨收益覆蓋佳')
+    p10_color = curr_fund['kpis'].get('p10_color', 'normal')
+    p11_delta = curr_fund['kpis'].get('p11_delta', '⚠️ 申購 - 贖回差距')
+    p11_color = curr_fund['kpis'].get('p11_color', 'inverse')
+
+    with fin_c1: st.metric(label="總基金資產值 (AUM)", value=curr_fund['kpis']['p8'], delta="百萬美元 (USD Million)", delta_color="normal")
+    with fin_c2: st.metric(label="過往一年淨收益 (總收入-總支出)", value=curr_fund['kpis']['p9'], delta=p9_delta, delta_color=p9_color)
+    with fin_c3: st.metric(label="過往一年總派息金額", value=curr_fund['kpis']['p10'], delta=p10_delta, delta_color=p10_color)
+    with fin_c4: st.metric(label="申購與贖回差距 (淨資金流向)", value=curr_fund['kpis']['p11'], delta=p11_delta, delta_color=p11_color) # 💡 新增 申購與贖回差距 名片
+else:
+    with fin_c1: st.metric(label="總基金資產值 (AUM)", value="待核對", delta="請上傳PDF")
+    with fin_c2: st.metric(label="過往一年淨收益", value="待核對", delta="請上傳PDF")
+    with fin_c3: st.metric(label="過往一年總派息金額", value="待核對", delta="請上傳PDF")
+    with fin_c4: st.metric(label="申購與贖回差距", value="待核對", delta="請上傳PDF")
 
 st.markdown("<br>", unsafe_allow_html=True)
 
