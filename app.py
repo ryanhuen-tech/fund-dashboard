@@ -32,37 +32,6 @@ st.markdown("""
         font-size: 12px;
     }
 
-    /* 頂部 7 大核心數據名片網格 */
-    .kpi-grid-7 {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        gap: 10px;
-        margin-bottom: 25px;
-    }
-    .kpi-card-custom {
-        background-color: #FFFFFF;
-        border-radius: 8px;
-        padding: 12px 14px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-        border: 1px solid #E2E8F0;
-        border-top: 4px solid #1E3A8A;
-    }
-    .kpi-card-custom-warning {
-        background-color: #FFFFFF;
-        border-radius: 8px;
-        padding: 12px 14px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-        border: 1px solid #E2E8F0;
-        border-top: 4px solid #F59E0B;
-    }
-    .kpi-card-title {
-        font-size: 11px;
-        color: #64748B;
-        font-weight: 700;
-        margin-bottom: 4px;
-        white-space: nowrap;
-    }
-
     /* 統一 HTML 表格樣式 (靠左對齊 + 深藍標頭) */
     .custom-table {
         width: 100%;
@@ -79,7 +48,7 @@ st.markdown("""
         background-color: #1E3A8A;
         color: #FFFFFF;
         font-weight: 700;
-        text-align: left; /* 靠左顯示 */
+        text-align: left;
         padding: 12px 14px;
         border-bottom: 2px solid #1E293B;
     }
@@ -89,7 +58,7 @@ st.markdown("""
         vertical-align: middle;
         color: #334155;
         line-height: 1.6;
-        text-align: left; /* 靠左顯示 */
+        text-align: left;
     }
     .custom-table tr:hover {
         background-color: #F8FAFC;
@@ -156,7 +125,7 @@ st.markdown("""
 
 st.title("🛡️ 智能基金風險評估系統")
 
-# 3. 預設資料庫
+# 3. 預設資料庫（完全包含您提供的 5 張照片真實數據）
 PRESET_FUNDS = {
     "霸菱環球高收益債券基金": {
         "zh": "霸菱環球高收益債券基金",
@@ -185,6 +154,66 @@ PRESET_FUNDS = {
             {"排名": 8, "持倉名稱": "EchoStar", "資產類別": "衛星通訊債", "佔比 (%)": "1.25%"},
             {"排名": 9, "持倉名稱": "Herbalife Ltd.", "資產類別": "非必需消費債", "佔比 (%)": "1.10%"},
             {"排名": 10, "持倉名稱": "PRA Group", "資產類別": "金融服務債", "佔比 (%)": "1.06%"},
+        ],
+        # 歷史派息紀錄
+        "history_div": [
+            ["30/06/2026", "01/07/2026", "08/07/2026", "0.578980", "73.11", "9.93%"],
+            ["29/05/2026", "02/06/2026", "08/06/2026", "0.578980", "73.55", "9.87%"],
+            ["30/04/2026", "01/05/2026", "08/05/2026", "0.578980", "73.73", "9.84%"],
+            ["31/03/2026", "01/04/2026", "09/04/2026", "0.578980", "73.39", "9.89%"],
+            ["27/02/2026", "02/03/2026", "06/03/2026", "0.578980", "74.51", "9.73%"],
+            ["30/01/2026", "03/02/2026", "09/02/2026", "0.593352", "75.02", "9.92%"],
+            ["31/12/2025", "02/01/2026", "08/01/2026", "0.593352", "74.92", "9.93%"],
+            ["28/11/2025", "01/12/2025", "05/12/2025", "0.593352", "74.87", "9.94%"],
+            ["31/10/2025", "03/11/2025", "07/11/2025", "0.593352", "75.19", "9.89%"],
+            ["30/09/2025", "01/10/2025", "07/10/2025", "0.593352", "75.85", "9.80%"],
+            ["29/08/2025", "02/09/2025", "08/09/2025", "0.593352", "75.70", "9.82%"],
+            ["31/07/2025", "01/08/2025", "08/08/2025", "0.593352", "75.61", "9.83%"]
+        ],
+        # 派息組成
+        "composition_div": [
+            ["05-2026", "0.578980", "52.61%", "47.39%"],
+            ["04-2026", "0.578980", "55.51%", "44.49%"],
+            ["03-2026", "0.578980", "57.81%", "42.19%"],
+            ["02-2026", "0.578980", "52.16%", "47.84%"],
+            ["01-2026", "0.593352", "50.79%", "49.21%"],
+            ["12-2025", "0.593352", "48.35%", "51.65%"],
+            ["11-2025", "0.593352", "53.82%", "46.18%"],
+            ["10-2025", "0.593352", "47.31%", "52.69%"],
+            ["09-2025", "0.593352", "47.88%", "52.12%"],
+            ["08-2025", "0.593352", "55.34%", "44.66%"],
+            ["07-2025", "0.593352", "53.51%", "46.49%"],
+            ["06-2025", "0.593352", "40.80%", "59.20%"]
+        ],
+        # 十大行業
+        "sector_dist": [
+            ["電訊", "12.19%"],
+            ["醫療保健", "11.69%"],
+            ["能源", "9.38%"],
+            ["金融服務", "6.91%"],
+            ["媒體", "6.61%"],
+            ["基本工業", "5.05%"],
+            ["資本物品", "4.62%"],
+            ["休閒", "4.49%"],
+            ["服務", "4.47%"],
+            ["科技及電子", "4.26%"]
+        ],
+        # 評級分佈
+        "rating_dist": [
+            ["Baa及以上", "5.40%"],
+            ["Ba", "37.91%"],
+            ["B", "33.75%"],
+            ["Caa1及以下", "9.69%"],
+            ["尚未評級", "2.00%"],
+            ["現金及等值", "11.26%"]
+        ],
+        # 💡 最新上傳圖片數據：地區分佈歷年走勢
+        "geo_dist_history": [
+            {"月份": "25年6月", "北美": 66.2, "歐洲": 27.6, "其他地區": 1.6, "現金及等值": 4.6},
+            {"月份": "25年9月", "北美": 67.4, "歐洲": 25.9, "其他地區": 2.4, "現金及等值": 4.3},
+            {"月份": "25年12月", "北美": 66.7, "歐洲": 24.6, "其他地區": 2.7, "現金及等值": 6.0},
+            {"月份": "26年3月", "北美": 68.3, "歐洲": 22.9, "其他地區": 3.1, "現金及等值": 5.7},
+            {"月份": "26年5月", "北美": 61.3, "歐洲": 23.8, "其他地區": 3.6, "現金及等值": 11.3}
         ]
     }
 }
@@ -214,25 +243,16 @@ st.markdown(f"""
 kpi_c1, kpi_c2, kpi_c3, kpi_c4, kpi_c5, kpi_c6, kpi_c7 = st.columns(7)
 
 if fund_type == "債券基金":
-    with kpi_c1:
-        st.metric(label="現時派息率", value=curr_fund['kpis']['p1'], delta="年化分派", delta_color="normal")
-    with kpi_c2:
-        st.metric(label="派息與收益息差", value=curr_fund['kpis']['p2'], delta="⚠️ 存在本金補貼風險", delta_color="inverse")
-    with kpi_c3:
-        st.metric(label="平均持有債務評級", value=curr_fund['kpis']['p3'], delta="⚠️ 高收益債 (非投資級)", delta_color="inverse")
-    with kpi_c4:
-        st.metric(label="續存率 / 有效期", value=curr_fund['kpis']['p4'], delta="存續期 (久期)", delta_color="normal")
-    with kpi_c5:
-        st.metric(label="手持現金比率", value=curr_fund['kpis']['p5'], delta="流動性充沛", delta_color="normal")
-    with kpi_c6:
-        st.metric(label="前十大發行人佔比", value=curr_fund['kpis']['p6'], delta="極度分散", delta_color="normal")
-    with kpi_c7:
-        st.metric(label="槓桿比率", value=curr_fund['kpis']['p7'], delta="無顯著借貸", delta_color="normal")
+    with kpi_c1: st.metric(label="現時派息率", value=curr_fund['kpis']['p1'], delta="年化分派", delta_color="normal")
+    with kpi_c2: st.metric(label="派息與收益息差", value=curr_fund['kpis']['p2'], delta="⚠️ 存在本金補貼風險", delta_color="inverse")
+    with kpi_c3: st.metric(label="平均持有債務評級", value=curr_fund['kpis']['p3'], delta="⚠️ 高收益債 (非投資級)", delta_color="inverse")
+    with kpi_c4: st.metric(label="續存率 / 有效期", value=curr_fund['kpis']['p4'], delta="存續期 (久期)", delta_color="normal")
+    with kpi_c5: st.metric(label="手持現金比率", value=curr_fund['kpis']['p5'], delta="流動性充沛", delta_color="normal")
+    with kpi_c6: st.metric(label="前十大發行人佔比", value=curr_fund['kpis']['p6'], delta="極度分散", delta_color="normal")
+    with kpi_c7: st.metric(label="槓桿比率", value=curr_fund['kpis']['p7'], delta="無顯著借貸", delta_color="normal")
 else:
-    for c, title in zip([kpi_c1, kpi_c2, kpi_c3, kpi_c4, kpi_c5, kpi_c6, kpi_c7], 
-                        ["現時派息率", "息差 / Beta", "平均持股/債評級", "續存率 / 波動率", "手持現金比率", "前十大發行人佔比", "槓桿比率"]):
-        with c:
-            st.metric(label=title, value="待核對", delta="請上傳PDF")
+    for c, title in zip([kpi_c1, kpi_c2, kpi_c3, kpi_c4, kpi_c5, kpi_c6, kpi_c7], ["現時派息率", "息差 / Beta", "平均持股/債評級", "續存率 / 波動率", "手持現金比率", "前十大發行人佔比", "槓桿比率"]):
+        with c: st.metric(label=title, value="待核對", delta="請上傳PDF")
 
 st.markdown("<br>", unsafe_allow_html=True)
 
@@ -245,71 +265,127 @@ with tab1:
     if fund_type != "債券基金":
         st.info(f"💡 目前切換至【{fund_type}】，請上傳對應 Factsheet / 月報 PDF 後生成專屬風險雷達圖。")
     else:
-        df_chart = pd.DataFrame(dict(
-            Score=curr_fund["radar_scores"], 
-            Dimension=curr_fund["radar_dimensions"]
-        ))
-        
-        fig_radar = px.line_polar(
-            df_chart, 
-            r='Score', 
-            theta='Dimension', 
-            line_close=True, 
-            markers=True, 
-            range_r=[0, 20], 
-            color_discrete_sequence=['#00E676']
-        )
-        fig_radar.update_traces(
-            fill='toself', 
-            fillcolor='rgba(0, 230, 118, 0.35)', 
-            line=dict(color='#00E676', width=2.5), 
-            marker=dict(size=7, color='#00E676')
-        )
+        df_chart = pd.DataFrame(dict(Score=curr_fund["radar_scores"], Dimension=curr_fund["radar_dimensions"]))
+        fig_radar = px.line_polar(df_chart, r='Score', theta='Dimension', line_close=True, markers=True, range_r=[0, 20], color_discrete_sequence=['#00E676'])
+        fig_radar.update_traces(fill='toself', fillcolor='rgba(0, 230, 118, 0.35)', line=dict(color='#00E676', width=2.5), marker=dict(size=7, color='#00E676'))
         fig_radar.update_layout(
-            height=480, 
-            margin=dict(l=60, r=60, t=30, b=30),
-            paper_bgcolor="rgba(0,0,0,0)",
-            polar=dict(
-                bgcolor="#1E222D",
-                radialaxis=dict(visible=True, range=[0, 20], showticklabels=False, gridcolor="#334155"),
-                angularaxis=dict(
-                    tickfont=dict(size=13, color="#000000", family="Arial, sans-serif"),
-                    gridcolor="#334155"
-                )
-            )
+            height=480, margin=dict(l=60, r=60, t=30, b=30), paper_bgcolor="rgba(0,0,0,0)",
+            polar=dict(bgcolor="#1E222D", radialaxis=dict(visible=True, range=[0, 20], showticklabels=False, gridcolor="#334155"), angularaxis=dict(tickfont=dict(size=13, color="#000000", family="Arial, sans-serif"), gridcolor="#334155"))
         )
         st.plotly_chart(fig_radar, use_container_width=True)
 
 with tab2:
-    # 💡 美化前十大持倉表格：採用與深度風險評估一模一樣的深藍標頭、全靠左對齊 HTML 表格
-    top10_rows_html = "".join([
-        f"<tr><td style='width: 10%; text-align: left;'><b>{row['排名']}</b></td>"
-        f"<td style='width: 45%; text-align: left;'><b>{row['持倉名稱']}</b></td>"
-        f"<td style='width: 30%; text-align: left;'>{row['資產類別']}</td>"
-        f"<td style='width: 15%; text-align: left; font-weight: bold;'>{row['佔比 (%)']}</td></tr>"
-        for row in curr_fund["top10"]
-    ])
-    
-    top10_table_html = f"""
+    top10_rows_html = "".join([f"<tr><td style='width: 10%;'><b>{row['排名']}</b></td><td style='width: 45%;'><b>{row['持倉名稱']}</b></td><td style='width: 30%;'>{row['資產類別']}</td><td style='width: 15%; font-weight: bold;'>{row['佔比 (%)']}</td></tr>" for row in curr_fund["top10"]])
+    st.markdown(f"""
     <table class="custom-table">
-        <thead>
-            <tr>
-                <th style="width: 10%; text-align: left;">排名</th>
-                <th style="width: 45%; text-align: left;">持倉名稱</th>
-                <th style="width: 30%; text-align: left;">資產類別</th>
-                <th style="width: 15%; text-align: left;">佔比 (%)</th>
-            </tr>
-        </thead>
-        <tbody>
-            {top10_rows_html}
-        </tbody>
+        <thead><tr><th>排名</th><th>持倉名稱</th><th>資產類別</th><th>佔比 (%)</th></tr></thead>
+        <tbody>{top10_rows_html}</tbody>
     </table>
-    """
-    st.markdown(top10_table_html, unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
 st.markdown("---")
 
-# 7. 【下區】：📋 基金深度風險評估 表格
+# 7. 💡 【新增區塊】：包含 5 個數據 Tabs (歷史派息、派息組成、行業分佈、評級分佈、地區分佈)
+st.markdown("### 📊 基金底層數據與歷史分佈明細")
+
+sub_tab1, sub_tab2, sub_tab3, sub_tab4, sub_tab5 = st.tabs([
+    "📅 歷史派息紀錄", 
+    "💰 派息組成 (可分派收益 vs 資本)", 
+    "🏭 十大行業分佈 (%)", 
+    "🛡️ 評級分佈 (%)",
+    "🌍 地區分佈歷年走勢 (%)" # 💡 新增第 5 個 TAB
+])
+
+# Tab 1: 歷史派息紀錄
+with sub_tab1:
+    h_rows = "".join([f"<tr><td>{r[0]}</td><td>{r[1]}</td><td>{r[2]}</td><td><b>{r[3]}</b></td><td>{r[4]}</td><td style='font-weight:bold; color:#059669;'>{r[5]}</td></tr>" for r in curr_fund["history_div"]])
+    st.markdown(f"""
+    <table class="custom-table">
+        <thead>
+            <tr><th>記錄日</th><th>除息日</th><th>派息日</th><th>每單位股息 (美元)</th><th>除息日每單位資產淨值 (美元)</th><th>年度化派息率</th></tr>
+        </thead>
+        <tbody>{h_rows}</tbody>
+    </table>
+    """, unsafe_allow_html=True)
+
+# Tab 2: 派息組成
+with sub_tab2:
+    st.caption("📌 註：G類別美元分派(每月) - 該月份可分派淨收入股息 vs 由資本所分派之股息")
+    c_rows = "".join([f"<tr><td><b>{r[0]}</b></td><td>{r[1]}</td><td>{r[2]}</td><td style='font-weight:bold; color:#D97706;'>{r[3]}</td></tr>" for r in curr_fund["composition_div"]])
+    st.markdown(f"""
+    <table class="custom-table">
+        <thead>
+            <tr><th>月份 (For the month of)</th><th>每股股息 (Dividend per share)</th><th>該月份可分派之淨收入股息 %</th><th>由資本所分派之股息 % (ROC)</th></tr>
+        </thead>
+        <tbody>{c_rows}</tbody>
+    </table>
+    """, unsafe_allow_html=True)
+
+# Tab 3: 十大行業分佈
+with sub_tab3:
+    s_rows = "".join([f"<tr><td><b>{r[0]}</b></td><td style='font-weight:bold; color:#1E3A8A;'>{r[1]}</td></tr>" for r in curr_fund["sector_dist"]])
+    st.markdown(f"""
+    <table class="custom-table" style="width: 50%;">
+        <thead>
+            <tr><th>行業類別 (十大行業)</th><th>佔市值 %</th></tr>
+        </thead>
+        <tbody>{s_rows}</tbody>
+    </table>
+    """, unsafe_allow_html=True)
+
+# Tab 4: 評級分佈
+with sub_tab4:
+    r_rows = "".join([f"<tr><td><b>{r[0]}</b></td><td style='font-weight:bold; color:#1E3A8A;'>{r[1]}</td></tr>" for r in curr_fund["rating_dist"]])
+    st.markdown(f"""
+    <table class="custom-table" style="width: 50%;">
+        <thead>
+            <tr><th>信貸評級分佈</th><th>佔市值 %</th></tr>
+        </thead>
+        <tbody>{r_rows}</tbody>
+    </table>
+    """, unsafe_allow_html=True)
+
+# 💡 Tab 5: 地區分佈歷年走勢 (%) (最新加入)
+with sub_tab5:
+    col_chart_geo, col_table_geo = st.columns([1.2, 1])
+    
+    df_geo = pd.DataFrame(curr_fund["geo_dist_history"])
+    
+    with col_chart_geo:
+        # 繪製與圖片顏色完全相同的堆疊柱狀圖
+        fig_geo = px.bar(
+            df_geo, 
+            x='月份', 
+            y=['北美', '歐洲', '其他地區', '現金及等值'],
+            title="地區分佈歷史變動走勢 (佔市值 %)",
+            color_discrete_map={
+                '北美': '#0B2545',      # 深藍色
+                '歐洲': '#10B981',      # 鮮綠色
+                '其他地區': '#94A3B8',  # 灰色
+                '現金及等值': '#1E50A2'  # 中藍色
+            },
+            template="plotly_white"
+        )
+        fig_geo.update_layout(height=380, barmode='stack', yaxis_title="佔比 (%)", legend_title_text="地區類別")
+        st.plotly_chart(fig_geo, use_container_width=True)
+        
+    with col_table_geo:
+        geo_rows = "".join([
+            f"<tr><td><b>{r['月份']}</b></td><td>{r['北美']}%</td><td>{r['歐洲']}%</td><td>{r['其他地區']}%</td><td>{r['現金及等值']}%</td></tr>"
+            for r in curr_fund["geo_dist_history"]
+        ])
+        st.markdown(f"""
+        <table class="custom-table">
+            <thead>
+                <tr><th>月份</th><th>北美 %</th><th>歐洲 %</th><th>其他地區 %</th><th>現金及等值 %</th></tr>
+            </thead>
+            <tbody>{geo_rows}</tbody>
+        </table>
+        """, unsafe_allow_html=True)
+
+st.markdown("---")
+
+# 8. 【下區】：📋 基金深度風險評估 表格
 st.markdown('### 📋 基金深度風險評估')
 
 if fund_type == "債券基金":
@@ -440,5 +516,5 @@ else:
     """
     st.markdown(html_table, unsafe_allow_html=True)
 
-# 8. 底部智能洞察點評
+# 9. 底部智能洞察點評
 st.info(f"**💡 AI 智能洞察 ({curr_fund['zh']})**：{curr_fund['summary']}")
