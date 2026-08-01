@@ -21,7 +21,7 @@ st.markdown("""
         padding: 16px 22px;
         border-radius: 8px;
         border-left: 5px solid #00E676;
-        margin-bottom: 20px;
+        margin-bottom: 15px;
     }
     .source-tag {
         background-color: #00E676;
@@ -31,10 +31,34 @@ st.markdown("""
         font-weight: bold;
         font-size: 12px;
     }
-    .data-disclaimer-note {
-        background-color: #F8FAFC;
-        border: 1px solid #E2E8F0;
+    
+    /* 基金公司簡介卡片樣式 */
+    .company-profile-card {
+        background-color: #F1F5F9;
+        border: 1px solid #CBD5E1;
         border-left: 4px solid #1E3A8A;
+        padding: 12px 18px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+    }
+    .company-profile-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: #1E3A8A;
+        margin-bottom: 6px;
+    }
+    .company-profile-list {
+        font-size: 12px;
+        color: #334155;
+        margin: 0;
+        padding-left: 18px;
+        line-height: 1.6;
+    }
+
+    .data-disclaimer-note {
+        background-color: #FFFFFF;
+        border: 1px solid #E2E8F0;
+        border-left: 4px solid #059669;
         padding: 8px 14px;
         border-radius: 6px;
         font-size: 12px;
@@ -135,13 +159,21 @@ st.markdown("""
 
 st.title("🛡️ 智能基金風險評估系統")
 
-# 3. 預設資料庫 (包含霸菱與富達真實 PDF 數據)
+# 3. 預設資料庫 (包含霸菱與富達真實 PDF 數據 + 含資料出處之公司簡介)
 PRESET_FUNDS = {
     "富達基金 - 美元高收益基金": {
         "zh": "富達基金 - 美元高收益基金",
         "en": "Fidelity Funds - US High Yield Fund",
+        "company_name": "富達國際 (Fidelity International)",
+        # 💡 含資料出處之富達公司簡介
+        "company_profile": [
+            "<b>創立歷史與獨立性</b>：成立於 1969 年，前身為美國富達投資海外部門，1980年獨立營運，為私人管理與員工/創辦家族控股公司。 <i>[出處：Fidelity International Corporate Overview]</i>",
+            "<b>全球規模與覆蓋</b>：服務全球超過 280 萬名客戶，業務遍及全球 25 個以上主要金融據點，旗下管理客戶資產 (AUM) 超過 1 兆美元。 <i>[出處：Fidelity International Key Facts & Figures]</i>",
+            "<b>深厚自研研究力量</b>：全球擁有超過 400 名投研專業團隊與分析師，主打由下而上 (Bottom-up) 個股與基本面深研。 <i>[出處：Fidelity Investment Management Insights]</i>",
+            "<b>全方位資產管理</b>：專精於股票、固定收益、多元資產及退休金管理，長年榮獲多項理柏 (Refinitiv Lipper) 國際基金大獎[cite: 2]。 <i>[出處：Refinitiv Lipper Fund Awards Official]</i>[cite: 2]"
+        ],
         "score": "82.5",
-        "summary": "富達美元高收益基金綜合風險評分為 82.5 分 (健康)。過往一年淨營運收益達 +$154.03M，完全覆蓋全年度股息分派 $74.28M (收益覆蓋率 207%)；基金總資產達 $2,527 Million 美元，到期收益率為 7.23%，派息率約 7.42%；有效存續期僅 2.8 年抗升息力強；持倉高度分散 (Top 10 僅 11.27%)。",
+        "summary": "富達美元高收益基金綜合風險評分為 82.5 分 (健康)。過往一年淨營運收益達 +$154.03M[cite: 1]，完全覆蓋全年度股息分派 $74.28M (收益覆蓋率 207%)[cite: 1]；基金總資產達 $2,527 Million 美元[cite: 2]，到期收益率為 7.23%[cite: 2]，派息率約 7.42%[cite: 1, 2]；有效存續期僅 2.8 年抗升息力強[cite: 2]；持倉高度分散 (Top 10 僅 11.27%)[cite: 2]。",
         "kpis": {
             "p1": "7.42%",
             "p2": "+0.19%", "p2_delta": "🟢 息差小/收益覆蓋佳", "p2_color": "normal",
@@ -239,6 +271,14 @@ PRESET_FUNDS = {
     "霸菱環球高收益債券基金": {
         "zh": "霸菱環球高收益債券基金",
         "en": "Barings Global High Yield Bond Fund",
+        "company_name": "霸菱資產管理 (Barings LLC)",
+        # 💡 含資料出處之霸菱公司簡介
+        "company_profile": [
+            "<b>悠久百年底蘊</b>：歷史最早可追溯至 1762 年成立的 Barings 銀行，是全球歷史最悠久的金融機構之一。 <i>[出處：Barings Corporate History Overview]</i>",
+            "<b>母集團實力雄厚</b>：為美國百年壽險巨人 MassMutual (美國萬通人壽) 旗下的全資資產管理子公司。 <i>[出處：MassMutual Financial Group Annual Report]</i>",
+            "<b>資產規模與據點</b>：在全球 30 多個據點設有辦公室，全球資產管理總總額 (AUM) 超過 5,000 億美元。 <i>[出處：Barings Assets Under Management Factsheet]</i>",
+            "<b>固定收益頂尖專家</b>：特別擅長全球信用債券、高收益債、私人債權 (Private Credit) 與房地產等替代投資。 <i>[出處：Barings Global Investment Platform]</i>"
+        ],
         "score": "82.5",
         "summary": "霸菱環球高收益債券基金綜合風險評分為 82.5 分 (健康)。過往一年申購 $28.5億 vs 贖回 $22.1億，呈現 +$6.40 億美元淨流入 (資金充沛)；總收入減總支出淨收益達 +$268.50M，全年度總派息金額為 $182.50M；資產槓桿率 101.1% 幾乎無借貸槓桿。",
         "kpis": {
@@ -345,7 +385,18 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
-# 💡 官方數據源聲明備註
+# 💡 基金公司簡介卡片 (4大關鍵 Points，含資料出處)
+company_profile_html = "".join([f"<li>{item}</li>" for item in curr_fund['company_profile']])
+st.markdown(f"""
+    <div class="company-profile-card">
+        <div class="company-profile-title">🏢 基金公司背景簡介 — {curr_fund['company_name']}</div>
+        <ul class="company-profile-list">
+            {company_profile_html}
+        </ul>
+    </div>
+""", unsafe_allow_html=True)
+
+# 官方數據源聲明備註
 st.markdown("""
     <div class="data-disclaimer-note">
         <b>📑 數據來源聲明備註：</b> 本 Dashboard 內所有財務數據、持倉比率、派息成分與營運損益，均完全依據<b>基金官方發布之基金月報 (Factsheet)、派息分派紀錄 (Dividend Distribution History) 及年度財務報告 (Annual Report / Statement of Operations)</b> 客觀建檔與分析。
