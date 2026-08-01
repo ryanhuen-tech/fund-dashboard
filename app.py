@@ -125,7 +125,7 @@ st.markdown("""
 
 st.title("🛡️ 智能基金風險評估系統")
 
-# 3. 預設資料庫 (完全包含霸菱與富達真實 PDF 數據)
+# 3. 預設資料庫 (包含霸菱與富達真實 PDF 數據)
 PRESET_FUNDS = {
     "富達基金 - 美元高收益基金": {
         "zh": "富達基金 - 美元高收益基金",
@@ -143,7 +143,6 @@ PRESET_FUNDS = {
         },
         "radar_scores": [15.0, 10.0, 15.0, 10.0, 10.0, 10.0, 10.0, 0.0, 2.5],
         "radar_dimensions": ["一、派息質量", "二、信用風險", "三、槓桿水平", "四、利率敏感度", "五、流動性風險", "六、集中度風險", "七、匯率風險", "八、區域風險", "九、總開支比率"],
-        # 💡 來自《Z13 基金月報.pdf》最新前十大持倉
         "top10": [
             {"排名": 1, "持倉名稱": "UST BILLS 0% 07/30/26 (美國國庫券)", "資產類別": "美國國庫券", "佔比 (%)": "3.02%"},
             {"排名": 2, "持倉名稱": "UST BILLS 0% 09/10/26 (美國國庫券)", "資產類別": "美國國庫券", "佔比 (%)": "2.02%"},
@@ -156,7 +155,6 @@ PRESET_FUNDS = {
             {"排名": 9, "持倉名稱": "CARNIVAL CORP 6.125% 2/33 144A", "資產類別": "休閒旅遊債", "佔比 (%)": "0.80%"},
             {"排名": 10, "持倉名稱": "OAK-EAGLE ACQUI 7.25% 7/33 144A", "資產類別": "金融服務債", "佔比 (%)": "0.78%"},
         ],
-        # 💡 來自《Z13 股息派發紀錄.pdf》真實歷史派息紀錄 (A-MINCOME(G)-USD)
         "history_div": [
             ["01/06/2026", "02/06/2026", "09/06/2026", "0.046600", "7.7920", "7.42%"],
             ["01/05/2026", "02/05/2026", "09/05/2026", "0.046600", "7.8160", "7.39%"],
@@ -171,7 +169,6 @@ PRESET_FUNDS = {
             ["01/08/2025", "04/08/2025", "11/08/2025", "0.046600", "7.8060", "7.40%"],
             ["01/07/2025", "02/07/2025", "09/07/2025", "0.046600", "7.8430", "7.37%"]
         ],
-        # 💡 來自《Z13 股息派發紀錄.pdf》真實派息成分拆解
         "composition_div": [
             ["01-06-2026", "0.046600", "100.00%", "0.00%"],
             ["01-05-2026", "0.046600", "89.00%", "11.00%"],
@@ -186,7 +183,6 @@ PRESET_FUNDS = {
             ["01-08-2025", "0.046600", "92.00%", "8.00%"],
             ["01-07-2025", "0.046600", "75.00%", "25.00%"]
         ],
-        # 💡 來自《Z13 基金月報.pdf》行業分佈
         "sector_dist": [
             ["通訊 (Communications)", "16.83%"],
             ["週期性消費品 (Consumer Cyclical)", "16.06%"],
@@ -199,7 +195,6 @@ PRESET_FUNDS = {
             ["國庫券 (Treasury)", "5.04%"],
             ["公用事業 (Utility)", "3.49%"]
         ],
-        # 💡 來自《Z13 基金月報.pdf》信用評級分佈
         "rating_dist": [
             ["國庫券 / 高評級 (AA/Aa)", "5.04%"],
             ["投資級別 (BBB/Baa)", "3.51%"],
@@ -209,7 +204,6 @@ PRESET_FUNDS = {
             ["其他 / 未評級", "0.78%"],
             ["現金 (Cash)", "-0.40%"]
         ],
-        # 💡 來自《Z13 基金月報.pdf》地區分佈歷史走勢
         "geo_dist_history": [
             {"月份": "2024年6月", "北美": 80.5, "歐洲": 13.1, "其他地區": 2.4, "現金及等值": 4.0},
             {"月份": "2025年6月", "北美": 79.8, "歐洲": 13.5, "其他地區": 2.5, "現金及等值": 4.2},
@@ -498,38 +492,38 @@ with st.expander("📋 點擊展開 / 折疊：基金深度風險評估明細表
         </div>
         """
         st.markdown(html_table, unsafe_allow_html=True)
-else:
-    # 📈 股票基金 / 股債混合基金 專屬「基金深度風險評估」表
-    html_table = f"""
-    <table class="custom-table">
-        <thead>
-            <tr>
-                <th style="width: 16%;">評估維度</th>
-                <th style="width: 22%;">具體檢查指標</th>
-                <th style="width: 32%;">專屬評分簡算規則</th>
-                <th style="width: 18%;">底層資產數據與解析</th>
-                <th style="width: 12%; text-align: center;">風險狀態</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr><td><b>一、市場敏感度</b></td><td>貝塔係數 (β) / 股票比率</td><td>β &lt; 0.8 防禦=15分 | 0.8-1.2 適中=9分 | &gt;1.2 高波動=0分</td><td>待上傳 PDF 核對</td><td style="text-align: center;"><span class="status-badge-yellow">📋 待核對</span></td></tr>
-            <tr><td><b>二、極端回撤</b></td><td>最大回撤 (Max Drawdown)</td><td>回撤 &lt; 15%=15分 | 15%-25%=9分 | &gt; 25%=0分</td><td>待上傳 PDF 核對</td><td style="text-align: center;"><span class="status-badge-yellow">📋 待核對</span></td></tr>
-            <tr><td><b>三、持倉集中度</b></td><td>前十大重倉標的佔比</td><td>&lt; 30% 分散=10分 | 30%-50%=6分 | &gt; 50% 集中=0分</td><td>待上傳 PDF 核對</td><td style="text-align: center;"><span class="status-badge-yellow">📋 待核對</span></td></tr>
-            <tr><td><b>四、絕對波動控制</b></td><td>年度化標準差 / 組合久期</td><td>&lt; 10% 穩健=5分 | 10%-20%=3分 | &gt; 20% 高波動=0分</td><td>待上傳 PDF 核對</td><td style="text-align: center;"><span class="status-badge-yellow">📋 待核對</span></td></tr>
-            <tr><td><b>五、風險性價比</b></td><td>夏普比率 (Sharpe Ratio)</td><td>&gt; 1.0 優秀=10分 | 0.5-1.0 良好=6分 | &lt; 0.5 差=0分</td><td>待上傳 PDF 核對</td><td style="text-align: center;"><span class="status-badge-yellow">📋 待核對</span></td></tr>
-            <tr><td><b>六、經理穩定性</b></td><td>任職年限與團隊變更</td><td>&gt; 3年無變更=15分 | 1-3年=9分 | &lt; 1年/頻繁變更=0分</td><td>待上傳 PDF 核對</td><td style="text-align: center;"><span class="status-badge-yellow">📋 待核對</span></td></tr>
-            <tr><td><b>七、規模適中性</b></td><td>基金資產規模 (AUM)</td><td>2億-100億=10分 | 5000萬-2億或&gt;100億=6分 | &lt; 5000萬=0分</td><td>待上傳 PDF 核對</td><td style="text-align: center;"><span class="status-badge-yellow">📋 待核對</span></td></tr>
-            <tr><td><b>八、行業集中度</b></td><td>最大單一行業/資產占比</td><td>&lt; 20%=10分 | 20%-30%=6分 | &gt; 30% 高度集中=0分</td><td>待上傳 PDF 核對</td><td style="text-align: center;"><span class="status-badge-yellow">📋 待核對</span></td></tr>
-            <tr><td><b>九、匯率對沖曝險</b></td><td>外幣資產與對沖狀況</td><td>完全對沖=10分 | 部分對沖=5分 | 未對沖&gt;30%=0分</td><td>待上傳 PDF 核對</td><td style="text-align: center;"><span class="status-badge-yellow">📋 待核對</span></td></tr>
-        </tbody>
-    </table>
-    <div class="summary-footer">
-        <span class="summary-title">總得分 / 得分率：</span>
-        <span class="summary-score">待核對 (0 / 100)</span>
-        <span class="status-badge-yellow" style="font-size: 12px; padding: 4px 10px;">請上傳月報 PDF</span>
-    </div>
-    """
-    st.markdown(html_table, unsafe_allow_html=True)
+    else:
+        # 📈 股票基金 / 股債混合基金 專屬「基金深度風險評估」表
+        html_table = f"""
+        <table class="custom-table">
+            <thead>
+                <tr>
+                    <th style="width: 16%;">評估維度</th>
+                    <th style="width: 22%;">具體檢查指標</th>
+                    <th style="width: 32%;">專屬評分簡算規則</th>
+                    <th style="width: 18%;">底層資產數據與解析</th>
+                    <th style="width: 12%; text-align: center;">風險狀態</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td><b>一、市場敏感度</b></td><td>貝塔係數 (β) / 股票比率</td><td>β &lt; 0.8 防禦=15分 | 0.8-1.2 適中=9分 | &gt;1.2 高波動=0分</td><td>待上傳 PDF 核對</td><td style="text-align: center;"><span class="status-badge-yellow">📋 待核對</span></td></tr>
+                <tr><td><b>二、極端回撤</b></td><td>最大回撤 (Max Drawdown)</td><td>回撤 &lt; 15%=15分 | 15%-25%=9分 | &gt; 25%=0分</td><td>待上傳 PDF 核對</td><td style="text-align: center;"><span class="status-badge-yellow">📋 待核對</span></td></tr>
+                <tr><td><b>三、持倉集中度</b></td><td>前十大重倉標的佔比</td><td>&lt; 30% 分散=10分 | 30%-50%=6分 | &gt; 50% 集中=0分</td><td>待上傳 PDF 核對</td><td style="text-align: center;"><span class="status-badge-yellow">📋 待核對</span></td></tr>
+                <tr><td><b>四、絕對波動控制</b></td><td>年度化標準差 / 組合久期</td><td>&lt; 10% 穩健=5分 | 10%-20%=3分 | &gt; 20% 高波動=0分</td><td>待上傳 PDF 核對</td><td style="text-align: center;"><span class="status-badge-yellow">📋 待核對</span></td></tr>
+                <tr><td><b>五、風險性價比</b></td><td>夏普比率 (Sharpe Ratio)</td><td>&gt; 1.0 優秀=10分 | 0.5-1.0 良好=6分 | &lt; 0.5 差=0分</td><td>待上傳 PDF 核對</td><td style="text-align: center;"><span class="status-badge-yellow">📋 待核對</span></td></tr>
+                <tr><td><b>六、經理穩定性</b></td><td>任職年限與團隊變更</td><td>&gt; 3年無變更=15分 | 1-3年=9分 | &lt; 1年/頻繁變更=0分</td><td>待上傳 PDF 核對</td><td style="text-align: center;"><span class="status-badge-yellow">📋 待核對</span></td></tr>
+                <tr><td><b>七、規模適中性</b></td><td>基金資產規模 (AUM)</td><td>2億-100億=10分 | 5000萬-2億或&gt;100億=6分 | &lt; 5000萬=0分</td><td>待上傳 PDF 核對</td><td style="text-align: center;"><span class="status-badge-yellow">📋 待核對</span></td></tr>
+                <tr><td><b>八、行業集中度</b></td><td>最大單一行業/資產占比</td><td>&lt; 20%=10分 | 20%-30%=6分 | &gt; 30% 高度集中=0分</td><td>待上傳 PDF 核對</td><td style="text-align: center;"><span class="status-badge-yellow">📋 待核對</span></td></tr>
+                <tr><td><b>九、匯率對沖曝險</b></td><td>外幣資產與對沖狀況</td><td>完全對沖=10分 | 部分對沖=5分 | 未對沖&gt;30%=0分</td><td>待上傳 PDF 核對</td><td style="text-align: center;"><span class="status-badge-yellow">📋 待核對</span></td></tr>
+            </tbody>
+        </table>
+        <div class="summary-footer">
+            <span class="summary-title">總得分 / 得分率：</span>
+            <span class="summary-score">待核對 (0 / 100)</span>
+            <span class="status-badge-yellow" style="font-size: 12px; padding: 4px 10px;">請上傳月報 PDF</span>
+        </div>
+        """
+        st.markdown(html_table, unsafe_allow_html=True)
 
 # 8. 底部智能洞察點評
 st.info(f"**💡 AI 智能洞察 ({curr_fund['zh']})**：{curr_fund['summary']}")
