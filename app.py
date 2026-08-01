@@ -32,59 +32,13 @@ st.markdown("""
         font-size: 12px;
     }
 
-    /* 頂部 7 大核心數據名片網格 */
-    .kpi-grid-7 {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        gap: 10px;
-        margin-bottom: 25px;
+    /* 7 大核心名片專用 Container 樣式 */
+    [data-testid="stMetricValue"] {
+        font-size: 20px !important;
+        font-weight: 800 !important;
+        color: #1E3A8A !important;
     }
-    .kpi-card-custom {
-        background-color: #FFFFFF;
-        border-radius: 8px;
-        padding: 12px 14px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-        border: 1px solid #E2E8F0;
-        border-top: 4px solid #1E3A8A;
-    }
-    .kpi-card-custom-warning {
-        background-color: #FFFFFF;
-        border-radius: 8px;
-        padding: 12px 14px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-        border: 1px solid #E2E8F0;
-        border-top: 4px solid #F59E0B; /* 橘黃色警示邊框 */
-    }
-    .kpi-card-title {
-        font-size: 11px;
-        color: #64748B;
-        font-weight: 700;
-        margin-bottom: 4px;
-        white-space: nowrap;
-    }
-    .kpi-card-value {
-        font-size: 18px;
-        font-weight: 800;
-        color: #1E3A8A;
-        margin-bottom: 2px;
-    }
-    .kpi-card-value-warning {
-        font-size: 18px;
-        font-weight: 800;
-        color: #D97706; /* 橘黃色警告文字 */
-        margin-bottom: 2px;
-    }
-    .kpi-card-sub {
-        font-size: 10px;
-        color: #059669;
-        font-weight: 600;
-    }
-    .kpi-card-sub-warning {
-        font-size: 10px;
-        color: #D97706;
-        font-weight: 600;
-    }
-
+    
     /* HTML 表格樣式 */
     .custom-table {
         width: 100%;
@@ -231,44 +185,31 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
-# 5. 核心數據名片 (7 大 KPI 名片卡片列 - 已將「息差」與「債務評級」修正為警示樣式)
+# 5. 核心數據名片 (7 大 KPI 名片卡片列 - 改用安全 Native Metrics 元件，永不報錯)
+kpi_c1, kpi_c2, kpi_c3, kpi_c4, kpi_c5, kpi_c6, kpi_c7 = st.columns(7)
+
 if fund_type == "債券基金":
-    st.markdown(f"""
-    <div class="kpi-grid-7">
-        <div class="kpi-card-custom"><div class="kpi-card-title">現時派息率</div><div class="kpi-card-value">{curr_fund['kpis']['p1']}</div><div class="kpi-card-sub">年化分派</div></div>
-        
-        <!-- 💡 息差：警示邊框與警告文字 -->
-        <div class="kpi-card-custom-warning">
-            <div class="kpi-card-title">派息與收益息差</div>
-            <div class="kpi-card-value-warning">{curr_fund['kpis']['p2']}</div>
-            <div class="kpi-card-sub-warning">⚠️ 存在本金補貼風險</div>
-        </div>
-        
-        <!-- 💡 精準修正：平均持有債務評級改為橘黃色 (BB級非投資級/高收益債) -->
-        <div class="kpi-card-custom-warning">
-            <div class="kpi-card-title">平均持有債務評級</div>
-            <div class="kpi-card-value-warning">{curr_fund['kpis']['p3']}</div>
-            <div class="kpi-card-sub-warning">⚠️ 高收益債 (非投資級)</div>
-        </div>
-        
-        <div class="kpi-card-custom"><div class="kpi-card-title">續存率 / 有效期</div><div class="kpi-card-value">{curr_fund['kpis']['p4']}</div><div class="kpi-card-sub">存續期 (久期)</div></div>
-        <div class="kpi-card-custom"><div class="kpi-card-title">手持現金比率</div><div class="kpi-card-value">{curr_fund['kpis']['p5']}</div><div class="kpi-card-sub">流動性充沛</div></div>
-        <div class="kpi-card-custom"><div class="kpi-card-title">前十大發行人佔比</div><div class="kpi-card-value">{curr_fund['kpis']['p6']}</div><div class="kpi-card-sub">極度分散</div></div>
-        <div class="kpi-card-custom"><div class="kpi-card-title">槓桿比率</div><div class="kpi-card-value">{curr_fund['kpis']['p7']}</div><div class="kpi-card-sub">無顯著借貸</div></div>
-    </div>
-    """, unsafe_allow_html=True)
+    with kpi_c1:
+        st.metric(label="現時派息率", value=curr_fund['kpis']['p1'], delta="年化分派", delta_color="normal")
+    with kpi_c2:
+        st.metric(label="派息與收益息差", value=curr_fund['kpis']['p2'], delta="⚠️ 存在本金補貼風險", delta_color="inverse")
+    with kpi_c3:
+        st.metric(label="平均持有債務評級", value=curr_fund['kpis']['p3'], delta="⚠️ 高收益債 (非投資級)", delta_color="inverse")
+    with kpi_c4:
+        st.metric(label="續存率 / 有效期", value=curr_fund['kpis']['p4'], delta="存續期 (久期)", delta_color="normal")
+    with kpi_c5:
+        st.metric(label="手持現金比率", value=curr_fund['kpis']['p5'], delta="流動性充沛", delta_color="normal")
+    with kpi_c6:
+        st.metric(label="前十大發行人佔比", value=curr_fund['kpis']['p6'], delta="極度分散", delta_color="normal")
+    with kpi_c7:
+        st.metric(label="槓桿比率", value=curr_fund['kpis']['p7'], delta="無顯著借貸", delta_color="normal")
 else:
-    st.markdown(f"""
-    <div class="kpi-grid-7">
-        <div class="kpi-card-custom"><div class="kpi-card-title">現時派息率</div><div class="kpi-card-value">待核對</div><div class="kpi-card-sub">請上傳PDF</div></div>
-        <div class="kpi-card-custom"><div class="kpi-card-title">息差 / Beta</div><div class="kpi-card-value">待核對</div><div class="kpi-card-sub">請上傳PDF</div></div>
-        <div class="kpi-card-custom"><div class="kpi-card-title">平均持股/債評級</div><div class="kpi-card-value">待核對</div><div class="kpi-card-sub">請上傳PDF</div></div>
-        <div class="kpi-card-custom"><div class="kpi-card-title">續存率 / 波動率</div><div class="kpi-card-value">待核對</div><div class="kpi-card-sub">請上傳PDF</div></div>
-        <div class="kpi-card-custom"><div class="kpi-card-title">手持現金比率</div><div class="kpi-card-value">待核對</div><div class="kpi-card-sub">請上傳PDF</div></div>
-        <div class="kpi-card-custom"><div class="kpi-card-title">前十大發行人佔比</div><div class="kpi-card-value">待核對</div><div class="kpi-card-sub">請上傳PDF</div></div>
-        <div class="kpi-card-custom"><div class="kpi-card-title">槓桿比率</div><div class="kpi-card-value">待核對</div><div class="kpi-card-sub">請上傳PDF</div></div>
-    </div>
-    """, unsafe_allow_html=True)
+    for c, title in zip([kpi_c1, kpi_c2, kpi_c3, kpi_c4, kpi_c5, kpi_c6, kpi_c7], 
+                        ["現時派息率", "息差 / Beta", "平均持股/債評級", "續存率 / 波動率", "手持現金比率", "前十大發行人佔比", "槓桿比率"]):
+        with c:
+            st.metric(label=title, value="待核對", delta="請上傳PDF")
+
+st.markdown("<br>", unsafe_allow_html=True)
 
 # 6. 【上區】：雷達圖（黑底 + 周圍黑色粗體字）與前十大持倉清單
 st.markdown("### 🕸️ 風險維度分析與持倉分佈")
