@@ -9,26 +9,27 @@ st.set_page_config(
     layout="wide"
 )
 
-# 💡 在主頁面最上方建立「標題 + 右上角顯示設定」兩欄佈局
-title_col, settings_col = st.columns([3.2, 1.2])
+# 💡 在側邊欄設置全螢幕模式切換
+with st.sidebar:
+    st.header("⚙️ 顯示設定")
+    fullscreen_mode = st.toggle("🖥️ 啟用超寬全螢幕視角 (Wide Mode)", value=True)
 
-with title_col:
-    st.title("🛡️ 智能基金風險評估系統")
-
-with settings_col:
-    st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
-    fullscreen_mode = st.toggle("🖥️ 全螢幕 / 100% 超寬視角", value=True)
-
-# 2. 注入自訂 CSS 樣式 (根據右上角的切換動態調整頁面邊距)
-padding_top = "0.5rem" if fullscreen_mode else "1.2rem"
-max_width_css = "max-width: 98% !important;" if fullscreen_mode else ""
+# 2. 注入自訂 CSS 樣式 (徹底修復頂部遮擋與名片卡片排版)
+max_width_css = "max-width: 96% !important;" if fullscreen_mode else "max-width: 1200px;"
 
 st.markdown(f"""
     <style>
+    /* 修復最頂部被系統切掉的問題，加大上邊距 */
     .block-container {{
-        padding-top: {padding_top};
-        padding-bottom: 2rem;
+        padding-top: 2.5rem !important;
+        padding-bottom: 2rem !important;
         {max_width_css}
+    }}
+    .main-title {{
+        font-size: 26px;
+        font-weight: 800;
+        color: #1E3A8A;
+        margin-bottom: 15px;
     }}
     .fund-header {{
         background-color: #1E222D;
@@ -46,6 +47,17 @@ st.markdown(f"""
         font-size: 12px;
     }}
     
+    /* 歸類卡片區塊標題 */
+    .metric-group-header {{
+        font-size: 15px;
+        font-weight: 700;
+        color: #1E3A8A;
+        border-bottom: 2px solid #E2E8F0;
+        padding-bottom: 6px;
+        margin-top: 15px;
+        margin-bottom: 12px;
+    }}
+
     /* 基金公司簡介內部樣式 */
     .company-profile-list {{
         font-size: 12px;
@@ -157,8 +169,105 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# 3. 預設資料庫 (包含霸菱與富達真實 PDF 數據 + 含資料出處之公司簡介)
+# 標題獨立呈現
+st.markdown('<div class="main-title">🛡️ 智能基金風險評估系統</div>', unsafe_allow_html=True)
+
+# 3. 預設資料庫
 PRESET_FUNDS = {
+    "霸菱環球高收益債券基金": {
+        "zh": "霸菱環球高收益債券基金",
+        "en": "Barings Global High Yield Bond Fund",
+        "company_name": "霸菱資產管理 (Barings LLC)",
+        "company_profile": [
+            "<b>悠久百年底蘊</b>：歷史最早可追溯至 1762 年成立的 Barings 銀行，是全球歷史最悠久的金融機構之一。 <i>[出處：Barings Corporate History Overview]</i>",
+            "<b>母集團實力雄厚</b>：為美國百年壽險巨人 MassMutual (美國萬通人壽) 旗下的全資資產管理子公司。 <i>[出處：MassMutual Financial Group Annual Report]</i>",
+            "<b>資產規模與據點</b>：在全球 30 多個據點設有辦公室，全球資產管理總總額 (AUM) 超過 5,000 億美元。 <i>[出處：Barings Assets Under Management Factsheet]</i>",
+            "<b>固定收益頂尖專家</b>：特別擅長全球信用債券、高收益債、私人債權 (Private Credit) 與房地產等替代投資。 <i>[出處：Barings Global Investment Platform]</i>"
+        ],
+        "score": "82.5",
+        "summary": "霸菱環球高收益債券基金綜合風險評分為 82.5 分 (健康)。過往一年申購 $28.5億 vs 贖回 $22.1億，呈現 +$6.40 億美元淨流入 (資金充沛)；總收入減總支出淨收益達 +$268.50M，全年度總派息金額為 $182.50M；資產槓桿率 101.1% 幾乎無借貸槓桿。",
+        "kpis": {
+            "p1": "9.87%",
+            "p2": "+2.64%", "p2_delta": "⚠️ 存在本金補貼風險", "p2_color": "inverse",
+            "p3": "BB 級", "p3_delta": "⚠️ 高收益債 (非投資級)", "p3_color": "inverse",
+            "p4": "2.58 年",
+            "p5": "11.26%", "p5_delta": "流動資產", "p5_color": "normal",
+            "p6": "13.59%",
+            "p7": "101.1%",
+            "p8": "$4,380 M",
+            "p9": "+$268.50 M", "p9_delta": "🟢 總收入-總支出", "p9_color": "normal",
+            "p10": "$182.50 M", "p10_delta": "🟢 淨收益 147% 覆蓋", "p10_color": "normal",
+            "p11": "+$640.00 M", "p11_delta": "🟢 申購 - 贖回 (淨流入)", "p11_color": "normal"
+        },
+        "radar_scores": [15.0, 10.0, 15.0, 10.0, 10.0, 10.0, 10.0, 0.0, 2.5],
+        "radar_dimensions": ["一、派息質量", "二、信用風險", "三、槓桿水平", "四、利率敏感度", "五、流動性風險", "六、集中度風險", "七、匯率風險", "八、區域風險", "九、總開支比率"],
+        "top10": [
+            {"排名": 1, "持倉名稱": "現金及等值資產 (Cash Equivalents)", "資產類別": "現金/貨幣市場", "佔比 (%)": "11.26%"},
+            {"排名": 2, "持倉名稱": "Bausch Health Companies Inc.", "資產類別": "醫療保健債", "佔比 (%)": "2.40%"},
+            {"排名": 3, "持倉名稱": "Charter Communications Inc.", "資產類別": "通訊服務債", "佔比 (%)": "1.71%"},
+            {"排名": 4, "持倉名稱": "First Quantum Minerals Ltd", "資產類別": "基本工業債", "佔比 (%)": "1.66%"},
+            {"排名": 5, "持倉名稱": "Uniti Group Inc.", "資產類別": "通訊基礎設施債", "佔比 (%)": "1.46%"},
+            {"排名": 6, "持倉名稱": "Radiology Partners", "資產類別": "醫療保健債", "佔比 (%)": "1.31%"},
+            {"排名": 7, "持倉名稱": "LifePoint Health", "資產類別": "醫療保健債", "佔比 (%)": "1.27%"},
+            {"排名": 8, "持倉名稱": "EchoStar", "資產類別": "衛星通訊債", "佔比 (%)": "1.25%"},
+            {"排名": 9, "持倉名稱": "Herbalife Ltd.", "資產類別": "非必需消費債", "佔比 (%)": "1.10%"},
+            {"排名": 10, "持倉名稱": "PRA Group", "資產類別": "金融服務債", "佔比 (%)": "1.06%"},
+        ],
+        "history_div": [
+            ["30/06/2026", "01/07/2026", "08/07/2026", "0.578980", "73.11", "9.93%"],
+            ["29/05/2026", "02/06/2026", "08/06/2026", "0.578980", "73.55", "9.87%"],
+            ["30/04/2026", "01/05/2026", "08/05/2026", "0.578980", "73.73", "9.84%"],
+            ["31/03/2026", "01/04/2026", "09/04/2026", "0.578980", "73.39", "9.89%"],
+            ["27/02/2026", "02/03/2026", "06/03/2026", "0.578980", "74.51", "9.73%"],
+            ["30/01/2026", "03/02/2026", "09/02/2026", "0.593352", "75.02", "9.92%"],
+            ["31/12/2025", "02/01/2026", "08/01/2026", "0.593352", "74.92", "9.93%"],
+            ["28/11/2025", "01/12/2025", "05/12/2025", "0.593352", "74.87", "9.94%"],
+            ["31/10/2025", "03/11/2025", "07/11/2025", "0.593352", "75.19", "9.89%"],
+            ["30/09/2025", "01/10/2025", "07/10/2025", "0.593352", "75.85", "9.80%"],
+            ["29/08/2025", "02/09/2025", "08/09/2025", "0.593352", "75.70", "9.82%"],
+            ["31/07/2025", "01/08/2025", "08/08/2025", "0.593352", "75.61", "9.83%"]
+        ],
+        "composition_div": [
+            ["05-2026", "0.578980", "52.61%", "47.39%"],
+            ["04-2026", "0.578980", "55.51%", "44.49%"],
+            ["03-2026", "0.578980", "57.81%", "42.19%"],
+            ["02-2026", "0.578980", "52.16%", "47.84%"],
+            ["01-2026", "0.593352", "50.79%", "49.21%"],
+            ["12-2025", "0.593352", "48.35%", "51.65%"],
+            ["11-2025", "0.593352", "53.82%", "46.18%"],
+            ["10-2025", "0.593352", "47.31%", "52.69%"],
+            ["09-2025", "0.593352", "47.88%", "52.12%"],
+            ["08-2025", "0.593352", "55.34%", "44.66%"],
+            ["07-2025", "0.593352", "53.51%", "46.49%"],
+            ["06-2025", "0.593352", "40.80%", "59.20%"]
+        ],
+        "sector_dist": [
+            ["電訊", "12.19%"], ["醫療保健", "11.69%"], ["能源", "9.38%"], ["金融服務", "6.91%"], ["媒體", "6.61%"],
+            ["基本工業", "5.05%"], ["資本物品", "4.62%"], ["休閒", "4.49%"], ["服務", "4.47%"], ["科技及電子", "4.26%"]
+        ],
+        "rating_dist": [
+            ["Baa及以上", "5.40%"], ["Ba", "37.91%"], ["B", "33.75%"], ["Caa1及以下", "9.69%"], ["尚未評級", "2.00%"], ["現金及等值", "11.26%"]
+        ],
+        "geo_dist_history": [
+            {"月份": "25年6月", "北美": 66.2, "歐洲": 27.6, "其他地區": 1.6, "現金及等值": 4.6},
+            {"月份": "25年9月", "北美": 67.4, "歐洲": 25.9, "其他地區": 2.4, "現金及等值": 4.3},
+            {"月份": "25年12月", "北美": 66.7, "歐洲": 24.6, "其他地區": 2.7, "現金及等值": 6.0},
+            {"月份": "26年3月", "北美": 68.3, "歐洲": 22.9, "其他地區": 3.1, "現金及等值": 5.7},
+            {"月份": "26年5月", "北美": 61.3, "歐洲": 23.8, "其他地區": 3.6, "現金及等值": 11.3}
+        ],
+        "eval_table": [
+            ["一、派息質量", "從資本派息 (ROC) 與總回報覆蓋率", "• 20分: ROC <10% 或 總回報 ≥ 派息率<br>• 10分: ROC 10%-50% 且總回報覆蓋率 >70%<br>• 0分: ROC >50% 且 總回報為負", "• ROC 比例：42.2% ~ 59.2%<br>• 2025總回報：+9.19% | 派息率：~9.87%<br>👉 帳面營運淨利遠高於派息總額，總回報幾乎完全覆蓋派息。", "15 / 20", "<span class='status-badge-green'>🟢 健康/觀察</span>"],
+            ["二、信用風險", "評級分佈與非投資級占比", "• 15分: 平均評級 BBB 以上<br>• 10分: 平均評級 BB 級<br>• 5分: Caa/CCC級 >10% 或未評級 >15%", "• 平均評級：BB<br>• Ba 級 37.91%、B 級 33.75%<br>👉 標準高收益債配備，一次投資風險適中可控。", "10 / 15", "<span class='status-badge-yellow'>⚠️ 中等風險</span>"],
+            ["三、槓桿水平", "資產膨脹率 (Total / Net Assets)", "• 15分: 比率 <105% (無顯著槓桿)<br>• 10分: 比率 105%-120%<br>• 0分: 比率 >120% (槓桿過高)", "• 總資產 / 淨資產：101.1%<br>👉 幾乎無借貸槓桿，結構非常安全透明。", "15 / 15", "<span class='status-badge-green'>✔ 優秀</span>"],
+            ["四、利率敏感度", "有效存續期 (Duration)", "• 10分: 存續期 <3 年 (抗升息)<br>• 5分: 存續期 3-6 年<br>• 0分: 存續期 >6 年", "• 最低修訂存續期：2.58 年<br>👉 存續期極短，對央行利率變化的敏感度與衝擊較低。", "10 / 10", "<span class='status-badge-green'>✔ 優秀</span>"],
+            ["五、流動性風險", "現金儲備與營運現金流", "• 10分: 現金 >10% 且營運 Cash Flow 為正<br>• 5分: 現金 5%-10%<br>• 0分: 現金 <5% 或流動性緊縮", "• 現金及等值：11.26% (約 5.5 億美元)<br>👉 現金充沛，足以支應短期贖回需求。", "10 / 10", "<span class='status-badge-green'>✔ 優秀</span>"],
+            ["六、集中度風險", "前十大發行人持倉占比", "• 10分: 前持倉 <20% (極分散)<br>• 5分: 前持倉 20%-30%<br>• 0分: 前持倉 >30%", "• 前十大發行人合計占：13.59%<br>• 最大單一發行人僅占 2.40%<br>👉 極度分散，有效避免單一公司黑天鵝事件。", "10 / 10", "<span class='status-badge-green'>✔ 優秀</span>"],
+            ["七、匯率風險", "衍生品對沖與未實現損益", "• 10分: 全額對沖且衍生品虧損 <1% NAV<br>• 5分: 部分對沖<br>• 0分: 未對沖且外幣曝險過高", "• 各非美元類別均提供衍生品對沖<br>👉 避險機制運作順暢，衍生品風險極低。", "10 / 10", "<span class='status-badge-green'>✔ 優秀</span>"],
+            ["八、區域風險", "單一區域/國家持倉集中度", "• 5分: 單一區域 <40%<br>• 2.5分: 單一區域 40%-60%<br>• 0分: 單一區域 >60%", "• 北美地區：61.3% | 歐洲地區：23.8%<br>👉 重倉北美/美國市場，受美國信用週期影響深遠。", "0 / 5", "<span class='status-badge-red'>🚨 集中度偏高</span>"],
+            ["九、總開支比率", "每年管理費 (Management Fee)", "• 5分: 管理費 <1.0%<br>• 2.5分: 管理費 1.0%-1.5%<br>• 0分: Management Fee >1.5%", "• G類別 (零售)：1.25% / 年<br>👉 屬於市場高收益債券基金的標準收費區間。", "2.5 / 5", "<span class='status-badge-yellow'>⚠️ 中等</span>"]
+        ]
+    },
+
     "富達基金 - 美元高收益基金": {
         "zh": "富達基金 - 美元高收益基金",
         "en": "Fidelity Funds - US High Yield Fund",
@@ -263,104 +372,10 @@ PRESET_FUNDS = {
             ["八、區域風險", "單一區域/國家持倉集中度", "• 5分: 單一區域 <40%<br>• 2.5分: 單一區域 40%-60%<br>• 0分: 單一區域 >60%", "• 美國地區占比：79.60%<br>• 英國占 2.77%、加拿大占 2.58%<br>👉 高度重倉美國市場，受美國宏觀經濟與信用週期影響深遠。", "0 / 5", "<span class='status-badge-red'>🚨 集中度偏高</span>"],
             ["九、總開支比率", "每年管理費 (Management Fee)", "• 5分: 管理費 <1.0%<br>• 2.5分: 管理費 1.0%-1.5%<br>• 0分: Management Fee >1.5%", "• 每年管理費：1.00% / 年<br>👉 屬於市場高收益債券基金的標準合理收費區間。", "2.5 / 5", "<span class='status-badge-yellow'>⚠️ 中等</span>"]
         ]
-    },
-    
-    "霸菱環球高收益債券基金": {
-        "zh": "霸菱環球高收益債券基金",
-        "en": "Barings Global High Yield Bond Fund",
-        "company_name": "霸菱資產管理 (Barings LLC)",
-        "company_profile": [
-            "<b>悠久百年底蘊</b>：歷史最早可追溯至 1762 年成立的 Barings 銀行，是全球歷史最悠久的金融機構之一。 <i>[出處：Barings Corporate History Overview]</i>",
-            "<b>母集團實力雄厚</b>：為美國百年壽險巨人 MassMutual (美國萬通人壽) 旗下的全資資產管理子公司。 <i>[出處：MassMutual Financial Group Annual Report]</i>",
-            "<b>資產規模與據點</b>：在全球 30 多個據點設有辦公室，全球資產管理總總額 (AUM) 超過 5,000 億美元。 <i>[出處：Barings Assets Under Management Factsheet]</i>",
-            "<b>固定收益頂尖專家</b>：特別擅長全球信用債券、高收益債、私人債權 (Private Credit) 與房地產等替代投資。 <i>[出處：Barings Global Investment Platform]</i>"
-        ],
-        "score": "82.5",
-        "summary": "霸菱環球高收益債券基金綜合風險評分為 82.5 分 (健康)。過往一年申購 $28.5億 vs 贖回 $22.1億，呈現 +$6.40 億美元淨流入 (資金充沛)；總收入減總支出淨收益達 +$268.50M，全年度總派息金額為 $182.50M；資產槓桿率 101.1% 幾乎無借貸槓桿。",
-        "kpis": {
-            "p1": "9.87%",
-            "p2": "+2.64%", "p2_delta": "⚠️ 存在本金補貼風險", "p2_color": "inverse",
-            "p3": "BB 級", "p3_delta": "⚠️ 高收益債 (非投資級)", "p3_color": "inverse",
-            "p4": "2.58 年",
-            "p5": "11.26%", "p5_delta": "流動資產", "p5_color": "normal",
-            "p6": "13.59%",
-            "p7": "101.1%",
-            "p8": "$4,380 M",
-            "p9": "+$268.50 M", "p9_delta": "🟢 總收入-總支出", "p9_color": "normal",
-            "p10": "$182.50 M", "p10_delta": "🟢 淨收益 147% 覆蓋", "p10_color": "normal",
-            "p11": "+$640.00 M", "p11_delta": "🟢 申購 - 贖回 (淨流入)", "p11_color": "normal"
-        },
-        "radar_scores": [15.0, 10.0, 15.0, 10.0, 10.0, 10.0, 10.0, 0.0, 2.5],
-        "radar_dimensions": ["一、派息質量", "二、信用風險", "三、槓桿水平", "四、利率敏感度", "五、流動性風險", "六、集中度風險", "七、匯率風險", "八、區域風險", "九、總開支比率"],
-        "top10": [
-            {"排名": 1, "持倉名稱": "現金及等值資產 (Cash Equivalents)", "資產類別": "現金/貨幣市場", "佔比 (%)": "11.26%"},
-            {"排名": 2, "持倉名稱": "Bausch Health Companies Inc.", "資產類別": "醫療保健債", "佔比 (%)": "2.40%"},
-            {"排名": 3, "持倉名稱": "Charter Communications Inc.", "資產類別": "通訊服務債", "佔比 (%)": "1.71%"},
-            {"排名": 4, "持倉名稱": "First Quantum Minerals Ltd", "資產類別": "基本工業債", "佔比 (%)": "1.66%"},
-            {"排名": 5, "持倉名稱": "Uniti Group Inc.", "資產類別": "通訊基礎設施債", "佔比 (%)": "1.46%"},
-            {"排名": 6, "持倉名稱": "Radiology Partners", "資產類別": "醫療保健債", "佔比 (%)": "1.31%"},
-            {"排名": 7, "持倉名稱": "LifePoint Health", "資產類別": "醫療保健債", "佔比 (%)": "1.27%"},
-            {"排名": 8, "持倉名稱": "EchoStar", "資產類別": "衛星通訊債", "佔比 (%)": "1.25%"},
-            {"排名": 9, "持倉名稱": "Herbalife Ltd.", "資產類別": "非必需消費債", "佔比 (%)": "1.10%"},
-            {"排名": 10, "持倉名稱": "PRA Group", "資產類別": "金融服務債", "佔比 (%)": "1.06%"},
-        ],
-        "history_div": [
-            ["30/06/2026", "01/07/2026", "08/07/2026", "0.578980", "73.11", "9.93%"],
-            ["29/05/2026", "02/06/2026", "08/06/2026", "0.578980", "73.55", "9.87%"],
-            ["30/04/2026", "01/05/2026", "08/05/2026", "0.578980", "73.73", "9.84%"],
-            ["31/03/2026", "01/04/2026", "09/04/2026", "0.578980", "73.39", "9.89%"],
-            ["27/02/2026", "02/03/2026", "06/03/2026", "0.578980", "74.51", "9.73%"],
-            ["30/01/2026", "03/02/2026", "09/02/2026", "0.593352", "75.02", "9.92%"],
-            ["31/12/2025", "02/01/2026", "08/01/2026", "0.593352", "74.92", "9.93%"],
-            ["28/11/2025", "01/12/2025", "05/12/2025", "0.593352", "74.87", "9.94%"],
-            ["31/10/2025", "03/11/2025", "07/11/2025", "0.593352", "75.19", "9.89%"],
-            ["30/09/2025", "01/10/2025", "07/10/2025", "0.593352", "75.85", "9.80%"],
-            ["29/08/2025", "02/09/2025", "08/09/2025", "0.593352", "75.70", "9.82%"],
-            ["31/07/2025", "01/08/2025", "08/08/2025", "0.593352", "75.61", "9.83%"]
-        ],
-        "composition_div": [
-            ["05-2026", "0.578980", "52.61%", "47.39%"],
-            ["04-2026", "0.578980", "55.51%", "44.49%"],
-            ["03-2026", "0.578980", "57.81%", "42.19%"],
-            ["02-2026", "0.578980", "52.16%", "47.84%"],
-            ["01-2026", "0.593352", "50.79%", "49.21%"],
-            ["12-2025", "0.593352", "48.35%", "51.65%"],
-            ["11-2025", "0.593352", "53.82%", "46.18%"],
-            ["10-2025", "0.593352", "47.31%", "52.69%"],
-            ["09-2025", "0.593352", "47.88%", "52.12%"],
-            ["08-2025", "0.593352", "55.34%", "44.66%"],
-            ["07-2025", "0.593352", "53.51%", "46.49%"],
-            ["06-2025", "0.593352", "40.80%", "59.20%"]
-        ],
-        "sector_dist": [
-            ["電訊", "12.19%"], ["醫療保健", "11.69%"], ["能源", "9.38%"], ["金融服務", "6.91%"], ["媒體", "6.61%"],
-            ["基本工業", "5.05%"], ["資本物品", "4.62%"], ["休閒", "4.49%"], ["服務", "4.47%"], ["科技及電子", "4.26%"]
-        ],
-        "rating_dist": [
-            ["Baa及以上", "5.40%"], ["Ba", "37.91%"], ["B", "33.75%"], ["Caa1及以下", "9.69%"], ["尚未評級", "2.00%"], ["現金及等值", "11.26%"]
-        ],
-        "geo_dist_history": [
-            {"月份": "25年6月", "北美": 66.2, "歐洲": 27.6, "其他地區": 1.6, "現金及等值": 4.6},
-            {"月份": "25年9月", "北美": 67.4, "歐洲": 25.9, "其他地區": 2.4, "現金及等值": 4.3},
-            {"月份": "25年12月", "北美": 66.7, "歐洲": 24.6, "其他地區": 2.7, "現金及等值": 6.0},
-            {"月份": "26年3月", "北美": 68.3, "歐洲": 22.9, "其他地區": 3.1, "現金及等值": 5.7},
-            {"月份": "26年5月", "北美": 61.3, "歐洲": 23.8, "其他地區": 3.6, "現金及等值": 11.3}
-        ],
-        "eval_table": [
-            ["一、派息質量", "從資本派息 (ROC) 與總回報覆蓋率", "• 20分: ROC <10% 或 總回報 ≥ 派息率<br>• 10分: ROC 10%-50% 且總回報覆蓋率 >70%<br>• 0分: ROC >50% 且 總回報為負", "• ROC 比例：42.2% ~ 59.2%<br>• 2025總回報：+9.19% | 派息率：~9.87%<br>👉 帳面營運淨利遠高於派息總額，總回報幾乎完全覆蓋派息。", "15 / 20", "<span class='status-badge-green'>🟢 健康/觀察</span>"],
-            ["二、信用風險", "評級分佈與非投資級占比", "• 15分: 平均評級 BBB 以上<br>• 10分: 平均評級 BB 級<br>• 5分: Caa/CCC級 >10% 或未評級 >15%", "• 平均評級：BB<br>• Ba 級 37.91%、B 級 33.75%<br>👉 標準高收益債配備，一次投資風險適中可控。", "10 / 15", "<span class='status-badge-yellow'>⚠️ 中等風險</span>"],
-            ["三、槓桿水平", "資產膨脹率 (Total / Net Assets)", "• 15分: 比率 <105% (無顯著槓桿)<br>• 10分: 比率 105%-120%<br>• 0分: 比率 >120% (槓桿過高)", "• 總資產 / 淨資產：101.1%<br>👉 幾乎無借貸槓桿，結構非常安全透明。", "15 / 15", "<span class='status-badge-green'>✔ 優秀</span>"],
-            ["四、利率敏感度", "有效存續期 (Duration)", "• 10分: 存續期 <3 年 (抗升息)<br>• 5分: 存續期 3-6 年<br>• 0分: 存續期 >6 年", "• 最低修訂存續期：2.58 年<br>👉 存續期極短，對央行利率變化的敏感度與衝擊較低。", "10 / 10", "<span class='status-badge-green'>✔ 優秀</span>"],
-            ["五、流動性風險", "現金儲備與營運現金流", "• 10分: 現金 >10% 且營運 Cash Flow 為正<br>• 5分: 現金 5%-10%<br>• 0分: 現金 <5% 或流動性緊縮", "• 現金及等值：11.26% (約 5.5 億美元)<br>👉 現金充沛，足以支應短期贖回需求。", "10 / 10", "<span class='status-badge-green'>✔ 優秀</span>"],
-            ["六、集中度風險", "前十大發行人持倉占比", "• 10分: 前持倉 <20% (極分散)<br>• 5分: 前持倉 20%-30%<br>• 0分: 前持倉 >30%", "• 前十大發行人合計占：13.59%<br>• 最大單一發行人僅占 2.40%<br>👉 極度分散，有效避免單一公司黑天鵝事件。", "10 / 10", "<span class='status-badge-green'>✔ 優秀</span>"],
-            ["七、匯率風險", "衍生品對沖與未實現損益", "• 10分: 全額對沖且衍生品虧損 <1% NAV<br>• 5分: 部分對沖<br>• 0分: 未對沖且外幣曝險過高", "• 各非美元類別均提供衍生品對沖<br>👉 避險機制運作順暢，衍生品風險極低。", "10 / 10", "<span class='status-badge-green'>✔ 優秀</span>"],
-            ["八、區域風險", "單一區域/國家持倉集中度", "• 5分: 單一區域 <40%<br>• 2.5分: 單一區域 40%-60%<br>• 0分: 單一區域 >60%", "• 北美地區：61.3% | 歐洲地區：23.8%<br>👉 重倉北美/美國市場，受美國信用週期影響深遠。", "0 / 5", "<span class='status-badge-red'>🚨 集中度偏高</span>"],
-            ["九、總開支比率", "每年管理費 (Management Fee)", "• 5分: 管理費 <1.0%<br>• 2.5分: 管理費 1.0%-1.5%<br>• 0分: Management Fee >1.5%", "• G類別 (零售)：1.25% / 年<br>👉 屬於市場高收益債券基金的標準收費區間。", "2.5 / 5", "<span class='status-badge-yellow'>⚠️ 中等</span>"]
-        ]
     }
 }
 
-# 4. 最上方：選擇基金名稱與風險評估類別選單
+# 4. 選擇基金名稱與風險評估類別選單
 ctrl_col1, ctrl_col2 = st.columns([1.8, 1.2])
 
 with ctrl_col1:
@@ -390,8 +405,6 @@ with st.expander(f"🏢 點擊展開 / 折疊：基金公司背景簡介 — {cu
         </ul>
     """, unsafe_allow_html=True)
 
-st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
-
 # 官方數據源聲明備註
 st.markdown("""
     <div class="data-disclaimer-note">
@@ -399,9 +412,7 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# 5. 核心數據名片 (第一排 7 大結構名片)
-kpi_c1, kpi_c2, kpi_c3, kpi_c4, kpi_c5, kpi_c6, kpi_c7 = st.columns(7)
-
+# 5. 💡 重新精細歸類名片（三大結構區塊）
 if fund_type == "債券基金":
     p2_delta = curr_fund['kpis'].get('p2_delta', '⚠️ 存在本金補貼風險')
     p2_color = curr_fund['kpis'].get('p2_color', 'inverse')
@@ -409,24 +420,6 @@ if fund_type == "債券基金":
     p3_color = curr_fund['kpis'].get('p3_color', 'inverse')
     p5_delta = curr_fund['kpis'].get('p5_delta', '流動資產')
     p5_color = curr_fund['kpis'].get('p5_color', 'normal')
-
-    with kpi_c1: st.metric(label="現時派息率", value=curr_fund['kpis']['p1'], delta="年化分派", delta_color="normal")
-    with kpi_c2: st.metric(label="派息與收益息差", value=curr_fund['kpis']['p2'], delta=p2_delta, delta_color=p2_color)
-    with kpi_c3: st.metric(label="平均持有債務評級", value=curr_fund['kpis']['p3'], delta=p3_delta, delta_color=p3_color)
-    with kpi_c4: st.metric(label="續存率 / 有效期", value=curr_fund['kpis']['p4'], delta="存續期 (久期)", delta_color="normal")
-    with kpi_c5: st.metric(label="手持現金比率", value=curr_fund['kpis']['p5'], delta=p5_delta, delta_color=p5_color)
-    with kpi_c6: st.metric(label="前十大發行人佔比", value=curr_fund['kpis']['p6'], delta="極度分散", delta_color="normal")
-    with kpi_c7: st.metric(label="槓桿比率", value=curr_fund['kpis']['p7'], delta="無顯著借貸", delta_color="normal")
-else:
-    for c, title in zip([kpi_c1, kpi_c2, kpi_c3, kpi_c4, kpi_c5, kpi_c6, kpi_c7], ["現時派息率", "息差 / Beta", "平均持股/債評級", "續存率 / 波動率", "手持現金比率", "前十大發行人佔比", "槓桿比率"]):
-        with c: st.metric(label=title, value="待核對", delta="請上傳PDF")
-
-st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
-
-# 💡 第二排：重點展示 4 大核心財務流量名片 (總資產、淨營運收益、總派息金額、贖回/申購差距)
-fin_c1, fin_c2, fin_c3, fin_c4 = st.columns(4)
-
-if fund_type == "債券基金":
     p9_delta = curr_fund['kpis'].get('p9_delta', '🟢 總收入-總支出')
     p9_color = curr_fund['kpis'].get('p9_color', 'normal')
     p10_delta = curr_fund['kpis'].get('p10_delta', '🟢 淨收益覆蓋佳')
@@ -434,15 +427,31 @@ if fund_type == "債券基金":
     p11_delta = curr_fund['kpis'].get('p11_delta', '⚠️ 申購 - 贖回差距')
     p11_color = curr_fund['kpis'].get('p11_color', 'inverse')
 
-    with fin_c1: st.metric(label="總基金資產值 (AUM)", value=curr_fund['kpis']['p8'], delta="百萬美元 (USD Million)", delta_color="normal")
-    with fin_c2: st.metric(label="過往一年淨收益 (總收入-總支出)", value=curr_fund['kpis']['p9'], delta=p9_delta, delta_color=p9_color)
-    with fin_c3: st.metric(label="過往一年總派息金額", value=curr_fund['kpis']['p10'], delta=p10_delta, delta_color=p10_color)
-    with fin_c4: st.metric(label="申購與贖回差距 (淨資金流向)", value=curr_fund['kpis']['p11'], delta=p11_delta, delta_color=p11_color)
+    # --- 區塊一：📈 收益與分派指標 ---
+    st.markdown('<div class="metric-group-header">📈 收益與分派指標 (Income & Dividend Metrics)</div>', unsafe_allow_html=True)
+    g1_c1, g1_c2, g1_c3, g1_c4 = st.columns(4)
+    with g1_c1: st.metric(label="現時派息率", value=curr_fund['kpis']['p1'], delta="年化分派", delta_color="normal")
+    with g1_c2: st.metric(label="派息與收益息差", value=curr_fund['kpis']['p2'], delta=p2_delta, delta_color=p2_color)
+    with g1_c3: st.metric(label="過往一年總派息金額", value=curr_fund['kpis']['p10'], delta=p10_delta, delta_color=p10_color)
+    with g1_c4: st.metric(label="過往一年淨收益 (總收入-總支出)", value=curr_fund['kpis']['p9'], delta=p9_delta, delta_color=p9_color)
+
+    # --- 區塊二：🛡️ 風險與信用結構 ---
+    st.markdown('<div class="metric-group-header">🛡️ 風險與信用結構 (Risk & Credit Structure)</div>', unsafe_allow_html=True)
+    g2_c1, g2_c2, g2_c3, g2_c4, g2_c5 = st.columns(5)
+    with g2_c1: st.metric(label="平均持有債務評級", value=curr_fund['kpis']['p3'], delta=p3_delta, delta_color=p3_color)
+    with g2_c2: st.metric(label="續存率 / 有效存續期", value=curr_fund['kpis']['p4'], delta="存續期 (久期)", delta_color="normal")
+    with g2_c3: st.metric(label="手持現金比率", value=curr_fund['kpis']['p5'], delta=p5_delta, delta_color=p5_color)
+    with g2_c4: st.metric(label="前十大發行人佔比", value=curr_fund['kpis']['p6'], delta="極度分散", delta_color="normal")
+    with g2_c5: st.metric(label="槓桿比率", value=curr_fund['kpis']['p7'], delta="無顯著借貸", delta_color="normal")
+
+    # --- 區塊三：💵 規模與資金流向 (USD Million) ---
+    st.markdown('<div class="metric-group-header">💵 規模與資金流向 (Capital & AUM Flow - USD Million)</div>', unsafe_allow_html=True)
+    g3_c1, g3_c2 = st.columns(2)
+    with g3_c1: st.metric(label="總基金資產值 (AUM)", value=curr_fund['kpis']['p8'], delta="百萬美元 (USD Million)", delta_color="normal")
+    with g3_c2: st.metric(label="申購與贖回差距 (淨資金流向)", value=curr_fund['kpis']['p11'], delta=p11_delta, delta_color=p11_color)
+
 else:
-    with fin_c1: st.metric(label="總基金資產值 (AUM)", value="待核對", delta="請上傳PDF")
-    with fin_c2: st.metric(label="過往一年淨收益", value="待核對", delta="請上傳PDF")
-    with fin_c3: st.metric(label="過往一年總派息金額", value="待核對", delta="請上傳PDF")
-    with fin_c4: st.metric(label="申購與贖回差距", value="待核對", delta="請上傳PDF")
+    st.info("請選擇對應的風險評估類別以載入名片數據。")
 
 st.markdown("<br>", unsafe_allow_html=True)
 
