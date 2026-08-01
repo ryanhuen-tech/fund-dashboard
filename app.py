@@ -256,7 +256,7 @@ st.markdown("### 📊 風險維度分析及基金底層資產數據")
 
 main_tab1, main_tab2, main_tab3, main_tab4, main_tab5, main_tab6, main_tab7 = st.tabs([
     "🕸️ 風險維度雷達圖", 
-    "📋 前十大持倉清單",
+    "📋 底層資產清單", # 💡 已更名為 底層資產清單
     "📅 歷史派息紀錄", 
     "💰 派息組成 (收益 vs 資本)", 
     "🏭 十大行業分佈 (%)", 
@@ -278,12 +278,12 @@ with main_tab1:
         )
         st.plotly_chart(fig_radar, use_container_width=True)
 
-# Tab 2: 前十大持倉清單
+# Tab 2: 底層資產清單 (更名及欄位同步)
 with main_tab2:
     top10_rows_html = "".join([f"<tr><td style='width: 10%;'><b>{row['排名']}</b></td><td style='width: 45%;'><b>{row['持倉名稱']}</b></td><td style='width: 30%;'>{row['資產類別']}</td><td style='width: 15%; font-weight: bold;'>{row['佔比 (%)']}</td></tr>" for row in curr_fund["top10"]])
     st.markdown(f"""
     <table class="custom-table">
-        <thead><tr><th>排名</th><th>持倉名稱</th><th>資產類別</th><th>佔比 (%)</th></tr></thead>
+        <thead><tr><th>排名</th><th>底層資產名稱</th><th>資產類別</th><th>佔比 (%)</th></tr></thead>
         <tbody>{top10_rows_html}</tbody>
     </table>
     """, unsafe_allow_html=True)
@@ -363,7 +363,7 @@ with main_tab7:
 
 st.markdown("---")
 
-# 7. 💡 【新增隱藏功能】：使用 st.expander 將「基金深度風險評估」表格可摺疊隱藏！
+# 7. 隱藏摺疊：基金深度風險評估明細表
 with st.expander("📋 點擊展開 / 折疊：基金深度風險評估明細表", expanded=True):
     if fund_type == "債券基金":
         html_table = """
