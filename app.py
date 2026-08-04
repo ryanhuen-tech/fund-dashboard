@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import pandas as pd
 import plotly.express as px
 
@@ -176,7 +177,7 @@ st.markdown("""
 # 標題獨立呈現
 st.markdown('<div class="main-title">🛡️ 智能基金風險評估系統</div>', unsafe_allow_html=True)
 
-# 3. 預設資料庫 (包含上月派息率與性價比點算)
+# 3. 預設資料庫 (全 6 隻基金數據完整建檔)
 PRESET_FUNDS = {
     "Z13 富達基金 - 美元高收益基金 (上月派息: 7.42%)": {
         "code": "Z13",
@@ -619,7 +620,7 @@ PRESET_FUNDS = {
         "company_name": "友邦投資管理香港 (AIA Investment Management HK)",
         "company_profile": [
             "<b>亞太壽險巨擘子公司</b>：成立於 2019 年（母公司友邦保險 1299.HK 創立於 1919 年），為友邦保險集團旗下的專業資產管理機構。",
-            "<b>資產規模強勁</b>：專為友邦保險集團及獨立基金進行全球配置，管理資產總額 (AUM) 超過 3,000 億美元。",
+            "<b>資產規模強勁</b>：專為友邦保險集團及獨立基金進行全配置，管理資產總額 (AUM) 超過 3,000 億美元。",
             "<b>主打機構級審慎風控</b>：承襲保險資金的審慎投資基因，以嚴謹的風險預算與基本面研究管理固定收益組合。",
             "<b>雙重嚴格金融監管</b>：UCITS 旗艦基金發行註冊於盧森堡，受盧森堡 CSSF 及香港 SFC 雙重嚴格監督。"
         ],
@@ -823,7 +824,7 @@ PRESET_FUNDS = {
             ["四、信用風險", "評級分佈與非投資級占比", "• 10分: 平均評級 BBB 以上<br>• 5分: 平均評級 BB 級<br>• 0分: Caa/CCC級 >10% 或未評級 >15%", "• 綜合平均評級：BB- 級<br>• BB 級占 47.20%、B 級占 38.51%<br>👉 符合簡算規則 5 分級別 (BB 級)。", "5 / 10", "<span class='quality-badge-yellow'>🟡 中等風險</span>"],
             ["五、槓桿水平", "資產膨脹率 (Total / Net Assets)", "• 10分: 比率 <105% (無顯著槓桿)<br>• 5分: 比率 105%-120%<br>• 0分: 比率 >120% (槓桿過高)", "• 總資產 €2,597.48M / 淨資產 €2,569.28M = 101.09%<br>👉 比率 < 105%，完全無顯著借貸槓桿。", "10 / 10", "<span class='quality-badge-green'>✔ 優秀</span>"],
             ["六、利率敏感度", "有效存續期 (Duration)", "• 10分: 存續期 <3 年 (抗升息)<br>• 5分: 存續期 3-6 年<br>• 0分: 存續期 >6 年", "• 有效存續期 (Effective Duration)：~2.80 年<br>👉 存續期小於 3 年，符合 10 分規則 (高抗升息力)。", "10 / 10", "<span class='quality-badge-green'>✔ 優秀</span>"],
-            ["七、流動性風險", "現金儲備與營運現金流", "• 10分: 現金 >10% 且營運 Cash Flow 為正<br>• 5分: 現金 5%-10%<br>• 0分: 現金 <5% 或流動性緊縮", "• 銀行存款 6.11% (€1.57 億) + 申購淨流入 +€6.95 億歐元<br>👉 營運現金流極度充沛，流動性極優。", "10 / 10", "<span class='quality-badge-green'>✔ 優秀</span>"],
+            ["七、流動性風險", "現金儲備與營運現金流", "• 10分: 現金 >10% 或流動性充沛且營運 Cash Flow 為正<br>• 5分: 現金 5%-10%<br>• 0分: 現金 <5% 或流動性緊縮", "• 銀行存款 6.11% (€1.57 億) + 申購淨流入 +€6.95 億歐元<br>👉 營運現金流極度充沛，流動性極優。", "10 / 10", "<span class='quality-badge-green'>✔ 優秀</span>"],
             ["八、匯率風險", "衍生品對沖與未實現損益", "• 10分: 全額對沖且衍生品虧損 <1% NAV<br>• 5分: 部分對沖<br>• 0分: 未對沖且外幣曝險過高", "• 基礎貨幣為歐元 (EUR)<br>• 提供全套對沖股份類別 (USD H / CHF H / AUD H 等)<br>👉 避險機制完善，符合 10 分規則。", "10 / 10", "<span class='quality-badge-green'>✔ 優秀</span>"],
             ["九、區域風險", "單一區域/國家持倉集中度", "• 5分: 單一區域 <40%<br>• 2.5分: 單一區域 40%-60%<br>• 0分: 單一區域 >60%", "• 歐洲多國合計占 > 80%<br>👉 雖然分散於盧森堡、英國、法國等國，但屬歐洲單一區域。", "2.5 / 5", "<span class='quality-badge-yellow'>🟡 區域集中</span>"],
             ["十、總開支比率", "每年管理費 (Management Fee)", "• 5分: 管理費 <1.0%<br>• 2.5分: Management Fee 1.0%-1.5%<br>• 0分: Management Fee >1.5%", "• 零售 P 類別總開支率 (TER)：約 1.01% - 1.05% / 年<br>👉 落在 1.0%-1.5% 規則區間，符合 2.5 分規則。", "2.5 / 5", "<span class='quality-badge-yellow'>🟡 中等</span>"]
@@ -835,7 +836,7 @@ PRESET_FUNDS = {
 top_tab1, top_tab2 = st.tabs(["📊 跨基金總體風險比較表 (全基金縱覽)", "🔍 單一基金深度風險剖析"])
 
 # ==============================================================================
-# TAB 1: 📊 跨基金總體風險比較表 (100% 復原彩色風險標籤 + 動態排序選單)
+# TAB 1: 📊 跨基金總體風險比較表 (組件級 HTML 穩定修復版)
 # ==============================================================================
 with top_tab1:
     st.markdown("### 📊 跨基金 10 大風險維度得分總覽表")
@@ -846,7 +847,6 @@ with top_tab1:
         score_val = float(f["score"])
         risk_deduction = 100.0 - score_val if (100.0 - score_val) > 0 else 1.0
         yield_val = f["last_yield"]
-        # 性價比指數 = (上月派息率 / 風險扣分) * 100
         eff_score = round((yield_val / risk_deduction) * 100, 2)
 
         row = {
@@ -878,7 +878,7 @@ with top_tab1:
         sort_by_col = st.selectbox(
             "🔀 請選擇表格排序依據 (Sort By)：",
             ["性價比指數 (Yield/Risk)", "上月年化派息率 (%)", "綜合風險總分", "代號", "晨星評級", "一、派息質量 (20)", "二、底層資產質素 (15)", "三、集中度風險 (5)", "四、信用風險 (10)", "五、槓桿水平 (10)", "六、利率敏感度 (10)", "七、流動性風險 (10)", "八、匯率風險 (10)", "九、區域風險 (5)", "十、總開支比率 (5)"],
-            index=0 # 預設依據性價比指數排序
+            index=0
         )
     with sort_col2:
         sort_order = st.radio("排序方向：", ["由高至低 (降序)", "由低至高 (升序)"], horizontal=True)
@@ -888,44 +888,46 @@ with top_tab1:
     sort_key = "star_num" if sort_by_col == "晨星評級" else sort_by_col
     df_matrix_sorted = df_matrix.sort_values(sort_key, ascending=ascending_flag)
 
-    # 3. 渲染完美的 HTML 表格 (100% 復原綠/黃/紅三色標籤與名稱含派息率)
-    matrix_rows_html = ""
+    # 3. 拼接清潔無無窮換行符之極簡 HTML (無換行，無縮排，徹底解決亂碼)
+    rows_list = []
     for _, r in df_matrix_sorted.iterrows():
-        b_p1 = "quality-badge-green" if r['一、派息質量 (20)']>=15 else "quality-badge-yellow" if r['一、派息質量 (20)']>=10 else "quality-badge-red"
-        b_p2 = "quality-badge-green" if r['二、底層資產質素 (15)']>=15 else "quality-badge-yellow" if r['二、底層資產質素 (15)']>=10 else "quality-badge-red"
-        b_p3 = "quality-badge-green" if r['三、集中度風險 (5)']>=5 else "quality-badge-yellow"
-        b_p4 = "quality-badge-green" if r['四、信用風險 (10)']>=10 else "quality-badge-yellow"
-        b_p5 = "quality-badge-green" if r['五、槓桿水平 (10)']>=10 else "quality-badge-yellow"
-        b_p6 = "quality-badge-green" if r['六、利率敏感度 (10)']>=10 else "quality-badge-yellow" if r['六、利率敏感度 (10)']>=5 else "quality-badge-red"
-        b_p7 = "quality-badge-green" if r['七、流動性風險 (10)']>=10 else "quality-badge-yellow"
-        b_p8 = "quality-badge-green" if r['八、匯率風險 (10)']>=10 else "quality-badge-yellow"
-        b_p9 = "quality-badge-green" if r['九、區域風險 (5)']>=5 else "quality-badge-yellow" if r['九、區域風險 (5)']>=2.5 else "quality-badge-red"
-        b_p10 = "quality-badge-green" if r['十、總開支比率 (5)']>=5 else "quality-badge-yellow"
+        b1 = "quality-badge-green" if r['一、派息質量 (20)']>=15 else "quality-badge-yellow" if r['一、派息質量 (20)']>=10 else "quality-badge-red"
+        b2 = "quality-badge-green" if r['二、底層資產質素 (15)']>=15 else "quality-badge-yellow" if r['二、底層資產質素 (15)']>=10 else "quality-badge-red"
+        b3 = "quality-badge-green" if r['三、集中度風險 (5)']>=5 else "quality-badge-yellow"
+        b4 = "quality-badge-green" if r['四、信用風險 (10)']>=10 else "quality-badge-yellow"
+        b5 = "quality-badge-green" if r['五、槓桿水平 (10)']>=10 else "quality-badge-yellow"
+        b6 = "quality-badge-green" if r['六、利率敏感度 (10)']>=10 else "quality-badge-yellow" if r['六、利率敏感度 (10)']>=5 else "quality-badge-red"
+        b7 = "quality-badge-green" if r['七、流動性風險 (10)']>=10 else "quality-badge-yellow"
+        b8 = "quality-badge-green" if r['八、匯率風險 (10)']>=10 else "quality-badge-yellow"
+        b9 = "quality-badge-green" if r['九、區域風險 (5)']>=5 else "quality-badge-yellow" if r['九、區域風險 (5)']>=2.5 else "quality-badge-red"
+        b10 = "quality-badge-green" if r['十、總開支比率 (5)']>=5 else "quality-badge-yellow"
 
-        matrix_rows_html += f"""
-        <tr>
-            <td><b>{r['代號']}</b></td>
-            <td><b>{r['基金簡稱']}</b></td>
-            <td><span class='yield-tag'>📈 {r['上月年化派息率 (%)']}%</span></td>
-            <td><span class='ms-star-tag'>{r['晨星評級']}</span></td>
-            <td style='font-size:15px; font-weight:800; color:#1E3A8A;'>{r['綜合風險總分']} / 100</td>
-            <td style='font-size:15px; font-weight:800; color:#059669;'><b>{r['性價比指數 (Yield/Risk)']}</b></td>
-            <td><span class='{b_p1}'>{r['一、派息質量 (20)']} 分</span></td>
-            <td><span class='{b_p2}'>{r['二、底層資產質素 (15)']} 分</span></td>
-            <td><span class='{b_p3}'>{r['三、集中度風險 (5)']} 分</span></td>
-            <td><span class='{b_p4}'>{r['四、信用風險 (10)']} 分</span></td>
-            <td><span class='{b_p5}'>{r['五、槓桿水平 (10)']} 分</span></td>
-            <td><span class='{b_p6}'>{r['六、利率敏感度 (10)']} 分</span></td>
-            <td><span class='{b_p7}'>{r['七、流動性風險 (10)']} 分</span></td>
-            <td><span class='{b_p8}'>{r['八、匯率風險 (10)']} 分</span></td>
-            <td><span class='{b_p9}'>{r['九、區域風險 (5)']} 分</span></td>
-            <td><span class='{b_p10}'>{r['十、總開支比率 (5)']} 分</span></td>
-        </tr>
-        """
+        row_str = f"<tr><td><b>{r['代號']}</b></td><td><b>{r['基金簡稱']}</b></td><td><span class='yield-tag'>📈 {r['上月年化派息率 (%)']}%</span></td><td><span class='ms-star-tag'>{r['晨星評級']}</span></td><td style='font-size:15px; font-weight:800; color:#1E3A8A;'>{r['綜合風險總分']} / 100</td><td style='font-size:15px; font-weight:800; color:#059669;'><b>{r['性價比指數 (Yield/Risk)']}</b></td><td><span class='{b1}'>{r['一、派息質量 (20)']} 分</span></td><td><span class='{b2}'>{r['二、底層資產質素 (15)']} 分</span></td><td><span class='{b3}'>{r['三、集中度風險 (5)']} 分</span></td><td><span class='{b4}'>{r['四、信用風險 (10)']} 分</span></td><td><span class='{b5}'>{r['五、槓桿水平 (10)']} 分</span></td><td><span class='{b6}'>{r['六、利率敏感度 (10)']} 分</span></td><td><span class='{b7}'>{r['七、流動性風險 (10)']} 分</span></td><td><span class='{b8}'>{r['八、匯率風險 (10)']} 分</span></td><td><span class='{b9}'>{r['九、區域風險 (5)']} 分</span></td><td><span class='{b10}'>{r['十、總開支比率 (5)']} 分</span></td></tr>"
+        rows_list.append(row_str)
 
-    full_matrix_html = f"""
-    <div style='overflow-x: auto;'>
-        <table class='custom-table' style='min-width: 1400px;'>
+    table_body_html = "".join(rows_list)
+
+    # 4. 打包完整的 HTML + CSS 獨立元件
+    component_html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <style>
+    body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; background: transparent; }}
+    .custom-table {{ width: 100%; border-collapse: collapse; background-color: #FFFFFF; border-radius: 8px; border: 1px solid #E2E8F0; font-size: 13px; }}
+    .custom-table th {{ background-color: #1E3A8A; color: #FFFFFF; font-weight: 700; text-align: left; padding: 12px 14px; border-bottom: 2px solid #1E293B; white-space: nowrap; }}
+    .custom-table td {{ padding: 12px 14px; border-bottom: 1px solid #E2E8F0; vertical-align: middle; color: #334155; white-space: nowrap; }}
+    .custom-table tr:hover {{ background-color: #F8FAFC; }}
+    .quality-badge-green {{ background-color: #D1FAE5; color: #065F46; padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 12px; display: inline-block; }}
+    .quality-badge-yellow {{ background-color: #FEF3C7; color: #92400E; padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 12px; display: inline-block; }}
+    .quality-badge-red {{ background-color: #FEE2E2; color: #991B1B; padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 12px; display: inline-block; }}
+    .ms-star-tag {{ background-color: #FEF08A; color: #854D0E; padding: 3px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; }}
+    .yield-tag {{ background-color: #E0F2FE; color: #0369A1; padding: 3px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; }}
+    </style>
+    </head>
+    <body>
+    <div style="overflow-x: auto;">
+        <table class="custom-table" style="min-width: 1400px;">
             <thead>
                 <tr>
                     <th>代號</th>
@@ -947,17 +949,20 @@ with top_tab1:
                 </tr>
             </thead>
             <tbody>
-                {matrix_rows_html}
+                {table_body_html}
             </tbody>
         </table>
     </div>
+    </body>
+    </html>
     """
-    
-    st.markdown(full_matrix_html, unsafe_allow_html=True)
+
+    # 使用 Streamlit 官方組件安全渲染 (完美避開 Code Block 亂碼問題)
+    components.html(component_html, height=360, scrolling=True)
 
     st.markdown("<br><hr>", unsafe_allow_html=True)
 
-    # 4. 多基金重疊雷達圖比對區塊
+    # 5. 多基金重疊雷達圖比對區塊
     col_compare_left, col_compare_right = st.columns([1.3, 1])
 
     with col_compare_left:
