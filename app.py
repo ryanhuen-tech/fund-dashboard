@@ -13,7 +13,7 @@ st.set_page_config(
 st.markdown("""
     <style>
     .block-container {
-        padding-top: 2.5rem !important;
+        padding-top: 2rem !important;
         padding-bottom: 2rem !important;
     }
     .main-title {
@@ -156,7 +156,7 @@ st.markdown("""
 # 標題獨立呈現
 st.markdown('<div class="main-title">🛡️ 智能基金風險評估系統</div>', unsafe_allow_html=True)
 
-# 3. 預設資料庫 (派息質量採納 5 階精準評分：20, 15, 10, 5, 0 分)
+# 3. 預設資料庫 (全 6 隻基金數據完整建檔)
 PRESET_FUNDS = {
     "Z13 富達基金 - 美元高收益基金": {
         "code": "Z13",
@@ -374,7 +374,7 @@ PRESET_FUNDS = {
             "<b>深耕入息多元資產</b>：旗艦「入息基金 (Income Fund)」長年榮獲多項《指標》傑出基金大獎，專精於股債混合收益最佳化。"
         ],
         "score": "72.5",
-        "summary": "富蘭克林入息基金依據簡算規則審視得分為 72.5 分 (中高健康度)。純經常性利息淨收益 ($3.50億) 對總派息 ($5.73億) 覆蓋率為 61.1%，存在 $2.23 億缺口，需依賴股票資本利得 (Capital Gains) 補足，派息質量獲得 10 分[cite: 1, 2]；十大持股中包含美國國債、寶僑、微軟、家得寶等頂尖良好資產 (佔 18.2%)[cite: 2]；全年度呈現 +$3,249.83M 淨資金流入 (流動性極佳)[cite: 2]。",
+        "summary": "富蘭克林入息基金依據簡算規則審視得分為 72.5 分 (中高健康度)。純經常性利息淨收益 ($3.50億) 對總派息 ($5.73億) 覆蓋率為 61.1%，存在 $2.23 億缺口，需依賴股票資本利得 (Capital Gains) 補足，派息質量獲得 10 分；十大持股中包含美國國債、寶僑、微軟、家得寶等頂尖良好資產 (佔 18.2%)；全年度呈現 +$3,249.83M 淨資金流入 (流動性極佳)。",
         "kpis": {
             "p1": "8.37%",
             "p2": "+2.26%", "p2_delta": "⚠️ 存在 2.26% 資本補貼缺口", "p2_color": "inverse",
@@ -457,13 +457,13 @@ PRESET_FUNDS = {
             {"月份": "2026年6月", "北美": 80.8, "歐洲": 11.2, "其他地區": 2.0, "現金及等值": 6.0}
         ],
         "eval_table": [
-            ["一、派息質量", "從資本派息 (ROC) 與總回報覆蓋率", "• 20分: 覆蓋率 ≥100% 且 ROC <10%<br>• 15分: 覆蓋率 80%-100% (利得健康補充)<br>• 10分: 覆蓋率 60%-80% (中度資本補貼)<br>• 5分: 覆蓋率 <60% (高度依賴本金/ROC)", "• 月報到期收益率：6.11% | 現時派息率：~8.37%[cite: 1, 2]<br>• 經常性淨收益 ($3.50億) 對總派息 ($5.73億) 覆蓋率僅為 61.1%[cite: 2]<br>👉 存在 $2.23 億缺口需賣股補足，符合 10 分中度資本補貼標準。", "10 / 20", "<span class='quality-badge-yellow'>🟡 資本利得補貼</span>"],
+            ["一、派息質量", "從資本派息 (ROC) 與總回報覆蓋率", "• 20分: 覆蓋率 ≥100% 且 ROC <10%<br>• 15分: 覆蓋率 80%-100% (利得健康補充)<br>• 10分: 覆蓋率 60%-80% (中度資本補貼)<br>• 5分: 覆蓋率 <60% (高度依賴本金/ROC)", "• 月報到期收益率：6.11% | 現時派息率：~8.37%<br>• 經常性淨收益 ($3.50億) 對總派息 ($5.73億) 覆蓋率僅為 61.1%<br>👉 存在 $2.23 億缺口需賣股補足，符合 10 分中度資本補貼標準。", "10 / 20", "<span class='quality-badge-yellow'>🟡 資本利得補貼</span>"],
             ["二、底層資產質素", "前十大持股信用結構與品質判定", "• 15分: 良好 (投資級/國債) ≥70%<br>• 10分: 良好與普通混合且風險可控<br>• 5分: 普通 (BB/B級) 占 40%-70%<br>• 0分: 差 (CCC級/受壓) >30%", "• Top 10 中 9 項為優質國債/藍籌巨擘 (占 20.8%)<br>• 良好品質資產佔比達 89.4%<br>👉 符合滿分 15 分規則。", "15 / 15", "<span class='quality-badge-green'>✔ 高品質藍籌</span>"],
             ["三、集中度風險", "前十大發行人持倉占比", "• 5分: 前持倉 <20% (極分散)<br>• 2.5分: 前持倉 20%-30%<br>• 0分: 前持倉 >30%", "• 前十大發行人持倉合計占：23.27%<br>👉 落在 20%-30% 規則區間，符合 2.5 分規則。", "2.5 / 5", "<span class='quality-badge-yellow'>🟡 適中分散</span>"],
             ["四、信用風險", "評級分佈與非投資級占比", "• 10分: 平均評級 BBB 以上<br>• 5分: 平均評級 BB 級<br>• 0分: Caa/CCC級 >10% 或未評級 >15%", "• 綜合平均評級：BB 級<br>• 高收益債占 19.17%<br>👉 符合簡算規則 5 分級別 (BB 級)。", "5 / 10", "<span class='quality-badge-yellow'>🟡 中等風險</span>"],
             ["五、槓桿水平", "資產膨脹率 (Total / Net Assets)", "• 10分: 比率 <105% (無顯著槓桿)<br>• 5分: 比率 105%-120%<br>• 0分: 比率 >120% (槓桿過高)", "• 總資產 $8,878.70M / 淨資產 $8,817.35M = 100.69%<br>👉 比率 < 105%，完全無顯著借貸槓桿。", "10 / 10", "<span class='quality-badge-green'>✔ 優秀</span>"],
             ["六、利率敏感度", "有效存續期 (Duration)", "• 10分: 存續期 <3 年 (抗升息)<br>• 5分: 存續期 3-6 年<br>• 0分: 存續期 >6 年", "• 有效存續期 (Effective Duration)：4.24 年<br>👉 落在 3-6 年規則區間，符合 5 分規則。", "5 / 10", "<span class='quality-badge-yellow'>🟡 中等久期</span>"],
-            ["七、流動性風險", "現金儲備與營運現金流", "• 10分: 現金 >10% 或流動性充沛且營運 Cash Flow 為正<br>• 5分: 現金 5%-10%<br>• 0分: 現金 <5% 或流動性緊縮", "• 現金 5.97% + 申購淨流入達 +$32.5 億美元<br>👉 營運現金流極度充沛，符合 10 分規則。", "10 / 10", "<span class='quality-badge-green'>✔ 優秀</span>"],
+            ["七、流動性風險", "現金儲備與營運現金流", "• 10分: 現金 >10% 且營運 Cash Flow 為正<br>• 5分: 現金 5%-10%<br>• 0分: 現金 <5% 或流動性緊縮", "• 現金 5.97% + 申購淨流入達 +$32.5 億美元<br>👉 營運現金流極度充沛，符合 10 分規則。", "10 / 10", "<span class='quality-badge-green'>✔ 優秀</span>"],
             ["八、匯率風險", "衍生品對沖與未實現損益", "• 10分: 全額對沖且衍生品虧損 <1% NAV<br>• 5分: 部分對沖<br>• 0分: 未對沖且外幣曝險過高", "• 基礎貨幣為美元 (USD)<br>• 提供全套對沖股份類別 (AUD H / EUR H / GBP H / JPY H)<br>👉 避險機制完善，符合 10 分規則。", "10 / 10", "<span class='quality-badge-green'>✔ 優秀</span>"],
             ["九、區域風險", "單一區域/國家持倉集中度", "• 5分: 單一區域 <40%<br>• 2.5分: 單一區域 40%-60%<br>• 0分: 單一區域 >60%", "• 北美/美國企業占比：80.8% (> 60%)<br>👉 落在 > 60% 規則區間，符合 0 分規則。", "0 / 5", "<span class='quality-badge-red'>🚨 高度區域集中</span>"],
             ["十、總開支比率", "每年管理費 (Management Fee)", "• 5分: 管理費 <1.0%<br>• 2.5分: 管理費 1.0%-1.5%<br>• 0分: Management Fee >1.5%", "• 零售 A 類別總開支率 (TER)：約 1.35% / 年<br>👉 落在 1.0%-1.5% 規則區間，符合 2.5 分規則。", "2.5 / 5", "<span class='quality-badge-yellow'>🟡 中等</span>"]
@@ -482,7 +482,7 @@ PRESET_FUNDS = {
             "<b>高品質投資級專家</b>：精專於全球投資級企業債券與多資產研究，擁有獨立強大的信用評級分析團隊。"
         ],
         "score": "87.5",
-        "summary": "資本集團全球公司債券基金依據簡算規則審視得分為 87.5 分 (高品質投資級)。前十大持股均為摩根士丹利、甲骨文、摩根大通等全投資級高質感企業 (占 15.8%)[cite: 1]；年化派息率 4.77% 低於到期收益率 6.50%[cite: 1]；全年度淨收益 ($1.618億) 243% 超額覆蓋總派息 ($6,642萬)[cite: 4]；全年度呈現 +$21.36 億美元龐大淨資金流入[cite: 4]。",
+        "summary": "資本集團全球公司債券基金依據簡算規則審視得分為 87.5 分 (高品質投資級)。前十大持股均為摩根士丹利、甲骨文、摩根大通等全投資級高質感企業 (占 15.8%)；年化派息率 4.77% 低於到期收益率 6.50%；全年度淨收益 ($1.618億) 243% 超額覆蓋總派息 ($6,642萬)；全年度呈現 +$21.36 億美元龐大淨資金流入。",
         "kpis": {
             "p1": "4.77%",
             "p2": "-1.73%", "p2_delta": "🟢 息差為負 / 收益完美覆蓋", "p2_color": "normal",
@@ -569,11 +569,11 @@ PRESET_FUNDS = {
             ["三、集中度風險", "前十大發行人持倉占比", "• 5分: 前持倉 <20% (極分散)<br>• 2.5分: 前持倉 20%-30%<br>• 0分: 前持倉 >30%", "• 前十大發行人持倉合計占：15.80% (< 20%)<br>👉 符合 5 分滿分規則 (極度分散)。", "5 / 5", "<span class='quality-badge-green'>✔ 極度分散</span>"],
             ["四、信用風險", "評級分佈與非投資級占比", "• 10分: 平均評級 BBB 以上<br>• 5分: 平均評級 BB 級<br>• 0分: Caa/CCC級 >10% 或未評級 >15%", "• 綜合平均評級：A 級 (投資級別 >99.8%)<br>• A / AA 級占逾 50%、BBB 級占 40.9%<br>👉 符合簡算規則 10 分最高級別 (平均評級 BBB 以上)。", "10 / 10", "<span class='quality-badge-green'>✔ 高品質投資級</span>"],
             ["五、槓桿水平", "資產膨脹率 (Total / Net Assets)", "• 10分: 比率 <105% (無顯著槓桿)<br>• 5分: 比率 105%-120%<br>• 0分: 比率 >120% (槓桿過高)", "• 總資產 $5,515.94M / 淨資產 $5,485.75M = 100.55%<br>👉 比率 < 105%，完全無顯著借貸槓桿。", "10 / 10", "<span class='quality-badge-green'>✔ 優秀</span>"],
-            ["六、利率敏感度", "有效存續期 (Duration)", "• 10分: 存續期 <3 年 (抗升息)<br>• 5分: 存續期 3-6 年<br>• 0分: 存續期 >6 年", "• 有效存續期 (Effective Duration)：6.50 年<br>👉 存續期 > 6 年，落在 0 分規則區間 (對利率敏感)。", "0 / 10", "<span class='status-badge-red'>🚨 久期偏長</span>"],
+            ["六、利率敏感度", "有效存續期 (Duration)", "• 10分: 存續期 <3 年 (抗升息)<br>• 5分: 存續期 3-6 年<br>• 0分: 存續期 >6 年", "• 有效存續期 (Effective Duration)：6.50 年<br>👉 存續期 > 6 年，落在 0 分規則區間 (對利率敏感)。", "0 / 10", "<span class='quality-badge-red'>🚨 久期偏長</span>"],
             ["七、流動性風險", "現金儲備與營運現金流", "• 10分: 現金 >10% 或流動性充沛且營運 Cash Flow 為正<br>• 5分: 現金 5%-10%<br>• 0分: 現金 <5% 或流動性緊縮", "• 銀行存款 4.76% ($1.88 億) + 全年淨流入 +$21.36 億美元<br>👉 手持現金略小於 5% 門檻，符合 5 分規則。", "5 / 10", "<span class='quality-badge-yellow'>🟡 現金比例低</span>"],
             ["八、匯率風險", "衍生品對沖與未實現損益", "• 10分: 全額對沖且衍生品虧損 <1% NAV<br>• 5分: 部分對沖<br>• 0分: 未對沖且外幣曝險過高", "• 基礎貨幣為美元 (USD)<br>• 提供全套對沖股份類別 (EUR H / GBP H / SGD H 等)<br>👉 避險機制完善，符合 10 分規則。", "10 / 10", "<span class='quality-badge-green'>✔ 優秀</span>"],
             ["九、區域風險", "單一區域/國家持倉集中度", "• 5分: 單一區域 <40%<br>• 2.5分: 單一區域 40%-60%<br>• 0分: 單一區域 >60%", "• 美國企業占比：61.39% (> 60%)<br>👉 落在 > 60% 規則區間，符合 0 分規則。", "0 / 5", "<span class='quality-badge-red'>🚨 美國區域集中</span>"],
-            ["十、總開支比率", "每年管理費 (Management Fee)", "• 5分: 管理費 <1.0%<br>• 2.5分: 管理費 1.0%-1.5%<br>• 0分: Management Fee >1.5%", "• 零售 B / Bfdm 類別總開支率 (TER)：約 1.01% - 1.10% / 年<br>👉 落在 1.0%-1.5% 規則區間，符合 2.5 分規則。", "2.5 / 5", "<span class='quality-badge-yellow'>🟡 中等</span>"]
+            ["十、總開支比率", "每年管理費 (Management Fee)", "• 5分: 管理費 <1.0%<br>• 2.5分: Management Fee 1.0%-1.5%<br>• 0分: Management Fee >1.5%", "• 零售 B / Bfdm 類別總開支率 (TER)：約 1.01% - 1.10% / 年<br>👉 落在 1.0%-1.5% 規則區間，符合 2.5 分規則。", "2.5 / 5", "<span class='quality-badge-yellow'>🟡 中等</span>"]
         ]
     },
 
@@ -589,7 +589,7 @@ PRESET_FUNDS = {
             "<b>雙重嚴格金融監管</b>：UCITS 旗艦基金發行註冊於盧森堡，受盧森堡 CSSF 及香港 SFC 雙重嚴格監督。"
         ],
         "score": "75.0",
-        "summary": "友邦美國高收益債券基金依據簡算規則審視得分為 75.0 分 (中高健康度)。派息率 7.23% 高於到期收益率，經常性淨收益覆蓋率為 234%；前十大持倉 100% 為美國國債期貨、國庫券與高評級掉期工具 (良好品質)；底層 99.87% 債券具 Level 1 高級市場活絡流動性；全年度呈現 +$2,577.9 萬美元淨資金流入。",
+        "summary": "友邦美國高收益債券基金依據簡算規則審視得分為 75.0 分 (中高健康度)。前十大持倉中 100% 為美國國債期貨、國庫券與高評級 CDS 掉期工具 (良好品質)；2024 年底 BBB-與 BB 級高質量資產佔比提升至 59.8%；底層 99.87% 債券具 Level 1 高級市場活絡流動性；派息率 7.23%；全年度呈現 +$2,577.9 萬美元淨資金流入。",
         "kpis": {
             "p1": "7.23%",
             "p2": "+0.73%", "p2_delta": "⚠️ 存在 0.73% 資本補貼缺口", "p2_color": "inverse",
@@ -788,258 +788,393 @@ PRESET_FUNDS = {
             ["七、流動性風險", "現金儲備與營運現金流", "• 10分: 現金 >10% 且營運 Cash Flow 為正<br>• 5分: 現金 5%-10%<br>• 0分: 現金 <5% 或流動性緊縮", "• 銀行存款 6.11% (€1.57 億)[cite: 3] + 申購淨流入 +€6.95 億歐元[cite: 3]<br>👉 營運現金流極度充沛，流動性極優。", "10 / 10", "<span class='quality-badge-green'>✔ 優秀</span>"],
             ["八、匯率風險", "衍生品對沖與未實現損益", "• 10分: 全額對沖且衍生品虧損 <1% NAV<br>• 5分: 部分對沖<br>• 0分: 未對沖且外幣曝險過高", "• 基礎貨幣為歐元 (EUR)[cite: 3, 4]<br>• 提供全套對沖股份類別 (USD H / CHF H / AUD H 等)[cite: 3, 4]<br>👉 避險機制完善，符合 10 分規則。[cite: 3, 4]", "10 / 10", "<span class='quality-badge-green'>✔ 優秀</span>"],
             ["九、區域風險", "單一區域/國家持倉集中度", "• 5分: 單一區域 <40%<br>• 2.5分: 單一區域 40%-60%<br>• 0分: 單一區域 >60%", "• 歐洲多國合計占 > 80%[cite: 3]<br>👉 雖然分散於盧森堡、英國、法國等國，但屬歐洲單一區域。[cite: 3]", "2.5 / 5", "<span class='quality-badge-yellow'>🟡 區域集中</span>"],
-            ["十、總開支比率", "每年管理費 (Management Fee)", "• 5分: 管理費 <1.0%<br>• 2.5分: 管理費 1.0%-1.5%<br>• 0分: Management Fee >1.5%", "• 零售 P 類別總開支率 (TER)：約 1.01% - 1.05% / 年[cite: 4]<br>👉 落在 1.0%-1.5% 規則區間，符合 2.5 分規則。[cite: 4]", "2.5 / 5", "<span class='quality-badge-yellow'>🟡 中等</span>"]
+            ["十、總開支比率", "每年管理費 (Management Fee)", "• 5分: 管理費 <1.0%<br>• 2.5分: Management Fee 1.0%-1.5%<br>• 0分: Management Fee >1.5%", "• 零售 P 類別總開支率 (TER)：約 1.01% - 1.05% / 年[cite: 4]<br>👉 落在 1.0%-1.5% 規則區間，符合 2.5 分規則。[cite: 4]", "2.5 / 5", "<span class='quality-badge-yellow'>🟡 中等</span>"]
         ]
     }
 }
 
-# 4. 選擇基金名稱與風險評估類別選單
-ctrl_col1, ctrl_col2 = st.columns([1.8, 1.2])
+# 4. 最頂層主分頁切換：縱覽比較 vs 個別剖析
+top_tab1, top_tab2 = st.tabs(["📊 跨基金總體風險比較表 (全基金縱覽)", "🔍 單一基金深度風險剖析"])
 
-with ctrl_col1:
-    selected_preset = st.selectbox("📌 選擇基金名稱：", list(PRESET_FUNDS.keys()))
+# ==============================================================================
+# TAB 1: 📊 跨基金總體風險比較表 (全基金縱覽頁面)
+# ==============================================================================
+with top_tab1:
+    st.markdown("### 📊 跨基金 10 大風險維度得分總覽表")
+    st.caption("📌 提示：橫向滾動表格可比較全 6 隻基金在各項維度的得分狀況；點選表頭可進行升降序排列。")
 
-curr_fund = PRESET_FUNDS[selected_preset]
-
-# 自動導向正確的風險評估類別
-default_type_index = 2 if "富蘭克林" in selected_preset else 0
-
-with ctrl_col2:
-    fund_type = st.selectbox("📌 風險評估類別：", ["債券基金", "股票基金", "股債混合基金"], index=default_type_index)
-
-# 醒目基金名稱抬頭
-st.markdown(f"""
-    <div class="fund-header">
-        <span style="font-size: 13px; color: #888;">當前分析目標基金 ({fund_type})：</span> 
-        <span class="source-tag">📍 客觀真實數據源 : {curr_fund['zh']}</span><br>
-        <span style="font-size: 20px; font-weight: bold; color: #FFF;">{curr_fund['zh']}</span> 
-        <span style="font-size: 14px; color: #AAA;">({curr_fund['en']})</span>
-    </div>
-""", unsafe_allow_html=True)
-
-# 基金公司背景簡介
-company_profile_html = "".join([f"<li>{item}</li>" for item in curr_fund['company_profile']])
-with st.expander(f"🏢 點擊展開 / 折疊：基金公司背景簡介 — {curr_fund['company_name']}", expanded=False):
-    st.markdown(f"""
-        <ul class="company-profile-list">
-            {company_profile_html}
-        </ul>
-    """, unsafe_allow_html=True)
-
-# 官方數據源聲明備註
-st.markdown("""
-    <div class="data-disclaimer-note">
-        <b>📑 數據來源聲明備註：</b> 本 Dashboard 內所有財務數據、持倉比率、派息成分與營運損益，均完全依據<b>基金官方發布之基金月報 (Factsheet)、派息分派紀錄 (Dividend Distribution History) 及年度財務報告 (Annual Report / Statement of Operations)</b> 客觀建檔與分析。
-    </div>
-""", unsafe_allow_html=True)
-
-# 5. 帶有「小眼仔 👁️ 隱藏/顯示功能」的三大歸類名片區塊
-if fund_type == "債券基金" or fund_type == "股債混合基金":
-    p2_delta = curr_fund['kpis'].get('p2_delta', '⚠️ 存在本金補貼風險')
-    p2_color = curr_fund['kpis'].get('p2_color', 'inverse')
-    p3_delta = curr_fund['kpis'].get('p3_delta', '⚠️ 高收益債 (非投資級)')
-    p3_color = curr_fund['kpis'].get('p3_color', 'inverse')
-    p5_delta = curr_fund['kpis'].get('p5_delta', '流動資產')
-    p5_color = curr_fund['kpis'].get('p5_color', 'normal')
-    p9_delta = curr_fund['kpis'].get('p9_delta', '🟢 總收入-總支出')
-    p9_color = curr_fund['kpis'].get('p9_color', 'normal')
-    p10_delta = curr_fund['kpis'].get('p10_delta', '🟢 淨收益覆蓋佳')
-    p10_color = curr_fund['kpis'].get('p10_color', 'normal')
-    p11_delta = curr_fund['kpis'].get('p11_delta', '⚠️ 申購 - 贖回差距')
-    p11_color = curr_fund['kpis'].get('p11_color', 'inverse')
-
-    # --- 區塊一：📈 收益與分派指標 ---
-    header_col1, eye_col1 = st.columns([4, 1])
-    with header_col1:
-        st.markdown('<div class="metric-group-title">📈 收益與分派指標 (Income & Dividend Metrics)</div>', unsafe_allow_html=True)
-    with eye_col1:
-        show_g1 = st.toggle("👁️ 顯示名片", value=True, key="eye_g1")
+    # 1. 建立縱覽矩陣數據
+    matrix_data = []
+    for key, f in PRESET_FUNDS.items():
+        row = {
+            "代號": f["code"],
+            "基金簡稱": f["zh"],
+            "總得分": float(f["score"]),
+            "一、派息質量 (20)": f["radar_scores"][0],
+            "二、底層資產質素 (15)": f["radar_scores"][1],
+            "三、集中度風險 (5)": f["radar_scores"][2],
+            "四、信用風險 (10)": f["radar_scores"][3],
+            "五、槓桿水平 (10)": f["radar_scores"][4],
+            "六、利率敏感度 (10)": f["radar_scores"][5],
+            "七、流動性風險 (10)": f["radar_scores"][6],
+            "八、匯率風險 (10)": f["radar_scores"][7],
+            "九、區域風險 (5)": f["radar_scores"][8],
+            "十、總開支比率 (5)": f["radar_scores"][9],
+        }
+        matrix_data.append(row)
     
-    if show_g1:
-        g1_c1, g1_c2, g1_c3, g1_c4 = st.columns(4)
-        with g1_c1: st.metric(label="現時派息率", value=curr_fund['kpis']['p1'], delta="年化分派", delta_color="normal")
-        with g1_c2: st.metric(label="派息與收益息差", value=curr_fund['kpis']['p2'], delta=p2_delta, delta_color=p2_color)
-        with g1_c3: st.metric(label="過往一年總派息金額", value=curr_fund['kpis']['p10'], delta=p10_delta, delta_color=p10_color)
-        with g1_c4: st.metric(label="過往一年淨收益 (總收入-總支出)", value=curr_fund['kpis']['p9'], delta=p9_delta, delta_color=p9_color)
+    df_matrix = pd.DataFrame(matrix_data).sort_values("代號")
 
-    st.markdown("<hr style='margin: 10px 0; border: none; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
+    # 2. 呈現漂亮的跨基金風險比較表 (HTML)
+    matrix_rows_html = ""
+    for _, r in df_matrix.iterrows():
+        matrix_rows_html += f"""
+        <tr>
+            <td><b>{r['代號']}</b></td>
+            <td><b>{r['基金簡稱']}</b></td>
+            <td style='font-size: 16px; font-weight: 800; color: #1E3A8A;'>{r['總得分']} / 100</td>
+            <td><span class="{'quality-badge-green' if r['一、派息質量 (20)']>=15 else 'quality-badge-yellow' if r['一、派息質量 (20)']>=10 else 'quality-badge-red'}">{r['一、派息質量 (20)']} 分</span></td>
+            <td><span class="{'quality-badge-green' if r['二、底層資產質素 (15)']>=15 else 'quality-badge-yellow' if r['二、底層資產質素 (15)']>=10 else 'quality-badge-red'}">{r['二、底層資產質素 (15)']} 分</span></td>
+            <td><span class="{'quality-badge-green' if r['三、集中度風險 (5)']>=5 else 'quality-badge-yellow'}">{r['三、集中度風險 (5)']} 分</span></td>
+            <td><span class="{'quality-badge-green' if r['四、信用風險 (10)']>=10 else 'quality-badge-yellow'}">{r['四、信用風險 (10)']} 分</span></td>
+            <td><span class="{'quality-badge-green' if r['五、槓桿水平 (10)']>=10 else 'quality-badge-yellow'}">{r['五、槓桿水平 (10)']} 分</span></td>
+            <td><span class="{'quality-badge-green' if r['六、利率敏感度 (10)']>=10 else 'quality-badge-yellow' if r['六、利率敏感度 (10)']>=5 else 'quality-badge-red'}">{r['六、利率敏感度 (10)']} 分</span></td>
+            <td><span class="{'quality-badge-green' if r['七、流動性風險 (10)']>=10 else 'quality-badge-yellow'}">{r['七、流動性風險 (10)']} 分</span></td>
+            <td><span class="{'quality-badge-green' if r['八、匯率風險 (10)']>=10 else 'quality-badge-yellow'}">{r['八、匯率風險 (10)']} 分</span></td>
+            <td><span class="{'quality-badge-green' if r['九、區域風險 (5)']>=5 else 'quality-badge-yellow' if r['九、區域風險 (5)']>=2.5 else 'quality-badge-red'}">{r['九、區域風險 (5)']} 分</span></td>
+            <td><span class="{'quality-badge-green' if r['十、總開支比率 (5)']>=5 else 'quality-badge-yellow'}">{r['十、總開支比率 (5)']} 分</span></td>
+        </tr>
+        """
 
-    # --- 區塊二：🛡️ 風險與信用結構 ---
-    header_col2, eye_col2 = st.columns([4, 1])
-    with header_col2:
-        st.markdown('<div class="metric-group-title">🛡️ 風險與信用結構 (Risk & Credit Structure)</div>', unsafe_allow_html=True)
-    with eye_col2:
-        show_g2 = st.toggle("👁️ 顯示名片", value=True, key="eye_g2")
-
-    if show_g2:
-        g2_c1, g2_c2, g2_c3, g2_c4, g2_c5 = st.columns(5)
-        with g2_c1: st.metric(label="平均持有債務評級", value=curr_fund['kpis']['p3'], delta=p3_delta, delta_color=p3_color)
-        with g2_c2: st.metric(label="續存率 / 有效存續期", value=curr_fund['kpis']['p4'], delta="存續期 (久期)", delta_color="normal")
-        with g2_c3: st.metric(label="手持現金比率", value=curr_fund['kpis']['p5'], delta=p5_delta, delta_color=p5_color)
-        with g2_c4: st.metric(label="前十大發行人佔比", value=curr_fund['kpis']['p6'], delta="極度分散", delta_color="normal")
-        with g2_c5: st.metric(label="槓桿比率", value=curr_fund['kpis']['p7'], delta="無顯著借貸", delta_color="normal")
-
-    st.markdown("<hr style='margin: 10px 0; border: none; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
-
-    # --- 區塊三：💵 規模與資金流向 (USD/EUR Million) ---
-    header_col3, eye_col3 = st.columns([4, 1])
-    with header_col3:
-        st.markdown('<div class="metric-group-title">💵 規模與資金流向 (Capital & AUM Flow)</div>', unsafe_allow_html=True)
-    with eye_col3:
-        show_g3 = st.toggle("👁️ 顯示名片", value=True, key="eye_g3")
-
-    if show_g3:
-        g3_c1, g3_c2 = st.columns(2)
-        with g3_c1: st.metric(label="總基金資產值 (AUM)", value=curr_fund['kpis']['p8'], delta="百萬計價 (Million)", delta_color="normal")
-        with g3_c2: st.metric(label="申購與贖回差距 (淨資金流向)", value=curr_fund['kpis']['p11'], delta=p11_delta, delta_color=p11_color)
-
-else:
-    st.info("請選擇對應的風險評估類別以載入名片數據。")
-
-st.markdown("<br>", unsafe_allow_html=True)
-
-# 6. 風險維度分析及基金底層資產數據 (7 大 TAB)
-st.markdown("### 📊 風險維度分析及基金底層資產數據")
-
-main_tab1, main_tab2, main_tab3, main_tab4, main_tab5, main_tab6, main_tab7 = st.tabs([
-    "🕸️ 風險維度雷達圖", 
-    "📋 底層資產清單 (含背景與品質)",
-    "📅 歷史派息紀錄", 
-    "💰 派息組成 (收益 vs 資本)", 
-    "🏭 十大行業分佈 (%)", 
-    "🛡️ 評級分佈 (%)",
-    "🌍 地區分佈歷年走勢 (%)"
-])
-
-# Tab 1: 風險維度雷達圖
-with main_tab1:
-    df_chart = pd.DataFrame(dict(Score=curr_fund["radar_scores"], Dimension=curr_fund["radar_dimensions"]))
-    fig_radar = px.line_polar(df_chart, r='Score', theta='Dimension', line_close=True, markers=True, range_r=[0, 20], color_discrete_sequence=['#00E676'])
-    fig_radar.update_traces(fill='toself', fillcolor='rgba(0, 230, 118, 0.35)', line=dict(color='#00E676', width=2.5), marker=dict(size=7, color='#00E676'))
-    fig_radar.update_layout(
-        height=480, margin=dict(l=60, r=60, t=30, b=30), paper_bgcolor="rgba(0,0,0,0)",
-        polar=dict(bgcolor="#1E222D", radialaxis=dict(visible=True, range=[0, 20], showticklabels=False, gridcolor="#334155"), angularaxis=dict(tickfont=dict(size=13, color="#000000", family="Arial, sans-serif"), gridcolor="#334155"))
-    )
-    st.plotly_chart(fig_radar, use_container_width=True)
-
-# Tab 2: 底層資產清單 (包含資產背景與綠/黃/紅三色品質標籤)
-with main_tab2:
-    top10_rows_html = "".join([
-        f"<tr><td style='width: 6%;'><b>{row['排名']}</b></td><td style='width: 32%;'><b>{row['持倉名稱']}</b></td><td style='width: 35%; color: #475569;'>{row.get('bg', '主要資產發行機構')}</td><td style='width: 15%;'>{row['資產類別']}</td><td style='width: 6%; font-weight: bold;'>{row['佔比 (%)']}</td><td style='width: 6%; text-align: center;'>{row['badge']}</td></tr>" 
-        for row in curr_fund["top10"]
-    ])
     st.markdown(f"""
-    <table class="custom-table">
-        <thead><tr><th>排名</th><th>底層資產名稱</th><th>資產背景簡介</th><th>資產類別</th><th>佔比 (%)</th><th style="text-align: center;">品質評級</th></tr></thead>
-        <tbody>{top10_rows_html}</tbody>
-    </table>
+    <div style="overflow-x: auto;">
+        <table class="custom-table" style="min-width: 1200px;">
+            <thead>
+                <tr>
+                    <th>代號</th>
+                    <th>基金名稱</th>
+                    <th>綜合風險總分</th>
+                    <th>一、派息質量 (20)</th>
+                    <th>二、底層資產質素 (15)</th>
+                    <th>三、集中度風險 (5)</th>
+                    <th>四、信用風險 (10)</th>
+                    <th>五、槓桿水平 (10)</th>
+                    <th>六、利率敏感度 (10)</th>
+                    <th>七、流動性風險 (10)</th>
+                    <th>八、匯率風險 (10)</th>
+                    <th>九、區域風險 (5)</th>
+                    <th>十、總開支比率 (5)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {matrix_rows_html}
+            </tbody>
+        </table>
+    </div>
     """, unsafe_allow_html=True)
 
-# Tab 3: 歷史派息紀錄
-with main_tab3:
-    h_rows = "".join([f"<tr><td>{r[0]}</td><td>{r[1]}</td><td>{r[2]}</td><td><b>{r[3]}</b></td><td>{r[4]}</td><td style='font-weight:bold; color:#059669;'>{r[5]}</td></tr>" for r in curr_fund["history_div"]])
-    st.markdown(f"""
-    <table class="custom-table">
-        <thead>
-            <tr><th>除息日</th><th>記錄日</th><th>派息日</th><th>每單位股息 (美元/歐元)</th><th>除息日每單位資產淨值</th><th>年度化派息率</th></tr>
-        </thead>
-        <tbody>{h_rows}</tbody>
-    </table>
-    """, unsafe_allow_html=True)
+    st.markdown("<br><hr>", unsafe_allow_html=True)
 
-# Tab 4: 派息組成
-with main_tab4:
-    st.caption("📌 註：可分派淨收入股息 vs 由資本所分派之股息 (ROC)")
-    c_rows = "".join([f"<tr><td><b>{r[0]}</b></td><td>{r[1]}</td><td>{r[2]}</td><td style='font-weight:bold; color:#D97706;'>{r[3]}</td></tr>" for r in curr_fund["composition_div"]])
-    st.markdown(f"""
-    <table class="custom-table">
-        <thead>
-            <tr><th>除息日 (Ex-dividend date)</th><th>每股股息 (Dividend per share)</th><th>該月份可分派之淨收益股息 %</th><th>由資本所分派之股息 % (ROC)</th></tr>
-        </thead>
-        <tbody>{c_rows}</tbody>
-    </table>
-    """, unsafe_allow_html=True)
+    # 3. 多基金重疊雷達圖比對區塊
+    col_compare_left, col_compare_right = st.columns([1.3, 1])
 
-# Tab 5: 十大行業分佈
-with main_tab5:
-    s_rows = "".join([f"<tr><td><b>{r[0]}</b></td><td style='font-weight:bold; color:#1E3A8A;'>{r[1]}</td></tr>" for r in curr_fund["sector_dist"]])
-    st.markdown(f"""
-    <table class="custom-table" style="width: 50%;">
-        <thead>
-            <tr><th>行業類別 (十大行業)</th><th>佔市值 %</th></tr>
-        </thead>
-        <tbody>{s_rows}</tbody>
-    </table>
-    """, unsafe_allow_html=True)
+    with col_compare_left:
+        st.markdown("#### 🕸️ 勾選基金進行 10 大維度雷達圖重疊對比")
+        selected_funds_to_compare = st.multiselect(
+            "請選擇要對比的基金 (可複選 2~6 隻)：",
+            list(PRESET_FUNDS.keys()),
+            default=["Z29 資本集團 - 資本集團全球公司債券基金", "Z15 霸菱環球高收益債券基金"]
+        )
 
-# Tab 6: 評級分佈
-with main_tab6:
-    r_rows = "".join([f"<tr><td><b>{r[0]}</b></td><td style='font-weight:bold; color:#1E3A8A;'>{r[1]}</td></tr>" for r in curr_fund["rating_dist"]])
-    st.markdown(f"""
-    <table class="custom-table" style="width: 50%;">
-        <thead>
-            <tr><th>信貸評級分佈</th><th>佔市值 %</th></tr>
-        </thead>
-        <tbody>{r_rows}</tbody>
-    </table>
-    """, unsafe_allow_html=True)
+        if len(selected_funds_to_compare) > 0:
+            radar_multi_data = []
+            for f_name in selected_funds_to_compare:
+                f_obj = PRESET_FUNDS[f_name]
+                for dim, score in zip(f_obj["radar_dimensions"], f_obj["radar_scores"]):
+                    radar_multi_data.append({
+                        "基金名稱": f_obj["code"] + " " + f_obj["zh"],
+                        "維度": dim,
+                        "得分": score
+                    })
+            
+            df_multi_radar = pd.DataFrame(radar_multi_data)
+            fig_multi_radar = px.line_polar(
+                df_multi_radar, r='得分', theta='維度', color='基金名稱',
+                line_close=True, markers=True, range_r=[0, 20],
+                template="plotly_dark"
+            )
+            fig_multi_radar.update_layout(
+                height=480, margin=dict(l=40, r=40, t=30, b=30), paper_bgcolor="rgba(0,0,0,0)",
+                polar=dict(bgcolor="#1E222D", radialaxis=dict(visible=True, range=[0, 20], showticklabels=False, gridcolor="#334155"))
+            )
+            st.plotly_chart(fig_multi_radar, use_container_width=True)
+        else:
+            st.warning("請至少勾選 1 隻基金以繪制雷達圖。")
 
-# Tab 7: 地區分佈歷年走勢 (%)
-with main_tab7:
-    col_chart_geo, col_table_geo = st.columns([1.2, 1])
-    df_geo = pd.DataFrame(curr_fund["geo_dist_history"])
-    with col_chart_geo:
-        fig_geo = px.bar(
-            df_geo, x='月份', y=['北美', '歐洲', '其他地區', '現金及等值'],
-            title="地區分佈歷史變動走勢 (佔市值 %)",
-            color_discrete_map={'北美': '#0B2545', '歐洲': '#10B981', '其他地區': '#94A3B8', '現金及等值': '#1E50A2'},
+    with col_compare_right:
+        st.markdown("#### 🏆 基金綜合風險總得分排行榜")
+        df_rank = df_matrix[["代號", "基金簡稱", "總得分"]].sort_values("總得分", ascending=True)
+        
+        fig_rank = px.bar(
+            df_rank, x='總得分', y='代號', text='總得分', orientation='h',
+            title="各基金綜合風險總得分 (滿分 100 分)",
+            color='總得分', color_continuous_scale='Greens',
             template="plotly_white"
         )
-        fig_geo.update_layout(height=380, barmode='stack', yaxis_title="佔比 (%)", legend_title_text="地區類別")
-        st.plotly_chart(fig_geo, use_container_width=True)
-    with col_table_geo:
-        geo_rows = "".join([f"<tr><td><b>{r['月份']}</b></td><td>{r['北美']}%</td><td>{r['歐洲']}%</td><td>{r['其他地區']}%</td><td>{r['現金及等值']}%</td></tr>" for r in curr_fund["geo_dist_history"]])
+        fig_rank.update_layout(height=450, yaxis_title="基金代號", xaxis_title="總得分 (越高越健康/低風險)")
+        st.plotly_chart(fig_rank, use_container_width=True)
+
+
+# ==============================================================================
+# TAB 2: 🔍 單一基金深度風險剖析 (原單一 Dashboard 頁面)
+# ==============================================================================
+with top_tab2:
+    # 4. 選擇基金名稱與風險評估類別選單
+    ctrl_col1, ctrl_col2 = st.columns([1.8, 1.2])
+
+    with ctrl_col1:
+        selected_preset = st.selectbox("📌 選擇基金名稱：", list(PRESET_FUNDS.keys()))
+
+    curr_fund = PRESET_FUNDS[selected_preset]
+
+    default_type_index = 2 if "富蘭克林" in selected_preset else 0
+
+    with ctrl_col2:
+        fund_type = st.selectbox("📌 風險評估類別：", ["債券基金", "股票基金", "股債混合基金"], index=default_type_index)
+
+    # 醒目基金名稱抬頭
+    st.markdown(f"""
+        <div class="fund-header">
+            <span style="font-size: 13px; color: #888;">當前分析目標基金 ({fund_type})：</span> 
+            <span class="source-tag">📍 客觀真實數據源 : {curr_fund['zh']}</span><br>
+            <span style="font-size: 20px; font-weight: bold; color: #FFF;">{curr_fund['zh']}</span> 
+            <span style="font-size: 14px; color: #AAA;">({curr_fund['en']})</span>
+        </div>
+    """, unsafe_allow_html=True)
+
+    # 基金公司背景簡介
+    company_profile_html = "".join([f"<li>{item}</li>" for item in curr_fund['company_profile']])
+    with st.expander(f"🏢 點擊展開 / 折疊：基金公司背景簡介 — {curr_fund['company_name']}", expanded=False):
+        st.markdown(f"""
+            <ul class="company-profile-list">
+                {company_profile_html}
+            </ul>
+        """, unsafe_allow_html=True)
+
+    # 官方數據源聲明備註
+    st.markdown("""
+        <div class="data-disclaimer-note">
+            <b>📑 數據來源聲明備註：</b> 本 Dashboard 內所有財務數據、持倉比率、派息成分與營運損益，均完全依據<b>基金官方發布之基金月報 (Factsheet)、派息分派紀錄 (Dividend Distribution History) 及年度財務報告 (Annual Report / Statement of Operations)</b> 客觀建檔與分析。
+        </div>
+    """, unsafe_allow_html=True)
+
+    # 5. 帶有「小眼仔 👁️ 隱藏/顯示功能」的三大歸類名片區塊
+    if fund_type == "債券基金" or fund_type == "股債混合基金":
+        p2_delta = curr_fund['kpis'].get('p2_delta', '⚠️ 存在本金補貼風險')
+        p2_color = curr_fund['kpis'].get('p2_color', 'inverse')
+        p3_delta = curr_fund['kpis'].get('p3_delta', '⚠️ 高收益債 (非投資級)')
+        p3_color = curr_fund['kpis'].get('p3_color', 'inverse')
+        p5_delta = curr_fund['kpis'].get('p5_delta', '流動資產')
+        p5_color = curr_fund['kpis'].get('p5_color', 'normal')
+        p9_delta = curr_fund['kpis'].get('p9_delta', '🟢 總收入-總支出')
+        p9_color = curr_fund['kpis'].get('p9_color', 'normal')
+        p10_delta = curr_fund['kpis'].get('p10_delta', '🟢 淨收益覆蓋佳')
+        p10_color = curr_fund['kpis'].get('p10_color', 'normal')
+        p11_delta = curr_fund['kpis'].get('p11_delta', '⚠️ 申購 - 贖回差距')
+        p11_color = curr_fund['kpis'].get('p11_color', 'inverse')
+
+        # --- 區塊一：📈 收益與分派指標 ---
+        header_col1, eye_col1 = st.columns([4, 1])
+        with header_col1:
+            st.markdown('<div class="metric-group-title">📈 收益與分派指標 (Income & Dividend Metrics)</div>', unsafe_allow_html=True)
+        with eye_col1:
+            show_g1 = st.toggle("👁️ 顯示名片", value=True, key="eye_g1")
+        
+        if show_g1:
+            g1_c1, g1_c2, g1_c3, g1_c4 = st.columns(4)
+            with g1_c1: st.metric(label="現時派息率", value=curr_fund['kpis']['p1'], delta="年化分派", delta_color="normal")
+            with g1_c2: st.metric(label="派息與收益息差", value=curr_fund['kpis']['p2'], delta=p2_delta, delta_color=p2_color)
+            with g1_c3: st.metric(label="過往一年總派息金額", value=curr_fund['kpis']['p10'], delta=p10_delta, delta_color=p10_color)
+            with g1_c4: st.metric(label="過往一年淨收益 (總收入-總支出)", value=curr_fund['kpis']['p9'], delta=p9_delta, delta_color=p9_color)
+
+        st.markdown("<hr style='margin: 10px 0; border: none; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
+
+        # --- 區塊二：🛡️ 風險與信用結構 ---
+        header_col2, eye_col2 = st.columns([4, 1])
+        with header_col2:
+            st.markdown('<div class="metric-group-title">🛡️ 風險與信用結構 (Risk & Credit Structure)</div>', unsafe_allow_html=True)
+        with eye_col2:
+            show_g2 = st.toggle("👁️ 顯示名片", value=True, key="eye_g2")
+
+        if show_g2:
+            g2_c1, g2_c2, g2_c3, g2_c4, g2_c5 = st.columns(5)
+            with g2_c1: st.metric(label="平均持有債務評級", value=curr_fund['kpis']['p3'], delta=p3_delta, delta_color=p3_color)
+            with g2_c2: st.metric(label="續存率 / 有效存續期", value=curr_fund['kpis']['p4'], delta="存續期 (久期)", delta_color="normal")
+            with g2_c3: st.metric(label="手持現金比率", value=curr_fund['kpis']['p5'], delta=p5_delta, delta_color=p5_color)
+            with g2_c4: st.metric(label="前十大發行人佔比", value=curr_fund['kpis']['p6'], delta="極度分散", delta_color="normal")
+            with g2_c5: st.metric(label="槓桿比率", value=curr_fund['kpis']['p7'], delta="無顯著借貸", delta_color="normal")
+
+        st.markdown("<hr style='margin: 10px 0; border: none; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
+
+        # --- 區塊三：💵 規模與資金流向 (USD/EUR Million) ---
+        header_col3, eye_col3 = st.columns([4, 1])
+        with header_col3:
+            st.markdown('<div class="metric-group-title">💵 規模與資金流向 (Capital & AUM Flow)</div>', unsafe_allow_html=True)
+        with eye_col3:
+            show_g3 = st.toggle("👁️ 顯示名片", value=True, key="eye_g3")
+
+        if show_g3:
+            g3_c1, g3_c2 = st.columns(2)
+            with g3_c1: st.metric(label="總基金資產值 (AUM)", value=curr_fund['kpis']['p8'], delta="百萬計價 (Million)", delta_color="normal")
+            with g3_c2: st.metric(label="申購與贖回差距 (淨資金流向)", value=curr_fund['kpis']['p11'], delta=p11_delta, delta_color=p11_color)
+
+    else:
+        st.info("請選擇對應的風險評估類別以載入名片數據。")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # 6. 風險維度分析及基金底層資產數據 (7 大 TAB)
+    st.markdown("### 📊 風險維度分析及基金底層資產數據")
+
+    main_tab1, main_tab2, main_tab3, main_tab4, main_tab5, main_tab6, main_tab7 = st.tabs([
+        "🕸️ 風險維度雷達圖", 
+        "📋 底層資產清單 (含背景與品質)",
+        "📅 歷史派息紀錄", 
+        "💰 派息組成 (收益 vs 資本)", 
+        "🏭 十大行業分佈 (%)", 
+        "🛡️ 評級分佈 (%)",
+        "🌍 地區分佈歷年走勢 (%)"
+    ])
+
+    # Tab 1: 風險維度雷達圖
+    with main_tab1:
+        df_chart = pd.DataFrame(dict(Score=curr_fund["radar_scores"], Dimension=curr_fund["radar_dimensions"]))
+        fig_radar = px.line_polar(df_chart, r='Score', theta='Dimension', line_close=True, markers=True, range_r=[0, 20], color_discrete_sequence=['#00E676'])
+        fig_radar.update_traces(fill='toself', fillcolor='rgba(0, 230, 118, 0.35)', line=dict(color='#00E676', width=2.5), marker=dict(size=7, color='#00E676'))
+        fig_radar.update_layout(
+            height=480, margin=dict(l=60, r=60, t=30, b=30), paper_bgcolor="rgba(0,0,0,0)",
+            polar=dict(bgcolor="#1E222D", radialaxis=dict(visible=True, range=[0, 20], showticklabels=False, gridcolor="#334155"), angularaxis=dict(tickfont=dict(size=13, color="#000000", family="Arial, sans-serif"), gridcolor="#334155"))
+        )
+        st.plotly_chart(fig_radar, use_container_width=True)
+
+    # Tab 2: 底層資產清單 (包含資產背景與綠/黃/紅三色品質標籤)
+    with main_tab2:
+        top10_rows_html = "".join([
+            f"<tr><td style='width: 6%;'><b>{row['排名']}</b></td><td style='width: 32%;'><b>{row['持倉名稱']}</b></td><td style='width: 35%; color: #475569;'>{row.get('bg', '主要資產發行機構')}</td><td style='width: 15%;'>{row['資產類別']}</td><td style='width: 6%; font-weight: bold;'>{row['佔比 (%)']}</td><td style='width: 6%; text-align: center;'>{row['badge']}</td></tr>" 
+            for row in curr_fund["top10"]
+        ])
         st.markdown(f"""
         <table class="custom-table">
-            <thead>
-                <tr><th>月份</th><th>北美 %</th><th>歐洲 %</th><th>其他地區 %</th><th>現金及等值 %</th></tr>
-            </thead>
-            <tbody>{geo_rows}</tbody>
+            <thead><tr><th>排名</th><th>底層資產名稱</th><th>資產背景簡介</th><th>資產類別</th><th>佔比 (%)</th><th style="text-align: center;">品質評級</th></tr></thead>
+            <tbody>{top10_rows_html}</tbody>
         </table>
         """, unsafe_allow_html=True)
 
-st.markdown("---")
+    # Tab 3: 歷史派息紀錄
+    with main_tab3:
+        h_rows = "".join([f"<tr><td>{r[0]}</td><td>{r[1]}</td><td>{r[2]}</td><td><b>{r[3]}</b></td><td>{r[4]}</td><td style='font-weight:bold; color:#059669;'>{r[5]}</td></tr>" for r in curr_fund["history_div"]])
+        st.markdown(f"""
+        <table class="custom-table">
+            <thead>
+                <tr><th>除息日</th><th>記錄日</th><th>派息日</th><th>每單位股息 (美元/歐元)</th><th>除息日每單位資產淨值</th><th>年度化派息率</th></tr>
+            </thead>
+            <tbody>{h_rows}</tbody>
+        </table>
+        """, unsafe_allow_html=True)
 
-# 7. 隱藏摺疊：基金深度風險評估明細表
-with st.expander("📋 點擊展開 / 折疊：基金深度風險評估明細表", expanded=True):
-    eval_rows_html = "".join([
-        f"<tr><td><b>{r[0]}</b></td><td>{r[1]}</td><td>{r[2]}</td><td>{r[3]}</td><td style='text-align:center; font-weight:bold;'>{r[4]}</td><td style='text-align:center;'>{r[5]}</td></tr>"
-        for r in curr_fund["eval_table"]
-    ])
-    
-    html_table = f"""
-    <table class="custom-table">
-        <thead>
-            <tr>
-                <th style="width: 14%;">評估維度</th>
-                <th style="width: 18%;">具體檢查指標</th>
-                <th style="width: 25%;">專屬評分簡算規則</th>
-                <th style="width: 27%;">基金真實數據與解析</th>
-                <th style="width: 8%; text-align: center;">得分/滿分</th>
-                <th style="width: 8%; text-align: center;">風險狀態</th>
-            </tr>
-        </thead>
-        <tbody>
-            {eval_rows_html}
-        </tbody>
-    </table>
-    <div class="summary-footer">
-        <span class="summary-title">總得分 / 得分率：</span>
-        <span class="summary-score">{curr_fund['score']} / 100</span>
-        <span class="status-badge-yellow" style="font-size: 13px; padding: 5px 12px;">{curr_fund['score']}% (中等風險/健康)</span>
-    </div>
-    """
-    st.markdown(html_table, unsafe_allow_html=True)
+    # Tab 4: 派息組成
+    with main_tab4:
+        st.caption("📌 註：可分派淨收入股息 vs 由資本所分派之股息 (ROC)")
+        c_rows = "".join([f"<tr><td><b>{r[0]}</b></td><td>{r[1]}</td><td>{r[2]}</td><td style='font-weight:bold; color:#D97706;'>{r[3]}</td></tr>" for r in curr_fund["composition_div"]])
+        st.markdown(f"""
+        <table class="custom-table">
+            <thead>
+                <tr><th>除息日 (Ex-dividend date)</th><th>每股股息 (Dividend per share)</th><th>該月份可分派之淨收益股息 %</th><th>由資本所分派之股息 % (ROC)</th></tr>
+            </thead>
+            <tbody>{c_rows}</tbody>
+        </table>
+        """, unsafe_allow_html=True)
 
-# 8. 底部智能洞察點評
-st.info(f"**💡 AI 智能洞察 ({curr_fund['zh']})**：{curr_fund['summary']}")
+    # Tab 5: 十大行業分佈
+    with main_tab5:
+        s_rows = "".join([f"<tr><td><b>{r[0]}</b></td><td style='font-weight:bold; color:#1E3A8A;'>{r[1]}</td></tr>" for r in curr_fund["sector_dist"]])
+        st.markdown(f"""
+        <table class="custom-table" style="width: 50%;">
+            <thead>
+                <tr><th>行業類別 (十大行業)</th><th>佔市值 %</th></tr>
+            </thead>
+            <tbody>{s_rows}</tbody>
+        </table>
+        """, unsafe_allow_html=True)
+
+    # Tab 6: 評級分佈
+    with main_tab6:
+        r_rows = "".join([f"<tr><td><b>{r[0]}</b></td><td style='font-weight:bold; color:#1E3A8A;'>{r[1]}</td></tr>" for r in curr_fund["rating_dist"]])
+        st.markdown(f"""
+        <table class="custom-table" style="width: 50%;">
+            <thead>
+                <tr><th>信貸評級分佈</th><th>佔市值 %</th></tr>
+            </thead>
+            <tbody>{r_rows}</tbody>
+        </table>
+        """, unsafe_allow_html=True)
+
+    # Tab 7: 地區分佈歷年走勢 (%)
+    with main_tab7:
+        col_chart_geo, col_table_geo = st.columns([1.2, 1])
+        df_geo = pd.DataFrame(curr_fund["geo_dist_history"])
+        with col_chart_geo:
+            fig_geo = px.bar(
+                df_geo, x='月份', y=['北美', '歐洲', '其他地區', '現金及等值'],
+                title="地區分佈歷史變動走勢 (佔市值 %)",
+                color_discrete_map={'北美': '#0B2545', '歐洲': '#10B981', '其他地區': '#94A3B8', '現金及等值': '#1E50A2'},
+                template="plotly_white"
+            )
+            fig_geo.update_layout(height=380, barmode='stack', yaxis_title="佔比 (%)", legend_title_text="地區類別")
+            st.plotly_chart(fig_geo, use_container_width=True)
+        with col_table_geo:
+            geo_rows = "".join([f"<tr><td><b>{r['月份']}</b></td><td>{r['北美']}%</td><td>{r['歐洲']}%</td><td>{r['其他地區']}%</td><td>{r['現金及等值']}%</td></tr>" for r in curr_fund["geo_dist_history"]])
+            st.markdown(f"""
+            <table class="custom-table">
+                <thead>
+                    <tr><th>月份</th><th>北美 %</th><th>歐洲 %</th><th>其他地區 %</th><th>現金及等值 %</th></tr>
+                </thead>
+                <tbody>{geo_rows}</tbody>
+            </table>
+            """, unsafe_allow_html=True)
+
+    st.markdown("---")
+
+    # 7. 隱藏摺疊：基金深度風險評估明細表
+    with st.expander("📋 點擊展開 / 折疊：基金深度風險評估明細表", expanded=True):
+        eval_rows_html = "".join([
+            f"<tr><td><b>{r[0]}</b></td><td>{r[1]}</td><td>{r[2]}</td><td>{r[3]}</td><td style='text-align:center; font-weight:bold;'>{r[4]}</td><td style='text-align:center;'>{r[5]}</td></tr>"
+            for r in curr_fund["eval_table"]
+        ])
+        
+        html_table = f"""
+        <table class="custom-table">
+            <thead>
+                <tr>
+                    <th style="width: 14%;">評估維度</th>
+                    <th style="width: 18%;">具體檢查指標</th>
+                    <th style="width: 25%;">專屬評分簡算規則</th>
+                    <th style="width: 27%;">基金真實數據與解析</th>
+                    <th style="width: 8%; text-align: center;">得分/滿分</th>
+                    <th style="width: 8%; text-align: center;">風險狀態</th>
+                </tr>
+            </thead>
+            <tbody>
+                {eval_rows_html}
+            </tbody>
+        </table>
+        <div class="summary-footer">
+            <span class="summary-title">總得分 / 得分率：</span>
+            <span class="summary-score">{curr_fund['score']} / 100</span>
+            <span class="status-badge-yellow" style="font-size: 13px; padding: 5px 12px;">{curr_fund['score']}% (中等風險/健康)</span>
+        </div>
+        """
+        st.markdown(html_table, unsafe_allow_html=True)
+
+    # 8. 底部智能洞察點評
+    st.info(f"**💡 AI 智能洞察 ({curr_fund['zh']})**：{curr_fund['summary']}")
