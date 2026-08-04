@@ -10,11 +10,71 @@ st.set_page_config(
     layout="wide"
 )
 
+# ==============================================================================
+# 🔐 帳號與密碼認證系統 (Authentication System)
+# ==============================================================================
+
+# 可以在這裡設定授權的帳號與密碼（帳號 : 密碼）
+USER_CREDENTIALS = {
+    "admin": "888888",      # 預設管理員帳號密碼
+    "user": "123456"        # 一般使用者帳號密碼
+}
+
+# 初始化登入 Session 狀態
+if "authenticated" not in st.session_state:
+    st.session_state["authenticated"] = False
+if "username" not in st.session_state:
+    st.session_state["username"] = ""
+
+def check_login(username, password):
+    """檢查帳號密碼是否正確"""
+    if username in USER_CREDENTIALS and USER_CREDENTIALS[username] == password:
+        st.session_state["authenticated"] = True
+        st.session_state["username"] = username
+        st.success("🎉 登入成功！正在載入系統...")
+        st.rerun()
+    else:
+        st.error("❌ 帳號或密碼錯誤，請重新輸入！")
+
+def logout():
+    """清除登入狀態並登出"""
+    st.session_state["authenticated"] = False
+    st.session_state["username"] = ""
+    st.rerun()
+
+# 如果未登入，顯示登入畫面並阻擋後續內容載入
+if not st.session_state["authenticated"]:
+    col1, col2, col3 = st.columns([1, 1.2, 1])
+    with col2:
+        st.markdown("<br><br>", unsafe_allow_html=True)
+        st.markdown("""
+            <div style="text-align: center; background-color: #1E222D; padding: 25px; border-radius: 12px; border-top: 5px solid #00E676;">
+                <h2 style="color: #FFFFFF; margin-bottom: 5px;">🛡️ 智能基金風險評估系統</h2>
+                <p style="color: #94A3B8; font-size: 14px;">請輸入授權帳號與密碼以進行存取</p>
+            </div>
+        """, unsafe_allow_html=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        with st.form("login_form"):
+            user_input = st.text_input("👤 帳號 (Username)：", placeholder="請輸入帳號")
+            pass_input = st.text_input("🔑 密碼 (Password)：", type="password", placeholder="請輸入密碼")
+            submit_button = st.form_submit_button("🚀 安全登入 (Login)", use_container_width=True)
+
+            if submit_button:
+                check_login(user_input, pass_input)
+
+        st.info("💡 預設測試帳號：`admin` | 預設密碼：`888888` (登入後可於程式碼內修改)")
+    st.stop() # 阻擋執行下方的主系統內容
+
+# ==============================================================================
+# 🎯 登入後的系統主要內容 (原本的 Dashboard 系統)
+# ==============================================================================
+
 # 2. 注入自訂 CSS 樣式
 st.markdown("""
     <style>
     .block-container {
-        padding-top: 2rem !important;
+        padding-top: 1.5rem !important;
         padding-bottom: 2rem !important;
     }
     .main-title {
@@ -174,8 +234,14 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 標題獨立呈現
-st.markdown('<div class="main-title">🛡️ 智能基金風險評估系統</div>', unsafe_allow_html=True)
+# 頁首標題與登出按鈕橫列
+title_col, user_col = st.columns([3.5, 1])
+with title_col:
+    st.markdown('<div class="main-title">🛡️ 智能基金風險評估系統</div>', unsafe_allow_html=True)
+with user_col:
+    st.write(f"👤 已登入：**{st.session_state['username']}**")
+    if st.button("🚪 安全登出", use_container_width=True):
+        logout()
 
 # 3. 預設資料庫 (全 6 隻基金數據完整建檔)
 PRESET_FUNDS = {
@@ -824,7 +890,7 @@ PRESET_FUNDS = {
             ["四、信用風險", "評級分佈與非投資級占比", "• 10分: 平均評級 BBB 以上<br>• 5分: 平均評級 BB 級<br>• 0分: Caa/CCC級 >10% 或未評級 >15%", "• 綜合平均評級：BB- 級<br>• BB 級占 47.20%、B 級占 38.51%<br>👉 符合簡算規則 5 分級別 (BB 級)。", "5 / 10", "<span class='quality-badge-yellow'>🟡 中等風險</span>"],
             ["五、槓桿水平", "資產膨脹率 (Total / Net Assets)", "• 10分: 比率 <105% (無顯著槓桿)<br>• 5分: 比率 105%-120%<br>• 0分: 比率 >120% (槓桿過高)", "• 總資產 €2,597.48M / 淨資產 €2,569.28M = 101.09%<br>👉 比率 < 105%，完全無顯著借貸槓桿。", "10 / 10", "<span class='quality-badge-green'>✔ 優秀</span>"],
             ["六、利率敏感度", "有效存續期 (Duration)", "• 10分: 存續期 <3 年 (抗升息)<br>• 5分: 存續期 3-6 年<br>• 0分: 存續期 >6 年", "• 有效存續期 (Effective Duration)：~2.80 年<br>👉 存續期小於 3 年，符合 10 分規則 (高抗升息力)。", "10 / 10", "<span class='quality-badge-green'>✔ 優秀</span>"],
-            ["七、流動性風險", "現金儲備與營運現金流", "• 10分: 現金 >10% 或流動性充沛且營運 Cash Flow 為正<br>• 5分: 現金 5%-10%<br>• 0分: 現金 <5% 或流動性緊縮", "• 銀行存款 6.11% (€1.57 億) + 申購淨流入 +€6.95 億歐元<br>👉 營運現金流極度充沛，流動性極優。", "10 / 10", "<span class='quality-badge-green'>✔ 優秀</span>"],
+            ["七、流動性風險", "現金儲備與營運現金流", "• 10分: 現金 >10% 且營運 Cash Flow 為正<br>• 5分: 現金 5%-10%<br>• 0分: 現金 <5% 或流動性緊縮", "• 銀行存款 6.11% (€1.57 億) + 申購淨流入 +€6.95 億歐元<br>👉 營運現金流極度充沛，流動性極優。", "10 / 10", "<span class='quality-badge-green'>✔ 優秀</span>"],
             ["八、匯率風險", "衍生品對沖與未實現損益", "• 10分: 全額對沖且衍生品虧損 <1% NAV<br>• 5分: 部分對沖<br>• 0分: 未對沖且外幣曝險過高", "• 基礎貨幣為歐元 (EUR)<br>• 提供全套對沖股份類別 (USD H / CHF H / AUD H 等)<br>👉 避險機制完善，符合 10 分規則。", "10 / 10", "<span class='quality-badge-green'>✔ 優秀</span>"],
             ["九、區域風險", "單一區域/國家持倉集中度", "• 5分: 單一區域 <40%<br>• 2.5分: 單一區域 40%-60%<br>• 0分: 單一區域 >60%", "• 歐洲多國合計占 > 80%<br>👉 雖然分散於盧森堡、英國、法國等國，但屬歐洲單一區域。", "2.5 / 5", "<span class='quality-badge-yellow'>🟡 區域集中</span>"],
             ["十、總開支比率", "每年管理費 (Management Fee)", "• 5分: 管理費 <1.0%<br>• 2.5分: Management Fee 1.0%-1.5%<br>• 0分: Management Fee >1.5%", "• 零售 P 類別總開支率 (TER)：約 1.01% - 1.05% / 年<br>👉 落在 1.0%-1.5% 規則區間，符合 2.5 分規則。", "2.5 / 5", "<span class='quality-badge-yellow'>🟡 中等</span>"]
@@ -888,7 +954,7 @@ with top_tab1:
     sort_key = "star_num" if sort_by_col == "晨星評級" else sort_by_col
     df_matrix_sorted = df_matrix.sort_values(sort_key, ascending=ascending_flag)
 
-    # 3. 拼接清潔無無窮換行符之極簡 HTML (無換行，無縮排，徹底解決亂碼)
+    # 3. 拼接清潔無換行符之極簡 HTML (組件級渲染，防亂碼防洗掉顏色)
     rows_list = []
     for _, r in df_matrix_sorted.iterrows():
         b1 = "quality-badge-green" if r['一、派息質量 (20)']>=15 else "quality-badge-yellow" if r['一、派息質量 (20)']>=10 else "quality-badge-red"
@@ -907,7 +973,7 @@ with top_tab1:
 
     table_body_html = "".join(rows_list)
 
-    # 4. 打包完整的 HTML + CSS 獨立元件
+    # 4. 打包獨立 HTML 組件
     component_html = f"""
     <!DOCTYPE html>
     <html>
