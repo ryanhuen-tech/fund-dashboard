@@ -46,6 +46,15 @@ st.markdown("""
         font-size: 12px;
         margin-left: 8px;
     }
+    .yield-tag {
+        background-color: #E0F2FE;
+        color: #0369A1;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-weight: bold;
+        font-size: 12px;
+        margin-left: 8px;
+    }
     
     .metric-group-title {
         font-size: 15px;
@@ -167,14 +176,15 @@ st.markdown("""
 # 標題獨立呈現
 st.markdown('<div class="main-title">🛡️ 智能基金風險評估系統</div>', unsafe_allow_html=True)
 
-# 3. 預設資料庫 (全 6 隻基金數據完整建檔 + 純星星標籤)
+# 3. 預設資料庫 (包含上月派息率與性價比點算)
 PRESET_FUNDS = {
-    "Z13 富達基金 - 美元高收益基金": {
+    "Z13 富達基金 - 美元高收益基金 (上月派息: 7.42%)": {
         "code": "Z13",
         "zh": "富達基金 - 美元高收益基金",
         "en": "Fidelity Funds - US High Yield Fund",
         "star": "⭐⭐⭐⭐",
         "star_num": 4,
+        "last_yield": 7.42,
         "company_name": "富達國際 (Fidelity International)",
         "company_profile": [
             "<b>創立歷史與獨立性</b>：成立於 1969 年，前身為美國富達投資海外部門，1980年獨立營運，為私人管理與員工/創辦家族控股公司。",
@@ -183,7 +193,7 @@ PRESET_FUNDS = {
             "<b>全方位資產管理</b>：專精於股票、固定收益、多元資產及退休金管理，長年榮獲多項理柏 (Refinitiv Lipper) 國際基金大獎。"
         ],
         "score": "83.0",
-        "summary": "富達美元高收益基金綜合風險評分為 83.0 分 (健康)。晨星榮獲 4 星評級；淨收益 ($1.54億) 達總派息 ($7,428萬) 的 207% 超額覆蓋，派息質量獲得 15 分高分；前十大持股加總 11.27% 精準對齊發行人佔比，其中 52% 屬高質量國債與投資級門檻資產；有效存續期僅 2.8 年抗升息力強。",
+        "summary": "富達美元高收益基金綜合風險評分為 83.0 分 (健康)。晨星榮獲 4 星評級；上月派息率達 7.42%；性價比指數 43.65 (性價比雙冠軍)；淨收益 ($1.54億) 達總派息 ($7,428萬) 的 207% 超額覆蓋，派息質量獲得 15 分高分；前十大持股加總 11.27% 精準對齊發行人佔比，其中 52% 屬高質量國債與投資級門檻資產；有效存續期僅 2.8 年抗升息力強。",
         "kpis": {
             "p1": "7.42%",
             "p2": "+0.19%", "p2_delta": "🟢 息差小/收益覆蓋佳", "p2_color": "normal",
@@ -279,12 +289,13 @@ PRESET_FUNDS = {
         ]
     },
 
-    "Z15 霸菱環球高收益債券基金": {
+    "Z15 霸菱環球高收益債券基金 (上月派息: 9.87%)": {
         "code": "Z15",
         "zh": "霸菱環球高收益債券基金",
         "en": "Barings Global High Yield Bond Fund",
         "star": "⭐⭐⭐⭐",
         "star_num": 4,
+        "last_yield": 9.87,
         "company_name": "霸菱資產管理 (Barings LLC)",
         "company_profile": [
             "<b>悠久百年底蘊</b>：歷史最早可追溯至 1762 年成立的 Barings 銀行，是全球歷史最悠久的金融機構之一。",
@@ -293,7 +304,7 @@ PRESET_FUNDS = {
             "<b>固定收益頂尖專家</b>：特別擅長全球信用債券、高收益債、私人債權 (Private Credit) 與房地產等替代投資。"
         ],
         "score": "77.5",
-        "summary": "霸菱環球高收益債券基金依據嚴謹稽核調整得分為 77.5 分 (健康)。晨星榮獲 4 星評級；淨收益 ($2.685億) 對總派息 ($1.825億) 覆蓋率高達 147.1%，派息質量獲 15 分；前十大發行人持倉精準加總為 13.59%，其中包含 Bausch、Uniti、EchoStar 等 CCC 級受壓債券 (合佔 5.11%)，在 Top 10 持倉中比例達 37.6% (觸發 >30% 0分風險條款)。",
+        "summary": "霸菱環球高收益債券基金依據嚴謹稽核調整得分為 77.5 分 (健康)。晨星榮獲 4 星評級；上月派息率高達 9.87%；性價比指數 43.87 (高收益性價比冠軍)；淨收益 ($2.685億) 對總派息 ($1.825億) 覆蓋率高達 147.1%，派息質量獲 15 分；前十大發行人持倉精準加總為 13.59%，其中包含 Bausch、Uniti、EchoStar 等 CCC 級受壓債券 (合佔 5.11%)，在 Top 10 持倉中比例達 37.6% (觸發 >30% 0分風險條款)。",
         "kpis": {
             "p1": "9.87%",
             "p2": "+2.64%", "p2_delta": "⚠️ 存在 2.64% 資本補貼缺口", "p2_color": "inverse",
@@ -377,12 +388,13 @@ PRESET_FUNDS = {
         ]
     },
 
-    "Z18 富蘭克林鄧普頓 - 富蘭克林入息基金": {
+    "Z18 富蘭克林鄧普頓 - 富蘭克林入息基金 (上月派息: 8.37%)": {
         "code": "Z18",
         "zh": "富蘭克林鄧普頓 - 富蘭克林入息基金",
         "en": "Franklin Templeton - Franklin Income Fund",
         "star": "⭐⭐⭐⭐",
         "star_num": 4,
+        "last_yield": 8.37,
         "company_name": "富蘭克林鄧普頓 (Franklin Templeton)",
         "company_profile": [
             "<b>百年巨擘與全球覆蓋</b>：成立於 1931 年，總部位於美國加州，為紐約證券交易所上市公司 (NYSE: BEN)，服務全球超過 160 個國家客戶。",
@@ -391,7 +403,7 @@ PRESET_FUNDS = {
             "<b>深耕入息多元資產</b>：旗艦「入息基金 (Income Fund)」長年榮獲多項《指標》傑出基金大獎，專精於股債混合收益最佳化。"
         ],
         "score": "72.5",
-        "summary": "富蘭克林入息基金依據簡算規則審視得分為 72.5 分 (中高健康度)。晨星榮獲 4 星評級；純經常性利息淨收益 ($3.50億) 對總派息 ($5.73億) 覆蓋率為 61.1%，存在 $2.23 億缺口，需依賴股票資本利得 (Capital Gains) 補足，派息質量獲得 10 分；十大持股中包含美國國債、寶僑、微軟、家得寶等頂尖良好資產 (佔 18.2%)；全年度呈現 +$3,249.83M 淨資金流入 (流動性極佳)。",
+        "summary": "富蘭克林入息基金依據簡算規則審視得分為 72.5 分 (中高健康度)。晨星榮獲 4 星評級；上月派息率 8.37%；性價比指數 30.44；純經常性利息淨收益 ($3.50億) 對總派息 ($5.73億) 覆蓋率為 61.1%，存在 $2.23 億缺口，需依賴股票資本利得 (Capital Gains) 補足，派息質量獲得 10 分；十大持股中包含美國國債、寶僑、微軟、家得寶等頂尖良好資產 (佔 18.2%)；全年度呈現 +$3,249.83M 淨資金流入 (流動性極佳)。",
         "kpis": {
             "p1": "8.37%",
             "p2": "+2.26%", "p2_delta": "⚠️ 存在 2.26% 資本補貼缺口", "p2_color": "inverse",
@@ -487,12 +499,13 @@ PRESET_FUNDS = {
         ]
     },
 
-    "Z29 資本集團 - 資本集團全球公司債券基金": {
+    "Z29 資本集團 - 資本集團全球公司債券基金 (上月派息: 4.77%)": {
         "code": "Z29",
         "zh": "資本集團 - 資本集團全球公司債券基金 (盧森堡)",
         "en": "Capital Group Global Corporate Bond Fund (LUX)",
         "star": "⭐⭐⭐⭐⭐",
         "star_num": 5,
+        "last_yield": 4.77,
         "company_name": "資本集團 (Capital Group)",
         "company_profile": [
             "<b>全球歷史最悠久巨擘</b>：成立於 1931 年，總部位於美國加州洛杉磯，為全球規模最大的私營員工持股資產管理公司之一。",
@@ -501,7 +514,7 @@ PRESET_FUNDS = {
             "<b>高品質投資級專家</b>：精專於全球投資級企業債券與多資產研究，擁有獨立強大的信用評級分析團隊。"
         ],
         "score": "87.5",
-        "summary": "資本集團全球公司債券基金依據簡算規則審視得分為 87.5 分 (高品質投資級)。晨星榮獲最高 5 星榮譽評級；前十大持股均為摩根士丹利、甲骨文、摩根大通等全投資級高質感企業 (占 15.8%)；年化派息率 4.77% 低於到期收益率 6.50%；全年度淨收益 ($1.618億) 243% 超額覆蓋總派息 ($6,642萬)；全年度呈現 +$21.36 億美元龐大淨資金流入。",
+        "summary": "資本集團全球公司債券基金依據簡算規則審視得分為 87.5 分 (高品質投資級)。晨星榮獲最高 5 星榮譽評級；上月派息率 4.77%；性價比指數 38.16 (超高安全性首選)；前十大持股均為摩根士丹利、甲骨文、摩根大通等全投資級高質感企業 (占 15.8%)；年化派息率低於到期收益率 6.50%；全年度淨收益 ($1.618億) 243% 超額覆蓋總派息 ($6,642萬)；全年度呈現 +$21.36 億美元龐大淨資金流入。",
         "kpis": {
             "p1": "4.77%",
             "p2": "-1.73%", "p2_delta": "🟢 息差為負 / 收益完美覆蓋", "p2_color": "normal",
@@ -596,12 +609,13 @@ PRESET_FUNDS = {
         ]
     },
 
-    "Z52 友邦保險 - 友邦美國高收益債券基金": {
+    "Z52 友邦保險 - 友邦美國高收益債券基金 (上月派息: 7.23%)": {
         "code": "Z52",
         "zh": "友邦保險 - 友邦美國高收益債券基金",
         "en": "AIA Investment Funds - AIA US High Yield Bond Fund",
         "star": "⭐⭐⭐",
         "star_num": 3,
+        "last_yield": 7.23,
         "company_name": "友邦投資管理香港 (AIA Investment Management HK)",
         "company_profile": [
             "<b>亞太壽險巨擘子公司</b>：成立於 2019 年（母公司友邦保險 1299.HK 創立於 1919 年），為友邦保險集團旗下的專業資產管理機構。",
@@ -610,7 +624,7 @@ PRESET_FUNDS = {
             "<b>雙重嚴格金融監管</b>：UCITS 旗艦基金發行註冊於盧森堡，受盧森堡 CSSF 及香港 SFC 雙重嚴格監督。"
         ],
         "score": "75.0",
-        "summary": "友邦美國高收益債券基金依據簡算規則審視得分為 75.0 分 (中高健康度)。晨星獲 3 星評級；前十大持倉 100% 為美國國債期貨、國庫券與高評級 CDS 掉期工具 (良好品質)；2024 年底 BBB-與 BB 級高質量資產佔比提升至 59.8%；底層 99.87% 債券具 Level 1 高級市場活絡流動性；派息率 7.23%；全年度呈現 +$2,577.9 萬美元淨資金流入。",
+        "summary": "友邦美國高收益債券基金依據簡算規則審視得分為 75.0 分 (中高健康度)。晨星獲 3 星評級；上月派息率 7.23%；性價比指數 28.92；前十大持倉 100% 為美國國債期貨、國庫券與高評級 CDS 掉期工具 (良好品質)；2024 年底 BBB-與 BB 級高質量資產佔比提升至 59.8%；底層 99.87% 債券具 Level 1 高級市場活絡流動性；全年度呈現 +$2,577.9 萬美元淨資金流入。",
         "kpis": {
             "p1": "7.23%",
             "p2": "+0.73%", "p2_delta": "⚠️ 存在 0.73% 資本補貼缺口", "p2_color": "inverse",
@@ -706,12 +720,13 @@ PRESET_FUNDS = {
         ]
     },
 
-    "ZU6 瑞銀資產管理 - 瑞銀歐元高收益債券基金": {
+    "ZU6 瑞銀資產管理 - 瑞銀歐元高收益債券基金 (上月派息: 7.90%)": {
         "code": "ZU6",
         "zh": "瑞銀資產管理 - 瑞銀歐元高收益債券基金",
         "en": "UBS (Lux) Bond Fund - Euro High Yield (EUR)",
         "star": "⭐⭐⭐⭐",
         "star_num": 4,
+        "last_yield": 7.90,
         "company_name": "瑞銀集團資產管理 (UBS Asset Management)",
         "company_profile": [
             "<b>瑞士金融百年龍頭</b>：成立於 1862 年，總部位於瑞士蘇黎世，為全球最頂尖的跨國金融服務集團之一。",
@@ -720,7 +735,7 @@ PRESET_FUNDS = {
             "<b>嚴謹風險控管體系</b>：受盧森堡 CSSF 嚴格監管，產品結構透明且流動性管理機制完善。"
         ],
         "score": "75.5",
-        "summary": "瑞銀歐元高收益債券基金依據簡算規則審視得分為 75.5 分 (健康)。晨星榮獲 4 星評級；前十大持股中包含斯達藥業、泰華製藥、環球地產等良好/普通品質高收益債 (占 22.67%)；全基金層面營運淨收益 (+€1.08億) 仍完全覆蓋全全基金派息 (+€3,839萬)；申購 €13.17 億 vs 贖回 €6.21 億呈現 +€6.95 億歐元強勁淨流入；久期僅 2.8 年抗升息力強。",
+        "summary": "瑞銀歐元高收益債券基金依據簡算規則審視得分為 75.5 分 (健康)。晨星榮獲 4 星評級；上月派息率 7.90%；性價比指數 32.24；前十大持股中包含斯達藥業、泰華製藥、環球地產等良好/普通品質高收益債 (占 22.67%)；全基金層面營運淨收益 (+€1.08億) 仍完全覆蓋全全基金派息 (+€3,839萬)；申購 €13.17 億 vs 贖回 €6.21 億呈現 +€6.95 億歐元強勁淨流入；久期僅 2.8 年抗升息力強。",
         "kpis": {
             "p1": "7.90%",
             "p2": "+3.40%", "p2_delta": "⚠️ 存在 3.40% 資本補貼缺口", "p2_color": "inverse",
@@ -808,7 +823,7 @@ PRESET_FUNDS = {
             ["四、信用風險", "評級分佈與非投資級占比", "• 10分: 平均評級 BBB 以上<br>• 5分: 平均評級 BB 級<br>• 0分: Caa/CCC級 >10% 或未評級 >15%", "• 綜合平均評級：BB- 級<br>• BB 級占 47.20%、B 級占 38.51%<br>👉 符合簡算規則 5 分級別 (BB 級)。", "5 / 10", "<span class='quality-badge-yellow'>🟡 中等風險</span>"],
             ["五、槓桿水平", "資產膨脹率 (Total / Net Assets)", "• 10分: 比率 <105% (無顯著槓桿)<br>• 5分: 比率 105%-120%<br>• 0分: 比率 >120% (槓桿過高)", "• 總資產 €2,597.48M / 淨資產 €2,569.28M = 101.09%<br>👉 比率 < 105%，完全無顯著借貸槓桿。", "10 / 10", "<span class='quality-badge-green'>✔ 優秀</span>"],
             ["六、利率敏感度", "有效存續期 (Duration)", "• 10分: 存續期 <3 年 (抗升息)<br>• 5分: 存續期 3-6 年<br>• 0分: 存續期 >6 年", "• 有效存續期 (Effective Duration)：~2.80 年<br>👉 存續期小於 3 年，符合 10 分規則 (高抗升息力)。", "10 / 10", "<span class='quality-badge-green'>✔ 優秀</span>"],
-            ["七、流動性風險", "現金儲備與營運現金流", "• 10分: 現金 >10% 或流動性充沛且營運 Cash Flow 為正<br>• 5分: 現金 5%-10%<br>• 0分: 現金 <5% 或流動性緊縮", "• 銀行存款 6.11% (€1.57 億) + 申購淨流入 +€6.95 億歐元<br>👉 營運現金流極度充沛，流動性極優。", "10 / 10", "<span class='quality-badge-green'>✔ 優秀</span>"],
+            ["七、流動性風險", "現金儲備與營運現金流", "• 10分: 現金 >10% 且營運 Cash Flow 為正<br>• 5分: 現金 5%-10%<br>• 0分: 現金 <5% 或流動性緊縮", "• 銀行存款 6.11% (€1.57 億) + 申購淨流入 +€6.95 億歐元<br>👉 營運現金流極度充沛，流動性極優。", "10 / 10", "<span class='quality-badge-green'>✔ 優秀</span>"],
             ["八、匯率風險", "衍生品對沖與未實現損益", "• 10分: 全額對沖且衍生品虧損 <1% NAV<br>• 5分: 部分對沖<br>• 0分: 未對沖且外幣曝險過高", "• 基礎貨幣為歐元 (EUR)<br>• 提供全套對沖股份類別 (USD H / CHF H / AUD H 等)<br>👉 避險機制完善，符合 10 分規則。", "10 / 10", "<span class='quality-badge-green'>✔ 優秀</span>"],
             ["九、區域風險", "單一區域/國家持倉集中度", "• 5分: 單一區域 <40%<br>• 2.5分: 單一區域 40%-60%<br>• 0分: 單一區域 >60%", "• 歐洲多國合計占 > 80%<br>👉 雖然分散於盧森堡、英國、法國等國，但屬歐洲單一區域。", "2.5 / 5", "<span class='quality-badge-yellow'>🟡 區域集中</span>"],
             ["十、總開支比率", "每年管理費 (Management Fee)", "• 5分: 管理費 <1.0%<br>• 2.5分: Management Fee 1.0%-1.5%<br>• 0分: Management Fee >1.5%", "• 零售 P 類別總開支率 (TER)：約 1.01% - 1.05% / 年<br>👉 落在 1.0%-1.5% 規則區間，符合 2.5 分規則。", "2.5 / 5", "<span class='quality-badge-yellow'>🟡 中等</span>"]
@@ -825,15 +840,23 @@ top_tab1, top_tab2 = st.tabs(["📊 跨基金總體風險比較表 (全基金縱
 with top_tab1:
     st.markdown("### 📊 跨基金 10 大風險維度得分總覽表")
 
-    # 1. 建立縱覽矩陣數據
+    # 1. 建立縱覽矩陣數據 (包含上月派息率與性價比計算)
     matrix_data = []
     for key, f in PRESET_FUNDS.items():
+        score_val = float(f["score"])
+        risk_deduction = 100.0 - score_val if (100.0 - score_val) > 0 else 1.0
+        yield_val = f["last_yield"]
+        # 性價比指數 = (上月派息率 / 風險扣分) * 100
+        eff_score = round((yield_val / risk_deduction) * 100, 2)
+
         row = {
             "代號": f["code"],
             "基金簡稱": f["zh"],
             "晨星評級": f["star"],
             "star_num": f["star_num"],
-            "綜合風險總分": float(f["score"]),
+            "上月年化派息率 (%)": yield_val,
+            "綜合風險總分": score_val,
+            "性價比指數 (Yield/Risk)": eff_score,
             "一、派息質量 (20)": f["radar_scores"][0],
             "二、底層資產質素 (15)": f["radar_scores"][1],
             "三、集中度風險 (5)": f["radar_scores"][2],
@@ -854,8 +877,8 @@ with top_tab1:
     with sort_col1:
         sort_by_col = st.selectbox(
             "🔀 請選擇表格排序依據 (Sort By)：",
-            ["代號", "綜合風險總分", "晨星評級", "一、派息質量 (20)", "二、底層資產質素 (15)", "三、集中度風險 (5)", "四、信用風險 (10)", "五、槓桿水平 (10)", "六、利率敏感度 (10)", "七、流動性風險 (10)", "八、匯率風險 (10)", "九、區域風險 (5)", "十、總開支比率 (5)"],
-            index=1 # 預設依據綜合風險總分
+            ["性價比指數 (Yield/Risk)", "上月年化派息率 (%)", "綜合風險總分", "代號", "晨星評級", "一、派息質量 (20)", "二、底層資產質素 (15)", "三、集中度風險 (5)", "四、信用風險 (10)", "五、槓桿水平 (10)", "六、利率敏感度 (10)", "七、流動性風險 (10)", "八、匯率風險 (10)", "九、區域風險 (5)", "十、總開支比率 (5)"],
+            index=0 # 預設依據性價比指數排序
         )
     with sort_col2:
         sort_order = st.radio("排序方向：", ["由高至低 (降序)", "由低至高 (升序)"], horizontal=True)
@@ -865,7 +888,7 @@ with top_tab1:
     sort_key = "star_num" if sort_by_col == "晨星評級" else sort_by_col
     df_matrix_sorted = df_matrix.sort_values(sort_key, ascending=ascending_flag)
 
-    # 3. 渲染完美的 HTML 表格 (保留綠/黃/紅三色背景)
+    # 3. 渲染完美的 HTML 表格 (100% 復原綠/黃/紅三色標籤與名稱含派息率)
     matrix_rows_html = ""
     for _, r in df_matrix_sorted.iterrows():
         b_p1 = "quality-badge-green" if r['一、派息質量 (20)']>=15 else "quality-badge-yellow" if r['一、派息質量 (20)']>=10 else "quality-badge-red"
@@ -879,9 +902,56 @@ with top_tab1:
         b_p9 = "quality-badge-green" if r['九、區域風險 (5)']>=5 else "quality-badge-yellow" if r['九、區域風險 (5)']>=2.5 else "quality-badge-red"
         b_p10 = "quality-badge-green" if r['十、總開支比率 (5)']>=5 else "quality-badge-yellow"
 
-        matrix_rows_html += f"<tr><td><b>{r['代號']}</b></td><td><b>{r['基金簡稱']}</b></td><td><span class='ms-star-tag'>{r['晨星評級']}</span></td><td style='font-size:16px; font-weight:800; color:#1E3A8A;'>{r['綜合風險總分']} / 100</td><td><span class='{b_p1}'>{r['一、派息質量 (20)']} 分</span></td><td><span class='{b_p2}'>{r['二、底層資產質素 (15)']} 分</span></td><td><span class='{b_p3}'>{r['三、集中度風險 (5)']} 分</span></td><td><span class='{b_p4}'>{r['四、信用風險 (10)']} 分</span></td><td><span class='{b_p5}'>{r['五、槓桿水平 (10)']} 分</span></td><td><span class='{b_p6}'>{r['六、利率敏感度 (10)']} 分</span></td><td><span class='{b_p7}'>{r['七、流動性風險 (10)']} 分</span></td><td><span class='{b_p8}'>{r['八、匯率風險 (10)']} 分</span></td><td><span class='{b_p9}'>{r['九、區域風險 (5)']} 分</span></td><td><span class='{b_p10}'>{r['十、總開支比率 (5)']} 分</span></td></tr>"
+        matrix_rows_html += f"""
+        <tr>
+            <td><b>{r['代號']}</b></td>
+            <td><b>{r['基金簡稱']}</b></td>
+            <td><span class='yield-tag'>📈 {r['上月年化派息率 (%)']}%</span></td>
+            <td><span class='ms-star-tag'>{r['晨星評級']}</span></td>
+            <td style='font-size:15px; font-weight:800; color:#1E3A8A;'>{r['綜合風險總分']} / 100</td>
+            <td style='font-size:15px; font-weight:800; color:#059669;'><b>{r['性價比指數 (Yield/Risk)']}</b></td>
+            <td><span class='{b_p1}'>{r['一、派息質量 (20)']} 分</span></td>
+            <td><span class='{b_p2}'>{r['二、底層資產質素 (15)']} 分</span></td>
+            <td><span class='{b_p3}'>{r['三、集中度風險 (5)']} 分</span></td>
+            <td><span class='{b_p4}'>{r['四、信用風險 (10)']} 分</span></td>
+            <td><span class='{b_p5}'>{r['五、槓桿水平 (10)']} 分</span></td>
+            <td><span class='{b_p6}'>{r['六、利率敏感度 (10)']} 分</span></td>
+            <td><span class='{b_p7}'>{r['七、流動性風險 (10)']} 分</span></td>
+            <td><span class='{b_p8}'>{r['八、匯率風險 (10)']} 分</span></td>
+            <td><span class='{b_p9}'>{r['九、區域風險 (5)']} 分</span></td>
+            <td><span class='{b_p10}'>{r['十、總開支比率 (5)']} 分</span></td>
+        </tr>
+        """
 
-    full_matrix_html = f"<div style='overflow-x: auto;'><table class='custom-table' style='min-width: 1300px;'><thead><tr><th>代號</th><th>基金名稱</th><th>晨星評級</th><th>綜合風險總分</th><th>一、派息質量 (20)</th><th>二、底層資產質素 (15)</th><th>三、集中度風險 (5)</th><th>四、信用風險 (10)</th><th>五、槓桿水平 (10)</th><th>六、利率敏感度 (10)</th><th>七、流動性風險 (10)</th><th>八、匯率風險 (10)</th><th>九、區域風險 (5)</th><th>十、總開支比率 (5)</th></tr></thead><tbody>{matrix_rows_html}</tbody></table></div>"
+    full_matrix_html = f"""
+    <div style='overflow-x: auto;'>
+        <table class='custom-table' style='min-width: 1400px;'>
+            <thead>
+                <tr>
+                    <th>代號</th>
+                    <th>基金名稱</th>
+                    <th>上月派息率 (%)</th>
+                    <th>晨星評級</th>
+                    <th>綜合風險總分</th>
+                    <th>性價比指數 🏆</th>
+                    <th>一、派息質量 (20)</th>
+                    <th>二、底層質素 (15)</th>
+                    <th>三、集中度 (5)</th>
+                    <th>四、信用風險 (10)</th>
+                    <th>五、槓桿水平 (10)</th>
+                    <th>六、利率敏感 (10)</th>
+                    <th>七、流動性 (10)</th>
+                    <th>八、匯率風險 (10)</th>
+                    <th>九、區域風險 (5)</th>
+                    <th>十、總開支 (5)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {matrix_rows_html}
+            </tbody>
+        </table>
+    </div>
+    """
     
     st.markdown(full_matrix_html, unsafe_allow_html=True)
 
@@ -895,7 +965,7 @@ with top_tab1:
         selected_funds_to_compare = st.multiselect(
             "請選擇要對比的基金 (可複選 2~6 隻)：",
             list(PRESET_FUNDS.keys()),
-            default=["Z29 資本集團 - 資本集團全球公司債券基金", "Z15 霸菱環球高收益債券基金"]
+            default=["Z29 資本集團 - 資本集團全球公司債券基金 (上月派息: 4.77%)", "Z15 霸菱環球高收益債券基金 (上月派息: 9.87%)"]
         )
 
         if len(selected_funds_to_compare) > 0:
@@ -924,16 +994,16 @@ with top_tab1:
             st.warning("請至少勾選 1 隻基金以繪制雷達圖。")
 
     with col_compare_right:
-        st.markdown("#### 🏆 基金綜合風險總得分排行榜")
-        df_rank = df_matrix[["代號", "基金簡稱", "綜合風險總分"]].sort_values("綜合風險總分", ascending=True)
+        st.markdown("#### 🏆 基金性價比指數 (Yield-to-Risk) 排行榜")
+        df_rank = df_matrix[["代號", "性價比指數 (Yield/Risk)"]].sort_values("性價比指數 (Yield/Risk)", ascending=True)
         
         fig_rank = px.bar(
-            df_rank, x='綜合風險總分', y='代號', text='綜合風險總分', orientation='h',
-            title="各基金綜合風險總得分 (滿分 100 分)",
-            color='綜合風險總分', color_continuous_scale='Greens',
+            df_rank, x='性價比指數 (Yield/Risk)', y='代號', text='性價比指數 (Yield/Risk)', orientation='h',
+            title="各基金性價比指數 (越高代表每單位風險帶來最高派息)",
+            color='性價比指數 (Yield/Risk)', color_continuous_scale='Greens',
             template="plotly_white"
         )
-        fig_rank.update_layout(height=450, yaxis_title="基金代號", xaxis_title="總得分 (越高越健康/低風險)")
+        fig_rank.update_layout(height=450, yaxis_title="基金代號", xaxis_title="性價比指數 (更高＝回報最高風險最低)")
         st.plotly_chart(fig_rank, use_container_width=True)
 
 
@@ -953,11 +1023,12 @@ with top_tab2:
     with ctrl_col2:
         fund_type = st.selectbox("📌 風險評估類別：", ["債券基金", "股票基金", "股債混合基金"], index=default_type_index)
 
-    # 醒目基金名稱抬頭 (含精簡晨星評級標籤)
+    # 醒目基金名稱抬頭 (含上月派息率與精簡晨星評級標籤)
     st.markdown(f"""
         <div class="fund-header">
             <span style="font-size: 13px; color: #888;">當前分析目標基金 ({fund_type})：</span> 
             <span class="source-tag">📍 客觀真實數據源 : {curr_fund['zh']}</span>
+            <span class="yield-tag">📈 上月年化派息率 : {curr_fund['last_yield']}%</span>
             <span class="ms-star-tag">⭐ 晨星評級 : {curr_fund.get('star', '未評級')}</span><br>
             <span style="font-size: 20px; font-weight: bold; color: #FFF;">{curr_fund['zh']}</span> 
             <span style="font-size: 14px; color: #AAA;">({curr_fund['en']})</span>
