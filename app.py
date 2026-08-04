@@ -91,6 +91,7 @@ st.markdown("""
         text-align: left;
         padding: 12px 14px;
         border-bottom: 2px solid #1E293B;
+        white-space: nowrap;
     }
     .custom-table td {
         padding: 12px 14px;
@@ -99,6 +100,7 @@ st.markdown("""
         color: #334155;
         line-height: 1.6;
         text-align: left;
+        white-space: nowrap;
     }
     .custom-table tr:hover {
         background-color: #F8FAFC;
@@ -165,7 +167,7 @@ st.markdown("""
 # 標題獨立呈現
 st.markdown('<div class="main-title">🛡️ 智能基金風險評估系統</div>', unsafe_allow_html=True)
 
-# 3. 預設資料庫 (星級精簡為純星星，iPad 顯示完美不折行)
+# 3. 預設資料庫 (全 6 隻基金數據完整建檔 + 純星星標籤)
 PRESET_FUNDS = {
     "Z13 富達基金 - 美元高收益基金": {
         "code": "Z13",
@@ -818,19 +820,19 @@ PRESET_FUNDS = {
 top_tab1, top_tab2 = st.tabs(["📊 跨基金總體風險比較表 (全基金縱覽)", "🔍 單一基金深度風險剖析"])
 
 # ==============================================================================
-# TAB 1: 📊 跨基金總體風險比較表 (原生互動 Sorting 表格)
+# TAB 1: 📊 跨基金總體風險比較表 (100% 復原彩色風險標籤 + 動態排序選單)
 # ==============================================================================
 with top_tab1:
     st.markdown("### 📊 跨基金 10 大風險維度得分總覽表")
-    st.caption("📌 **排序操作提示**：請直接點選下方表格之**任一表頭（如「晨星評級」、「綜合風險總分」或各項風險維度）**，表格將自動執行動態升降序排序！")
 
     # 1. 建立縱覽矩陣數據
     matrix_data = []
     for key, f in PRESET_FUNDS.items():
         row = {
             "代號": f["code"],
-            "基金名稱": f["zh"],
-            "晨星評級": f["star_num"], # 以數字作原生 Sorting
+            "基金簡稱": f["zh"],
+            "晨星評級": f["star"],
+            "star_num": f["star_num"],
             "綜合風險總分": float(f["score"]),
             "一、派息質量 (20)": f["radar_scores"][0],
             "二、底層資產質素 (15)": f["radar_scores"][1],
@@ -847,41 +849,45 @@ with top_tab1:
     
     df_matrix = pd.DataFrame(matrix_data)
 
-    # 2. 使用 Streamlit 原生 st.dataframe 呈現帶升降序 Sorting 功能之動態表格
-    st.dataframe(
-        df_matrix,
-        column_config={
-            "代號": st.column_config.TextColumn("代號", width="small"),
-            "基金名稱": st.column_config.TextColumn("基金名稱", width="medium"),
-            "晨星評級": st.column_config.NumberColumn(
-                "晨星評級", 
-                help="晨星官方評級 (1-5星)", 
-                format="%d ⭐", 
-                width="small"
-            ),
-            "綜合風險總分": st.column_config.NumberColumn(
-                "綜合風險總分", 
-                format="%.1f 分", 
-                width="small"
-            ),
-            "一、派息質量 (20)": st.column_config.NumberColumn("一、派息質量", format="%.1f"),
-            "二、底層資產質素 (15)": st.column_config.NumberColumn("二、底層質素", format="%.1f"),
-            "三、集中度風險 (5)": st.column_config.NumberColumn("三、集中度", format="%.1f"),
-            "四、信用風險 (10)": st.column_config.NumberColumn("四、信用風險", format="%.1f"),
-            "五、槓桿水平 (10)": st.column_config.NumberColumn("五、槓桿水平", format="%.1f"),
-            "六、利率敏感度 (10)": st.column_config.NumberColumn("六、利率敏感", format="%.1f"),
-            "七、流動性風險 (10)": st.column_config.NumberColumn("七、流動性", format="%.1f"),
-            "八、匯率風險 (10)": st.column_config.NumberColumn("八、匯率風險", format="%.1f"),
-            "九、區域風險 (5)": st.column_config.NumberColumn("九、區域風險", format="%.1f"),
-            "十、總開支比率 (5)": st.column_config.NumberColumn("十、總開支", format="%.1f"),
-        },
-        use_container_width=True,
-        hide_index=True
-    )
+    # 2. 控制排序的控制列 (Sort Controls)
+    sort_col1, sort_col2 = st.columns([2, 1])
+    with sort_col1:
+        sort_by_col = st.selectbox(
+            "🔀 請選擇表格排序依據 (Sort By)：",
+            ["代號", "綜合風險總分", "晨星評級", "一、派息質量 (20)", "二、底層資產質素 (15)", "三、集中度風險 (5)", "四、信用風險 (10)", "五、槓桿水平 (10)", "六、利率敏感度 (10)", "七、流動性風險 (10)", "八、匯率風險 (10)", "九、區域風險 (5)", "十、總開支比率 (5)"],
+            index=1 # 預設依據綜合風險總分
+        )
+    with sort_col2:
+        sort_order = st.radio("排序方向：", ["由高至低 (降序)", "由低至高 (升序)"], horizontal=True)
+
+    # 執行動態排序
+    ascending_flag = True if sort_order == "由低至高 (升序)" else False
+    sort_key = "star_num" if sort_by_col == "晨星評級" else sort_by_col
+    df_matrix_sorted = df_matrix.sort_values(sort_key, ascending=ascending_flag)
+
+    # 3. 渲染完美的 HTML 表格 (保留綠/黃/紅三色背景)
+    matrix_rows_html = ""
+    for _, r in df_matrix_sorted.iterrows():
+        b_p1 = "quality-badge-green" if r['一、派息質量 (20)']>=15 else "quality-badge-yellow" if r['一、派息質量 (20)']>=10 else "quality-badge-red"
+        b_p2 = "quality-badge-green" if r['二、底層資產質素 (15)']>=15 else "quality-badge-yellow" if r['二、底層資產質素 (15)']>=10 else "quality-badge-red"
+        b_p3 = "quality-badge-green" if r['三、集中度風險 (5)']>=5 else "quality-badge-yellow"
+        b_p4 = "quality-badge-green" if r['四、信用風險 (10)']>=10 else "quality-badge-yellow"
+        b_p5 = "quality-badge-green" if r['五、槓桿水平 (10)']>=10 else "quality-badge-yellow"
+        b_p6 = "quality-badge-green" if r['六、利率敏感度 (10)']>=10 else "quality-badge-yellow" if r['六、利率敏感度 (10)']>=5 else "quality-badge-red"
+        b_p7 = "quality-badge-green" if r['七、流動性風險 (10)']>=10 else "quality-badge-yellow"
+        b_p8 = "quality-badge-green" if r['八、匯率風險 (10)']>=10 else "quality-badge-yellow"
+        b_p9 = "quality-badge-green" if r['九、區域風險 (5)']>=5 else "quality-badge-yellow" if r['九、區域風險 (5)']>=2.5 else "quality-badge-red"
+        b_p10 = "quality-badge-green" if r['十、總開支比率 (5)']>=5 else "quality-badge-yellow"
+
+        matrix_rows_html += f"<tr><td><b>{r['代號']}</b></td><td><b>{r['基金簡稱']}</b></td><td><span class='ms-star-tag'>{r['晨星評級']}</span></td><td style='font-size:16px; font-weight:800; color:#1E3A8A;'>{r['綜合風險總分']} / 100</td><td><span class='{b_p1}'>{r['一、派息質量 (20)']} 分</span></td><td><span class='{b_p2}'>{r['二、底層資產質素 (15)']} 分</span></td><td><span class='{b_p3}'>{r['三、集中度風險 (5)']} 分</span></td><td><span class='{b_p4}'>{r['四、信用風險 (10)']} 分</span></td><td><span class='{b_p5}'>{r['五、槓桿水平 (10)']} 分</span></td><td><span class='{b_p6}'>{r['六、利率敏感度 (10)']} 分</span></td><td><span class='{b_p7}'>{r['七、流動性風險 (10)']} 分</span></td><td><span class='{b_p8}'>{r['八、匯率風險 (10)']} 分</span></td><td><span class='{b_p9}'>{r['九、區域風險 (5)']} 分</span></td><td><span class='{b_p10}'>{r['十、總開支比率 (5)']} 分</span></td></tr>"
+
+    full_matrix_html = f"<div style='overflow-x: auto;'><table class='custom-table' style='min-width: 1300px;'><thead><tr><th>代號</th><th>基金名稱</th><th>晨星評級</th><th>綜合風險總分</th><th>一、派息質量 (20)</th><th>二、底層資產質素 (15)</th><th>三、集中度風險 (5)</th><th>四、信用風險 (10)</th><th>五、槓桿水平 (10)</th><th>六、利率敏感度 (10)</th><th>七、流動性風險 (10)</th><th>八、匯率風險 (10)</th><th>九、區域風險 (5)</th><th>十、總開支比率 (5)</th></tr></thead><tbody>{matrix_rows_html}</tbody></table></div>"
+    
+    st.markdown(full_matrix_html, unsafe_allow_html=True)
 
     st.markdown("<br><hr>", unsafe_allow_html=True)
 
-    # 3. 多基金重疊雷達圖比對區塊
+    # 4. 多基金重疊雷達圖比對區塊
     col_compare_left, col_compare_right = st.columns([1.3, 1])
 
     with col_compare_left:
@@ -919,7 +925,7 @@ with top_tab1:
 
     with col_compare_right:
         st.markdown("#### 🏆 基金綜合風險總得分排行榜")
-        df_rank = df_matrix[["代號", "基金名稱", "綜合風險總分"]].sort_values("綜合風險總分", ascending=True)
+        df_rank = df_matrix[["代號", "基金簡稱", "綜合風險總分"]].sort_values("綜合風險總分", ascending=True)
         
         fig_rank = px.bar(
             df_rank, x='綜合風險總分', y='代號', text='綜合風險總分', orientation='h',
