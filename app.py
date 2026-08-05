@@ -60,7 +60,6 @@ if not st.session_state["authenticated"]:
             if submit_button:
                 check_login(user_input, pass_input)
 
-        st.info("💡 預設測試帳號：`admin` | 預設密碼：`888888`")
     st.stop()
 
 # ==============================================================================
@@ -161,7 +160,7 @@ with top_tab1:
             b9 = "quality-badge-green" if r['九、區域風險 (5)']>=5 else "quality-badge-yellow"
             b10 = "quality-badge-green" if r['十、淨值波動與回撤 (5)']>=5 else "quality-badge-yellow"
 
-            rows_list.append(f"<tr><td><b>{r['代號']}</b></td><td><b>{r['基金簡稱']}</b></td><td><span class='type-tag'>{r['基金類別']}</span></td><td><span class='yield-tag'>📈 {r['上月年化派息率 (%)']}%</span></td><td style='font-weight:bold; color:#059669;'>+{r['近1年總回報 (%)']}%</td><td style='font-weight:bold; color:#0284C7;'>+{r['近3年年化總回報 (%)']}%</td><td><span class='ms-star-tag'>{r['晨星評級']}</span></td><td style='font-size:15px; font-weight:800; color:#1E3A8A;'>{r['綜合風險總分']} / 100</td><td style='font-size:15px; font-weight:800; color:#059669;'><b>{r['風險與回報對比指數']}</b></td><td><span class='{b1}'>{r['一、派息可持續性 (20)']} 分</span></td><td><span class='{b2}'>{r['二、底層質素 (15)']} 分</span></td><td><span class='{b3}'>{r['三、集中度 (5)']} 分</span></td><td><span class='{b4}'>{r['四、信用與風控 (10)']} 分</span></td><td><span class='{b5}'>{r['五、槓桿與天花板 (10)']} 分</span></td><td><span class='{b6}'>{r['六、利率/大盤敏感度 (10)']} 分</span></td><td><span class='{b7}'>{r['七、流動性 (10)']} 分</span></td><td><span class='{b8}'>{r['八、匯率風險 (10)']} 分</span></td><td><span class='{b9}'>{r['九、區域風險 (5)']} 分</span></td><td><span class='{b10}'>{r['十、淨值波動與回撤 (5)']} 分</span></td></tr>")
+            rows_list.append(f"<tr><td><b>{r['代號']}</b></td><td><b>{r['基金簡稱']}</b></td><td><span class='type-tag'>{r['基金類別']}</span></td><td><span class='yield-tag'>📈 {r['上月年化派息率 (%)']}%</span></td><td style='font-weight:bold; color:#059669;'>+{r['近1年總回報 (%)']}%</td><td style='font-weight:bold; color:#0284C7;'>+{r['近3年年化總回報 (%)']}%</td><td><span class='ms-star-tag'>{r['晨星評級']}</span></td><td style='font-size:15px; font-weight:800; color:#1E3A8A;'>{r['綜合風險總分']} / 100</td><td style='font-size:15px; font-weight:800; color:#059669;'><b>{r['風險與回報對比指數']}</b></td><td><span class='{b1}'>{r['一、派息可持續性 (20)']} 分</span></td><td><span class='{b2}'>{r['二、底層質素 (15)']} 分</span></td><td><span class='{b3}'>{r['三、集中度 (5)']} 分</span></td><td><span class='{b4}'>{r['四、信用與風控 (10)']} 分</span></td><td><span class='{b5}'>{r['五、槓桿與天花板 (10)']} 分</span></td><td><span class='{b6}'>{r['六、利率/大盤敏感度 (10)']} 分</span></td><td><span class='{b7}'>{r['七、流動性 (10)']} 分</span></td><td><span class='{b8}'>{r['八、匯率風險 (10)']} 分</span></td><td><span class='{b9}'>{r['九、區域風險 (5)']} 分</span></td><td><span class='{b10}'>{r['十、淨值波動 (5)']} 分</span></td></tr>")
 
         component_html = f"""
         <!DOCTYPE html><html><head><style>
@@ -217,12 +216,61 @@ with top_tab2:
 
     st.markdown('<div class="data-disclaimer-note"><b>📑 數據來源聲明備註：</b> 本 Dashboard 內所有財務數據、持倉比率、派息成分與營運損益，均完全依據<b>基金官方發布之基金月報 (Factsheet)、派息分派紀錄及年度財務報告</b> 客觀建檔分析。</div>', unsafe_allow_html=True)
 
-    # 4 大關鍵 KPI 數據名片
-    g1_c1, g1_c2, g1_c3, g1_c4 = st.columns(4)
-    with g1_c1: st.metric(label="現時派息率", value=curr_fund['kpis']['p1'])
-    with g1_c2: st.metric(label="過往 1 年總回報", value=f"+{curr_fund['return_1y']}%")
-    with g1_c3: st.metric(label="過往 3 年年化總回報", value=f"+{curr_fund['return_3y']}%")
-    with g1_c4: st.metric(label="總基金資產值 (AUM)", value=curr_fund['kpis']['p8'])
+    # 取得安全預設 KPI 標籤
+    p2_delta = curr_fund['kpis'].get('p2_delta', '⚠️ 存在本金補貼風險')
+    p2_color = curr_fund['kpis'].get('p2_color', 'inverse')
+    p3_delta = curr_fund['kpis'].get('p3_delta', '⚠️ 非投資級/風險持倉')
+    p3_color = curr_fund['kpis'].get('p3_color', 'inverse')
+    p5_delta = curr_fund['kpis'].get('p5_delta', '流動資產')
+    p5_color = curr_fund['kpis'].get('p5_color', 'normal')
+    p9_delta = curr_fund['kpis'].get('p9_delta', '🟢 總收入-總支出')
+    p9_color = curr_fund['kpis'].get('p9_color', 'normal')
+    p10_delta = curr_fund['kpis'].get('p10_delta', '🟢 淨收益覆蓋佳')
+    p10_color = curr_fund['kpis'].get('p10_color', 'normal')
+    p11_delta = curr_fund['kpis'].get('p11_delta', '⚠️ 申購 - 贖回差距')
+    p11_color = curr_fund['kpis'].get('p11_color', 'inverse')
+
+    # --- 區塊一：📈 收益與回報指標 ---
+    header_col1, eye_col1 = st.columns([4, 1])
+    with header_col1: st.markdown('<div class="metric-group-title">📈 收益與回報指標 (Income & Total Return Metrics)</div>', unsafe_allow_html=True)
+    with eye_col1: show_g1 = st.toggle("👁️ 顯示名片", value=True, key="eye_g1")
+    
+    if show_g1:
+        g1_c1, g1_c2, g1_c3, g1_c4, g1_c5, g1_c6 = st.columns(6)
+        with g1_c1: st.metric(label="現時派息率", value=curr_fund['kpis'].get('p1', '-'), delta="年化分派", delta_color="normal")
+        with g1_c2: st.metric(label="派息與收益息差", value=curr_fund['kpis'].get('p2', '-'), delta=p2_delta, delta_color=p2_color)
+        with g1_c3: st.metric(label="過往 1 年總回報率", value=f"+{curr_fund['return_1y']}%", delta="含股息再投資", delta_color="normal")
+        with g1_c4: st.metric(label="過往 3 年年化總回報", value=f"+{curr_fund['return_3y']}%", delta="晨星年化複合回報", delta_color="normal")
+        with g1_c5: st.metric(label="過往一年總派息金額", value=curr_fund['kpis'].get('p10', '-'), delta=p10_delta, delta_color=p10_color)
+        with g1_c6: st.metric(label="過往一年淨收益/權利金", value=curr_fund['kpis'].get('p9', '-'), delta=p9_delta, delta_color=p9_color)
+
+    st.markdown("<hr style='margin: 10px 0; border: none; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
+
+    # --- 區塊二：🛡️ 風險與信用結構 ---
+    header_col2, eye_col2 = st.columns([4, 1])
+    with header_col2: st.markdown('<div class="metric-group-title">🛡️ 風險與信用結構 (Risk & Credit Structure)</div>', unsafe_allow_html=True)
+    with eye_col2: show_g2 = st.toggle("👁️ 顯示名片", value=True, key="eye_g2")
+
+    if show_g2:
+        g2_c1, g2_c2, g2_c3, g2_c4, g2_c5, g2_c6 = st.columns(6)
+        with g2_c1: st.metric(label="平均持有評級/屬性", value=curr_fund['kpis'].get('p3', '-'), delta=p3_delta, delta_color=p3_color)
+        with g2_c2: st.metric(label="存續期/Beta敏感度", value=curr_fund['kpis'].get('p4', '-'), delta="風險敏感指標", delta_color="normal")
+        with g2_c3: st.metric(label="手持現金/衍生品比率", value=curr_fund['kpis'].get('p5', '-'), delta=p5_delta, delta_color=p5_color)
+        with g2_c4: st.metric(label="總持有資產數量", value=curr_fund.get('holdings_count', '-'), delta="底層持倉分散度", delta_color="normal")
+        with g2_c5: st.metric(label="前十大發行人/持股佔比", value=curr_fund['kpis'].get('p6', '-'), delta="集中度管控", delta_color="normal")
+        with g2_c6: st.metric(label="槓桿比率", value=curr_fund['kpis'].get('p7', '-'), delta="借貸/衍生品膨脹率", delta_color="normal")
+
+    st.markdown("<hr style='margin: 10px 0; border: none; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
+
+    # --- 區塊三：💵 規模與資金流向 ---
+    header_col3, eye_col3 = st.columns([4, 1])
+    with header_col3: st.markdown('<div class="metric-group-title">💵 規模與資金流向 (Capital & AUM Flow)</div>', unsafe_allow_html=True)
+    with eye_col3: show_g3 = st.toggle("👁️ 顯示名片", value=True, key="eye_g3")
+
+    if show_g3:
+        g3_c1, g3_c2 = st.columns(2)
+        with g3_c1: st.metric(label="總基金資產值 (AUM)", value=curr_fund['kpis'].get('p8', '-'), delta="百萬計價 (Million)", delta_color="normal")
+        with g3_c2: st.metric(label="申購與贖回差距 (淨資金流向)", value=curr_fund['kpis'].get('p11', '-'), delta=p11_delta, delta_color=p11_color)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
@@ -250,17 +298,18 @@ with top_tab2:
         fig.update_layout(height=480, margin=dict(l=60, r=60, t=30, b=30), paper_bgcolor="rgba(0,0,0,0)", polar=dict(bgcolor="#1E222D"))
         st.plotly_chart(fig, use_container_width=True)
 
-    # Tab 2: Top 10 底層資產
+    # Tab 2: Top 10 底層資產（完整 10 行渲染）
     with main_tab2:
-        top10_html = "".join([f"<tr><td><b>{r['排名']}</b></td><td><b>{r['持倉名稱']}</b></td><td style='color:#475569;'>{r.get('bg','')}</td><td>{r['資產類別']}</td><td style='font-weight:bold;'>{r['佔比 (%)']}</td><td style='text-align:center;'>{r['badge']}</td></tr>" for r in curr_fund.get("top10", [])])
-        st.markdown(f'<table class="custom-table"><thead><tr><th>排名</th><th>底層資產名稱</th><th>資產背景簡介</th><th>資產類別</th><th>佔比 (%)</th><th style="text-align:center;">品質評級</th></tr></thead><tbody>{top10_html}</tbody></table>', unsafe_allow_html=True)
+        top10_list = curr_fund.get("top10", [])
+        top10_rows_html = "".join([f"<tr><td><b>{r['排名']}</b></td><td><b>{r['持倉名稱']}</b></td><td style='color:#475569;'>{r.get('bg','')}</td><td>{r['資產類別']}</td><td style='font-weight:bold;'>{r['佔比 (%)']}</td><td style='text-align:center;'>{r['badge']}</td></tr>" for r in top10_list])
+        st.markdown(f'<table class="custom-table"><thead><tr><th>排名</th><th>底層資產名稱</th><th>資產背景簡介</th><th>資產類別</th><th>佔比 (%)</th><th style="text-align:center;">品質評級</th></tr></thead><tbody>{top10_rows_html}</tbody></table>', unsafe_allow_html=True)
 
-    # Tab 3: 歷史派息紀錄
+    # Tab 3: 歷史派息紀錄（完整 12 個月渲染）
     with main_tab3:
         h_rows = "".join([f"<tr><td>{r[0]}</td><td>{r[1]}</td><td>{r[2]}</td><td><b>{r[3]}</b></td><td>{r[4]}</td><td style='font-weight:bold; color:#059669;'>{r[5]}</td></tr>" for r in curr_fund.get("history_div", [])])
         st.markdown(f'<table class="custom-table"><thead><tr><th>除息日</th><th>記錄日</th><th>派息日</th><th>每單位股息</th><th>除息日每單位資產淨值</th><th>年度化派息率</th></tr></thead><tbody>{h_rows}</tbody></table>', unsafe_allow_html=True)
 
-    # Tab 4: 派息組成
+    # Tab 4: 派息組成（完整 12 個月渲染）
     with main_tab4:
         c_rows = "".join([f"<tr><td><b>{r[0]}</b></td><td>{r[1]}</td><td>{r[2]}</td><td style='font-weight:bold; color:#D97706;'>{r[3]}</td></tr>" for r in curr_fund.get("composition_div", [])])
         st.markdown(f'<table class="custom-table"><thead><tr><th>除息日</th><th>每股股息</th><th>可分派淨收益/權利金 %</th><th>由資本所分派之股息 % (ROC)</th></tr></thead><tbody>{c_rows}</tbody></table>', unsafe_allow_html=True)
