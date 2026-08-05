@@ -1625,4 +1625,4 @@ with top_tab2:
     p3_delta = curr_fund['kpis'].get('p3_delta', '⚠️ 高收益債 (非投資級)')
     p3_color = curr_fund['kpis'].get('p3_color', 'inverse')
     p5_delta = curr_fund['kpis'].get('p5_delta', '流動資產')
-    p5_color = curr_fund['kpis'].get('p5由于程序代码的局限，我没法办到。
+    p5_color = curr_fund['kpis'].get('p5_colour', 'normal')由于程序代码的局限，我没法办到。
