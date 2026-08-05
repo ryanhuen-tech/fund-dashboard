@@ -93,6 +93,15 @@ st.markdown("""
         font-weight: bold;
         font-size: 12px;
     }
+    .type-tag {
+        background-color: #E0E7FF;
+        color: #3730A3;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-weight: bold;
+        font-size: 12px;
+        margin-left: 8px;
+    }
     .ms-star-tag {
         background-color: #FEF08A;
         color: #854D0E;
@@ -238,12 +247,13 @@ with user_col:
     if st.button("🚪 安全登出", use_container_width=True):
         logout()
 
-# 3. 預設資料庫
+# 3. 預設資料庫 (全 6 隻基金數據完整建檔 - Z18 歸類為股債混合基金)
 PRESET_FUNDS = {
     "Z13 富達基金 - 美元高收益基金 (上月派息: 7.42%)": {
         "code": "Z13",
         "zh": "富達基金 - 美元高收益基金",
         "en": "Fidelity Funds - US High Yield Fund",
+        "category": "債券基金",
         "star": "⭐⭐⭐⭐",
         "star_num": 4,
         "last_yield": 7.42,
@@ -358,6 +368,7 @@ PRESET_FUNDS = {
         "code": "Z15",
         "zh": "霸菱環球高收益債券基金",
         "en": "Barings Global High Yield Bond Fund",
+        "category": "債券基金",
         "star": "⭐⭐⭐⭐",
         "star_num": 4,
         "last_yield": 9.87,
@@ -448,7 +459,7 @@ PRESET_FUNDS = {
             ["三、集中度風險", "發行人與行業雙維度持倉佔比", "• 5分: 前十持倉 <20% 且 第一大行業 <20%<br>• 2.5分: 前十持倉 20%-30% 或 第一行業 20%-35%<br>• 0分: 前十持倉 >30% 或 第一行業 >35%", "• 前十大發行人持倉合計占：13.59% (< 20%)<br>• 第一大行業 (電訊業) 占：12.19% (< 20%)<br>👉 符合 5 分滿分雙維度極度分散標準。", "5 / 5", "<span class='quality-badge-green'>✔ 雙重極度分散</span>"],
             ["四、信用風險", "全基金信貸評級結構與違約機率", "• 10分: 平均評級 BBB 以上<br>• 5分: 平均評級 BB 級<br>• 0分: Caa/CCC級 >10% 或未評級 >15%", "• 全基金平均評級：BB 級<br>• Ba 級 37.91%、B 級 33.75%、Caa 級 9.69%<br>👉 符合簡算規則 5 分級別 (BB 級高收益債)。", "5 / 10", "<span class='quality-badge-yellow'>🟡 中等風險</span>"],
             ["五、槓桿水平", "資產總膨脹率 (Total / Net Assets)", "• 10分: 比率 <105% (無顯著槓桿)<br>• 5分: 比率 105%-120%<br>• 0分: 比率 >120% (槓桿過高)", "• 總資產 / 淨資產：101.1%<br>👉 幾乎無借貸槓桿，結構非常安全透明。", "10 / 10", "<span class='quality-badge-green'>✔ 優秀</span>"],
-            ["六、利率敏感度", "有效存續期 (Duration)", "• 10分: 存續期 <3 年 (抗升息)<br>• 5分: 存續期 3-6 年<br>• 0分: 存續期 >6 年", "• 最低修訂存續期：2.58 年<br>👉 存續期極短，對央行利率变動的敏感度低。", "10 / 10", "<span class='quality-badge-green'>✔ 優秀</span>"],
+            ["六、利率敏感度", "有效存續期 (Duration)", "• 10分: 存續期 <3 年 (抗升息)<br>• 5分: 存續期 3-6 年<br>• 0分: 存續期 >6 年", "• 最低修訂存續期：2.58 年<br>👉 存續期極短，對央行利率變化的敏感度低。", "10 / 10", "<span class='quality-badge-green'>✔ 優秀</span>"],
             ["七、流動性風險", "現金儲備與營運現金流", "• 10分: 現金 >10% 且營運 Cash Flow 為正<br>• 5分: 現金 5%-10% 或靠國債/Level 1 資產緩衝<br>• 0分: 現金 <5% 或流動性緊縮", "• 現金及等值：11.26% (約 5.5 億美元)<br>👉 現金充沛 (> 10%)，足以支應短期贖回需求。", "10 / 10", "<span class='quality-badge-green'>✔ 優秀</span>"],
             ["八、匯率風險", "衍生品對沖與未實現損益", "• 10分: 全額對沖且衍生品虧損 <1% NAV<br>• 5分: 部分對沖<br>• 0分: 未對沖且外幣曝險過高", "• 各非美元類別均提供衍生品對沖<br>👉 避險機制運作順暢，衍生品風險極低。", "10 / 10", "<span class='quality-badge-green'>✔ 優秀</span>"],
             ["九、區域風險", "單一區域/國家持倉集中度", "• 5分: 美元專項基金美債 ≥60% 或 全球型單一區域 <40%<br>• 2.5分: 單一非美區域 40%-60% 或 全球型美債偏重<br>• 0分: 單一非美區域 >60%", "• 作為全球型高收益債基金，北美持倉 **61.3%**<br>👉 屬全球型基金之美債偏重區間，符合 2.5 分標準。", "2.5 / 5", "<span class='quality-badge-yellow'>🟡 區域偏重</span>"],
@@ -460,6 +471,7 @@ PRESET_FUNDS = {
         "code": "Z18",
         "zh": "富蘭克林鄧普頓 - 富蘭克林入息基金",
         "en": "Franklin Templeton - Franklin Income Fund",
+        "category": "股債混合基金",  # 專屬歸類為股債混合基金
         "star": "⭐⭐⭐⭐",
         "star_num": 4,
         "last_yield": 8.37,
@@ -574,6 +586,7 @@ PRESET_FUNDS = {
         "code": "Z29",
         "zh": "資本集團 - 資本集團全球公司債券基金 (盧森堡)",
         "en": "Capital Group Global Corporate Bond Fund (LUX)",
+        "category": "債券基金",
         "star": "⭐⭐⭐⭐⭐",
         "star_num": 5,
         "last_yield": 4.77,
@@ -687,6 +700,7 @@ PRESET_FUNDS = {
         "code": "Z52",
         "zh": "友邦保險 - 友邦美國高收益債券基金",
         "en": "AIA Investment Funds - AIA US High Yield Bond Fund",
+        "category": "債券基金",
         "star": "⭐⭐⭐",
         "star_num": 3,
         "last_yield": 7.23,
@@ -801,6 +815,7 @@ PRESET_FUNDS = {
         "code": "ZU6",
         "zh": "瑞銀資產管理 - 瑞銀歐元高收益債券基金",
         "en": "UBS (Lux) Bond Fund - Euro High Yield (EUR)",
+        "category": "債券基金",
         "star": "⭐⭐⭐⭐",
         "star_num": 4,
         "last_yield": 7.90,
@@ -915,14 +930,27 @@ PRESET_FUNDS = {
 top_tab1, top_tab2 = st.tabs(["📊 跨基金總體風險比較表 (全基金縱覽)", "🔍 單一基金深度風險剖析"])
 
 # ==============================================================================
-# TAB 1: 📊 跨基金總體風險比較表
+# TAB 1: 📊 跨基金總體風險比較表 (包含風險評估類別篩選功能)
 # ==============================================================================
 with top_tab1:
     st.markdown("### 📊 跨基金 10 大風險維度得分與回報總覽表")
 
-    # 1. 建立縱覽矩陣數據 (採用最新的平滑修正性價比公式)
+    # 1. 新增：風險評估類別/基金類別篩選器 (Filter Controls)
+    filter_col1, filter_col2, filter_col3 = st.columns([1.5, 1.5, 1])
+    with filter_col1:
+        selected_category = st.selectbox(
+            "📌 請選擇風險評估類別 (Fund Category)：",
+            ["全部類別", "債券基金", "股債混合基金", "股票基金"],
+            index=0
+        )
+
+    # 2. 建立縱覽矩陣數據 (根據類別進行動態過濾)
     matrix_data = []
     for key, f in PRESET_FUNDS.items():
+        # 若有選擇特定類別，進行過濾
+        if selected_category != "全部類別" and f["category"] != selected_category:
+            continue
+
         score_val = float(f["score"])
         risk_deduction = 100.0 - score_val
         return_1y_val = f["return_1y"]
@@ -931,6 +959,7 @@ with top_tab1:
         row = {
             "代號": f["code"],
             "基金簡稱": f["zh"],
+            "基金類別": f["category"],
             "晨星評級": f["star"],
             "star_num": f["star_num"],
             "上月年化派息率 (%)": f["last_yield"],
@@ -953,148 +982,151 @@ with top_tab1:
     
     df_matrix = pd.DataFrame(matrix_data)
 
-    # 2. 控制排序的控制列 (Sort Controls)
-    sort_col1, sort_col2 = st.columns([2, 1])
-    with sort_col1:
-        sort_by_col = st.selectbox(
-            "🔀 請選擇表格排序依據 (Sort By)：",
-            ["修正性價比指數 (Return/Risk+10)", "近1年總回報 (%)", "近3年年化總回報 (%)", "上月年化派息率 (%)", "綜合風險總分", "代號", "晨星評級", "一、派息可持續性 (20)", "二、底層資產質素 (15)", "三、集中度風險 (5)", "四、信用風險 (10)", "五、槓桿水平 (10)", "六、利率敏感度 (10)", "七、流動性風險 (10)", "八、匯率風險 (10)", "九、區域風險 (5)", "十、淨值波動與回撤 (5)"],
-            index=0
-        )
-    with sort_col2:
-        sort_order = st.radio("排序方向：", ["由高至低 (降序)", "由低至高 (升序)"], horizontal=True)
+    if len(df_matrix) == 0:
+        st.warning(f"目前無屬於『{selected_category}』類別的預設基金。")
+    else:
+        with filter_col2:
+            sort_by_col = st.selectbox(
+                "🔀 請選擇表格排序依據 (Sort By)：",
+                ["修正性價比指數 (Return/Risk+10)", "近1年總回報 (%)", "近3年年化總回報 (%)", "上月年化派息率 (%)", "綜合風險總分", "代號", "晨星評級", "一、派息可持續性 (20)", "二、底層資產質素 (15)", "三、集中度風險 (5)", "四、信用風險 (10)", "五、槓桿水平 (10)", "六、利率敏感度 (10)", "七、流動性風險 (10)", "八、匯率風險 (10)", "九、區域風險 (5)", "十、淨值波動與回撤 (5)"],
+                index=0
+            )
+        with filter_col3:
+            sort_order = st.radio("排序方向：", ["由高至低 (降序)", "由低至高 (升序)"], horizontal=True)
 
-    ascending_flag = True if sort_order == "由低至高 (升序)" else False
-    sort_key = "star_num" if sort_by_col == "晨星評級" else sort_by_col
-    df_matrix_sorted = df_matrix.sort_values(sort_key, ascending=ascending_flag)
+        ascending_flag = True if sort_order == "由低至高 (升序)" else False
+        sort_key = "star_num" if sort_by_col == "晨星評級" else sort_by_col
+        df_matrix_sorted = df_matrix.sort_values(sort_key, ascending=ascending_flag)
 
-    # 3. 拼接清潔 HTML
-    rows_list = []
-    for _, r in df_matrix_sorted.iterrows():
-        b1 = "quality-badge-green" if r['一、派息可持續性 (20)']>=15 else "quality-badge-yellow" if r['一、派息可持續性 (20)']>=10 else "quality-badge-red"
-        b2 = "quality-badge-green" if r['二、底層資產質素 (15)']>=15 else "quality-badge-yellow" if r['二、底層資產質素 (15)']>=10 else "quality-badge-red"
-        b3 = "quality-badge-green" if r['三、集中度風險 (5)']>=5 else "quality-badge-yellow"
-        b4 = "quality-badge-green" if r['四、信用風險 (10)']>=10 else "quality-badge-yellow"
-        b5 = "quality-badge-green" if r['五、槓桿水平 (10)']>=10 else "quality-badge-yellow"
-        b6 = "quality-badge-green" if r['六、利率敏感度 (10)']>=10 else "quality-badge-yellow" if r['六、利率敏感度 (10)']>=5 else "quality-badge-red"
-        b7 = "quality-badge-green" if r['七、流動性風險 (10)']>=10 else "quality-badge-yellow"
-        b8 = "quality-badge-green" if r['八、匯率風險 (10)']>=10 else "quality-badge-yellow"
-        b9 = "quality-badge-green" if r['九、區域風險 (5)']>=5 else "quality-badge-yellow" if r['九、區域風險 (5)']>=2.5 else "quality-badge-red"
-        b10 = "quality-badge-green" if r['十、淨值波動與回撤 (5)']>=5 else "quality-badge-yellow" if r['十、淨值波動與回撤 (5)']>=3 else "quality-badge-red"
+        # 3. 拼接清潔 HTML (包含基金類別標籤)
+        rows_list = []
+        for _, r in df_matrix_sorted.iterrows():
+            b1 = "quality-badge-green" if r['一、派息可持續性 (20)']>=15 else "quality-badge-yellow" if r['一、派息可持續性 (20)']>=10 else "quality-badge-red"
+            b2 = "quality-badge-green" if r['二、底層資產質素 (15)']>=15 else "quality-badge-yellow" if r['二、底層資產質素 (15)']>=10 else "quality-badge-red"
+            b3 = "quality-badge-green" if r['三、集中度風險 (5)']>=5 else "quality-badge-yellow"
+            b4 = "quality-badge-green" if r['四、信用風險 (10)']>=10 else "quality-badge-yellow"
+            b5 = "quality-badge-green" if r['五、槓桿水平 (10)']>=10 else "quality-badge-yellow"
+            b6 = "quality-badge-green" if r['六、利率敏感度 (10)']>=10 else "quality-badge-yellow" if r['六、利率敏感度 (10)']>=5 else "quality-badge-red"
+            b7 = "quality-badge-green" if r['七、流動性風險 (10)']>=10 else "quality-badge-yellow"
+            b8 = "quality-badge-green" if r['八、匯率風險 (10)']>=10 else "quality-badge-yellow"
+            b9 = "quality-badge-green" if r['九、區域風險 (5)']>=5 else "quality-badge-yellow" if r['九、區域風險 (5)']>=2.5 else "quality-badge-red"
+            b10 = "quality-badge-green" if r['十、淨值波動與回撤 (5)']>=5 else "quality-badge-yellow" if r['十、淨值波動與回撤 (5)']>=3 else "quality-badge-red"
 
-        row_str = f"<tr><td><b>{r['代號']}</b></td><td><b>{r['基金簡稱']}</b></td><td><span class='yield-tag'>📈 {r['上月年化派息率 (%)']}%</span></td><td style='font-weight:bold; color:#059669;'>+{r['近1年總回報 (%)']}%</td><td style='font-weight:bold; color:#0284C7;'>+{r['近3年年化總回報 (%)']}%</td><td><span class='ms-star-tag'>{r['晨星評級']}</span></td><td style='font-size:15px; font-weight:800; color:#1E3A8A;'>{r['綜合風險總分']} / 100</td><td style='font-size:15px; font-weight:800; color:#059669;'><b>{r['修正性價比指數 (Return/Risk+10)']}</b></td><td><span class='{b1}'>{r['一、派息可持續性 (20)']} 分</span></td><td><span class='{b2}'>{r['二、底層資產質素 (15)']} 分</span></td><td><span class='{b3}'>{r['三、集中度風險 (5)']} 分</span></td><td><span class='{b4}'>{r['四、信用風險 (10)']} 分</span></td><td><span class='{b5}'>{r['五、槓桿水平 (10)']} 分</span></td><td><span class='{b6}'>{r['六、利率敏感度 (10)']} 分</span></td><td><span class='{b7}'>{r['七、流動性風險 (10)']} 分</span></td><td><span class='{b8}'>{r['八、匯率風險 (10)']} 分</span></td><td><span class='{b9}'>{r['九、區域風險 (5)']} 分</span></td><td><span class='{b10}'>{r['十、淨值波動與回撤 (5)']} 分</span></td></tr>"
-        rows_list.append(row_str)
+            row_str = f"<tr><td><b>{r['代號']}</b></td><td><b>{r['基金簡稱']}</b></td><td><span class='type-tag'>{r['基金類別']}</span></td><td><span class='yield-tag'>📈 {r['上月年化派息率 (%)']}%</span></td><td style='font-weight:bold; color:#059669;'>+{r['近1年總回報 (%)']}%</td><td style='font-weight:bold; color:#0284C7;'>+{r['近3年年化總回報 (%)']}%</td><td><span class='ms-star-tag'>{r['晨星評級']}</span></td><td style='font-size:15px; font-weight:800; color:#1E3A8A;'>{r['綜合風險總分']} / 100</td><td style='font-size:15px; font-weight:800; color:#059669;'><b>{r['修正性價比指數 (Return/Risk+10)']}</b></td><td><span class='{b1}'>{r['一、派息可持續性 (20)']} 分</span></td><td><span class='{b2}'>{r['二、底層資產質素 (15)']} 分</span></td><td><span class='{b3}'>{r['三、集中度風險 (5)']} 分</span></td><td><span class='{b4}'>{r['四、信用風險 (10)']} 分</span></td><td><span class='{b5}'>{r['五、槓桿水平 (10)']} 分</span></td><td><span class='{b6}'>{r['六、利率敏感度 (10)']} 分</span></td><td><span class='{b7}'>{r['七、流動性風險 (10)']} 分</span></td><td><span class='{b8}'>{r['八、匯率風險 (10)']} 分</span></td><td><span class='{b9}'>{r['九、區域風險 (5)']} 分</span></td><td><span class='{b10}'>{r['十、淨值波動與回撤 (5)']} 分</span></td></tr>"
+            rows_list.append(row_str)
 
-    table_body_html = "".join(rows_list)
+        table_body_html = "".join(rows_list)
 
-    component_html = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-    <style>
-    body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; background: transparent; }}
-    .custom-table {{ width: 100%; border-collapse: collapse; background-color: #FFFFFF; border-radius: 8px; border: 1px solid #E2E8F0; font-size: 13px; }}
-    .custom-table th {{ background-color: #1E3A8A; color: #FFFFFF; font-weight: 700; text-align: left; padding: 12px 14px; border-bottom: 2px solid #1E293B; white-space: nowrap; }}
-    .custom-table td {{ padding: 12px 14px; border-bottom: 1px solid #E2E8F0; vertical-align: middle; color: #334155; white-space: nowrap; }}
-    .custom-table tr:hover {{ background-color: #F8FAFC; }}
-    .quality-badge-green {{ background-color: #D1FAE5; color: #065F46; padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 12px; display: inline-block; }}
-    .quality-badge-yellow {{ background-color: #FEF3C7; color: #92400E; padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 12px; display: inline-block; }}
-    .quality-badge-red {{ background-color: #FEE2E2; color: #991B1B; padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 12px; display: inline-block; }}
-    .ms-star-tag {{ background-color: #FEF08A; color: #854D0E; padding: 3px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; }}
-    .yield-tag {{ background-color: #E0F2FE; color: #0369A1; padding: 3px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; }}
-    </style>
-    </head>
-    <body>
-    <div style="overflow-x: auto;">
-        <table class="custom-table" style="min-width: 1550px;">
-            <thead>
-                <tr>
-                    <th>代號</th>
-                    <th>基金名稱</th>
-                    <th>上月派息率 (%)</th>
-                    <th>近1年總回報 (%)</th>
-                    <th>近3年年化回報 (%)</th>
-                    <th>晨星評級</th>
-                    <th>綜合風險總分</th>
-                    <th>修正性價比指數 🏆</th>
-                    <th>一、派息可持續性 (20)</th>
-                    <th>二、底層質素 (15)</th>
-                    <th>三、集中度 (5)</th>
-                    <th>四、信用風險 (10)</th>
-                    <th>五、槓桿水平 (10)</th>
-                    <th>六、利率敏感 (10)</th>
-                    <th>七、流動性 (10)</th>
-                    <th>八、匯率風險 (10)</th>
-                    <th>九、區域風險 (5)</th>
-                    <th>十、淨值波動 (5)</th>
-                </tr>
-            </thead>
-            <tbody>
-                {table_body_html}
-            </tbody>
-        </table>
-    </div>
-    </body>
-    </html>
-    """
+        component_html = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+        <style>
+        body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; background: transparent; }}
+        .custom-table {{ width: 100%; border-collapse: collapse; background-color: #FFFFFF; border-radius: 8px; border: 1px solid #E2E8F0; font-size: 13px; }}
+        .custom-table th {{ background-color: #1E3A8A; color: #FFFFFF; font-weight: 700; text-align: left; padding: 12px 14px; border-bottom: 2px solid #1E293B; white-space: nowrap; }}
+        .custom-table td {{ padding: 12px 14px; border-bottom: 1px solid #E2E8F0; vertical-align: middle; color: #334155; white-space: nowrap; }}
+        .custom-table tr:hover {{ background-color: #F8FAFC; }}
+        .type-tag {{ background-color: #E0E7FF; color: #3730A3; padding: 3px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; }}
+        .quality-badge-green {{ background-color: #D1FAE5; color: #065F46; padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 12px; display: inline-block; }}
+        .quality-badge-yellow {{ background-color: #FEF3C7; color: #92400E; padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 12px; display: inline-block; }}
+        .quality-badge-red {{ background-color: #FEE2E2; color: #991B1B; padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 12px; display: inline-block; }}
+        .ms-star-tag {{ background-color: #FEF08A; color: #854D0E; padding: 3px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; }}
+        .yield-tag {{ background-color: #E0F2FE; color: #0369A1; padding: 3px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; }}
+        </style>
+        </head>
+        <body>
+        <div style="overflow-x: auto;">
+            <table class="custom-table" style="min-width: 1650px;">
+                <thead>
+                    <tr>
+                        <th>代號</th>
+                        <th>基金名稱</th>
+                        <th>基金類別</th>
+                        <th>上月派息率 (%)</th>
+                        <th>近1年總回報 (%)</th>
+                        <th>近3年年化回報 (%)</th>
+                        <th>晨星評級</th>
+                        <th>綜合風險總分</th>
+                        <th>修正性價比指數 🏆</th>
+                        <th>一、派息可持續性 (20)</th>
+                        <th>二、底層質素 (15)</th>
+                        <th>三、集中度 (5)</th>
+                        <th>四、信用風險 (10)</th>
+                        <th>五、槓桿水平 (10)</th>
+                        <th>六、利率敏感 (10)</th>
+                        <th>七、流動性 (10)</th>
+                        <th>八、匯率風險 (10)</th>
+                        <th>九、區域風險 (5)</th>
+                        <th>十、淨值波動 (5)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {table_body_html}
+                </tbody>
+            </table>
+        </div>
+        </body>
+        </html>
+        """
 
-    components.html(component_html, height=360, scrolling=True)
+        components.html(component_html, height=360, scrolling=True)
 
-    st.markdown("<br><hr>", unsafe_allow_html=True)
+        st.markdown("<br><hr>", unsafe_allow_html=True)
 
-    # 4. 多基金重疊雷達圖比對區塊 (同樣採用得分率 % 比對)
-    col_compare_left, col_compare_right = st.columns([1.3, 1])
+        # 4. 多基金重疊雷達圖比對區塊
+        col_compare_left, col_compare_right = st.columns([1.3, 1])
 
-    with col_compare_left:
-        st.markdown("#### 🕸️ 勾選基金進行 10 大維度雷達圖重疊對比 (得分率 %)")
-        selected_funds_to_compare = st.multiselect(
-            "請選擇要對比的基金 (可複選 2~6 隻)：",
-            list(PRESET_FUNDS.keys()),
-            default=["Z29 資本集團 - 資本集團全球公司債券基金 (上月派息: 4.77%)", "Z15 霸菱環球高收益債券基金 (上月派息: 9.87%)"]
-        )
+        with col_compare_left:
+            st.markdown("#### 🕸️ 勾選基金進行 10 大維度雷達圖重疊對比 (得分率 %)")
+            selected_funds_to_compare = st.multiselect(
+                "請選擇要對比的基金 (可複選 2~6 隻)：",
+                list(PRESET_FUNDS.keys()),
+                default=["Z29 資本集團 - 資本集團全球公司債券基金 (上月派息: 4.77%)", "Z15 霸菱環球高收益債券基金 (上月派息: 9.87%)"]
+            )
 
-        if len(selected_funds_to_compare) > 0:
-            max_scores = [20, 15, 5, 10, 10, 10, 10, 10, 5, 5]
-            radar_multi_data = []
-            for f_name in selected_funds_to_compare:
-                f_obj = PRESET_FUNDS[f_name]
-                for dim, score, m_score in zip(f_obj["radar_dimensions"], f_obj["radar_scores"], max_scores):
-                    radar_multi_data.append({
-                        "基金名稱": f_obj["code"] + " " + f_obj["zh"],
-                        "維度": dim,
-                        "得分率 (%)": (score / m_score) * 100
-                    })
+            if len(selected_funds_to_compare) > 0:
+                max_scores = [20, 15, 5, 10, 10, 10, 10, 10, 5, 5]
+                radar_multi_data = []
+                for f_name in selected_funds_to_compare:
+                    f_obj = PRESET_FUNDS[f_name]
+                    for dim, score, m_score in zip(f_obj["radar_dimensions"], f_obj["radar_scores"], max_scores):
+                        radar_multi_data.append({
+                            "基金名稱": f_obj["code"] + " " + f_obj["zh"],
+                            "維度": dim,
+                            "得分率 (%)": (score / m_score) * 100
+                        })
+                
+                df_multi_radar = pd.DataFrame(radar_multi_data)
+                fig_multi_radar = px.line_polar(
+                    df_multi_radar, r='得分率 (%)', theta='維度', color='基金名稱',
+                    line_close=True, markers=True, range_r=[0, 100],
+                    template="plotly_dark"
+                )
+                fig_multi_radar.update_layout(
+                    height=480, margin=dict(l=40, r=40, t=30, b=30), paper_bgcolor="rgba(0,0,0,0)",
+                    polar=dict(bgcolor="#1E222D", radialaxis=dict(visible=True, range=[0, 100], showticklabels=False, gridcolor="#334155"))
+                )
+                st.plotly_chart(fig_multi_radar, use_container_width=True)
+            else:
+                st.warning("請至少勾選 1 隻基金以繪制雷達圖。")
+
+        with col_compare_right:
+            st.markdown("#### 🏆 修正性價比指數 (Total Return / Risk + 10) 排行榜")
+            df_rank = df_matrix[["代號", "修正性價比指數 (Return/Risk+10)"]].sort_values("修正性價比指數 (Return/Risk+10)", ascending=True)
             
-            df_multi_radar = pd.DataFrame(radar_multi_data)
-            fig_multi_radar = px.line_polar(
-                df_multi_radar, r='得分率 (%)', theta='維度', color='基金名稱',
-                line_close=True, markers=True, range_r=[0, 100],
-                template="plotly_dark"
+            fig_rank = px.bar(
+                df_rank, x='修正性價比指數 (Return/Risk+10)', y='代號', text='修正性價比指數 (Return/Risk+10)', orientation='h',
+                title="修正性價比指數 (每單位總風險帶來的近1年真實總回報)",
+                color='修正性價比指數 (Return/Risk+10)', color_continuous_scale='Greens',
+                template="plotly_white"
             )
-            fig_multi_radar.update_layout(
-                height=480, margin=dict(l=40, r=40, t=30, b=30), paper_bgcolor="rgba(0,0,0,0)",
-                polar=dict(bgcolor="#1E222D", radialaxis=dict(visible=True, range=[0, 100], showticklabels=False, gridcolor="#334155"))
-            )
-            st.plotly_chart(fig_multi_radar, use_container_width=True)
-        else:
-            st.warning("請至少勾選 1 隻基金以繪制雷達圖。")
-
-    with col_compare_right:
-        st.markdown("#### 🏆 修正性價比指數 (Total Return / Risk + 10) 排行榜")
-        df_rank = df_matrix[["代號", "修正性價比指數 (Return/Risk+10)"]].sort_values("修正性價比指數 (Return/Risk+10)", ascending=True)
-        
-        fig_rank = px.bar(
-            df_rank, x='修正性價比指數 (Return/Risk+10)', y='代號', text='修正性價比指數 (Return/Risk+10)', orientation='h',
-            title="修正性價比指數 (每單位總風險帶來的近1年真實總回報)",
-            color='修正性價比指數 (Return/Risk+10)', color_continuous_scale='Greens',
-            template="plotly_white"
-        )
-        fig_rank.update_layout(height=450, yaxis_title="基金代號", xaxis_title="修正性價比指數 (更高＝風險效率最高)")
-        st.plotly_chart(fig_rank, use_container_width=True)
+            fig_rank.update_layout(height=450, yaxis_title="基金代號", xaxis_title="修正性價比指數 (更高＝風險效率最高)")
+            st.plotly_chart(fig_rank, use_container_width=True)
 
 
 # ==============================================================================
-# TAB 2: 🔍 單一基金深度風險剖析 (採用百分比雷達圖 + 6 名片完美版)
+# TAB 2: 🔍 單一基金深度風險剖析
 # ==============================================================================
 with top_tab2:
     ctrl_col1, ctrl_col2 = st.columns([1.8, 1.2])
@@ -1104,7 +1136,7 @@ with top_tab2:
 
     curr_fund = PRESET_FUNDS[selected_preset]
 
-    default_type_index = 2 if "富蘭克林" in selected_preset else 0
+    default_type_index = 2 if curr_fund["category"] == "股債混合基金" else 0
 
     with ctrl_col2:
         fund_type = st.selectbox("📌 風險評估類別：", ["債券基金", "股票基金", "股債混合基金"], index=default_type_index)
@@ -1112,7 +1144,7 @@ with top_tab2:
     # 醒目基金名稱抬頭
     st.markdown(f"""
         <div class="fund-header">
-            <span style="font-size: 13px; color: #888;">當前分析目標基金 ({fund_type})：</span> 
+            <span style="font-size: 13px; color: #888;">當前分析目標基金 ({curr_fund['category']})：</span> 
             <span class="source-tag">📍 客觀真實數據源 : {curr_fund['zh']}</span>
             <span class="yield-tag">📈 上月年化派息率 : {curr_fund['last_yield']}%</span>
             <span class="ms-star-tag">⭐ 晨星評級 : {curr_fund.get('star', '未評級')}</span><br>
@@ -1137,7 +1169,7 @@ with top_tab2:
         </div>
     """, unsafe_allow_html=True)
 
-    # 5. 帶有「小眼仔 👁️ 隱藏/顯示功能」的三大歸類名片區塊 (6 名片完美對齊)
+    # 5. 帶有「小眼仔 👁️ 隱藏/顯示功能」的三大歸類名片區塊
     if fund_type == "債券基金" or fund_type == "股債混合基金":
         p2_delta = curr_fund['kpis'].get('p2_delta', '⚠️ 存在本金補貼風險')
         p2_color = curr_fund['kpis'].get('p2_color', 'inverse')
@@ -1170,7 +1202,7 @@ with top_tab2:
 
         st.markdown("<hr style='margin: 10px 0; border: none; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
 
-        # --- 區塊二：🛡️ 風險與信用結構 (含總持有債券數量) ---
+        # --- 區塊二：🛡️ 風險與信用結構 (含總持有債券/資產數量) ---
         header_col2, eye_col2 = st.columns([4, 1])
         with header_col2:
             st.markdown('<div class="metric-group-title">🛡️ 風險與信用結構 (Risk & Credit Structure)</div>', unsafe_allow_html=True)
@@ -1182,7 +1214,7 @@ with top_tab2:
             with g2_c1: st.metric(label="平均持有債務評級", value=curr_fund['kpis']['p3'], delta=p3_delta, delta_color=p3_color)
             with g2_c2: st.metric(label="續存率 / 有效存續期", value=curr_fund['kpis']['p4'], delta="存續期 (久期)", delta_color="normal")
             with g2_c3: st.metric(label="手持現金比率", value=curr_fund['kpis']['p5'], delta=p5_delta, delta_color=p5_color)
-            with g2_c4: st.metric(label="總持有債券/資產數量", value=curr_fund['holdings_count'], delta="底層持倉分散度", delta_color="normal")
+            with g2_c4: st.metric(label="總持有資產數量", value=curr_fund['holdings_count'], delta="底層持倉分散度", delta_color="normal")
             with g2_c5: st.metric(label="前十大發行人佔比", value=curr_fund['kpis']['p6'], delta="極度分散", delta_color="normal")
             with g2_c6: st.metric(label="槓桿比率", value=curr_fund['kpis']['p7'], delta="無顯著借貸", delta_color="normal")
 
@@ -1218,7 +1250,7 @@ with top_tab2:
         "🌍 地區分佈歷年走勢 (%)"
     ])
 
-    # Tab 1: 風險維度雷達圖 (採用百分比轉換，解決視覺凹陷問題)
+    # Tab 1: 風險維度雷達圖
     with main_tab1:
         max_scores = [20, 15, 5, 10, 10, 10, 10, 10, 5, 5]
         percentage_scores = [(s / m) * 100 for s, m in zip(curr_fund["radar_scores"], max_scores)]
@@ -1253,7 +1285,7 @@ with top_tab2:
             )
         )
         st.plotly_chart(fig_radar, use_container_width=True)
-        st.caption("💡 註：雷達圖已統一轉換為『得分率 (%)』顯示，100% 代表該風控維度獲得全額滿分（頂格即為 Pass）。")
+        st.caption("💡 註：雷達圖已統一轉換為『得分率 (%)』顯示，100% 代表該風控維度獲得全額滿分。")
 
     # Tab 2: 底層資產清單
     with main_tab2:
