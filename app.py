@@ -115,20 +115,21 @@ with top_tab1:
 
     matrix_data = []
     for key, f in PRESET_FUNDS.items():
-        if selected_category != "全部類別" and f.get("category") != selected_category:
+        cat = f.get("category", "未分類")
+        if selected_category != "全部類別" and cat != selected_category:
             continue
         
         score_val = float(f.get("score", 0))
         risk_deduction = 100.0 - score_val
-        return_1y_val = f.get("return_1y", 0)
+        return_1y_val = float(f.get("return_1y", 0))
         eff_score = round((return_1y_val / (risk_deduction + 10.0)) * 100, 2)
 
         radar_scores = f.get("radar_scores", [0]*10)
 
         matrix_data.append({
-            "代號": f.get("code", "N/A"), 
-            "基金簡稱": f.get("zh", key), 
-            "基金類別": f.get("category", "未分類"),
+            "代號": f.get("code") or f.get("代號") or "N/A", 
+            "基金簡稱": f.get("zh") or f.get("基金簡稱") or key, 
+            "基金類別": cat,
             "晨星評級": f.get("star", "未評級"), 
             "star_num": f.get("star_num", 0), 
             "上月年化派息率 (%)": f.get("last_yield", 0),
@@ -163,18 +164,28 @@ with top_tab1:
 
         rows_list = []
         for _, r in df_matrix_sorted.iterrows():
-            b1 = "quality-badge-green" if r['一、派息可持續性 (20)']>=15 else "quality-badge-yellow"
-            b2 = "quality-badge-green" if r['二、底層質素 (15)']>=15 else "quality-badge-yellow"
-            b3 = "quality-badge-green" if r['三、集中度 (5)']>=5 else "quality-badge-yellow"
-            b4 = "quality-badge-green" if r['四、信用與風控 (10)']>=10 else "quality-badge-yellow"
-            b5 = "quality-badge-green" if r['五、槓桿與天花板 (10)']>=10 else "quality-badge-yellow"
-            b6 = "quality-badge-green" if r['六、利率/大盤敏感度 (10)']>=10 else "quality-badge-yellow"
-            b7 = "quality-badge-green" if r['七、流動性 (10)']>=10 else "quality-badge-yellow"
-            b8 = "quality-badge-green" if r['八、匯率風險 (10)']>=10 else "quality-badge-yellow"
-            b9 = "quality-badge-green" if r['九、區域風險 (5)']>=5 else "quality-badge-yellow"
-            b10 = "quality-badge-green" if r['十、淨值波動與回撤 (5)']>=5 else "quality-badge-yellow"
+            b1 = "quality-badge-green" if r.get('一、派息可持續性 (20)', 0)>=15 else "quality-badge-yellow"
+            b2 = "quality-badge-green" if r.get('二、底層質素 (15)', 0)>=15 else "quality-badge-yellow"
+            b3 = "quality-badge-green" if r.get('三、集中度 (5)', 0)>=5 else "quality-badge-yellow"
+            b4 = "quality-badge-green" if r.get('四、信用與風控 (10)', 0)>=10 else "quality-badge-yellow"
+            b5 = "quality-badge-green" if r.get('五、槓桿與天花板 (10)', 0)>=10 else "quality-badge-yellow"
+            b6 = "quality-badge-green" if r.get('六、利率/大盤敏感度 (10)', 0)>=10 else "quality-badge-yellow"
+            b7 = "quality-badge-green" if r.get('七、流動性 (10)', 0)>=10 else "quality-badge-yellow"
+            b8 = "quality-badge-green" if r.get('八、匯率風險 (10)', 0)>=10 else "quality-badge-yellow"
+            b9 = "quality-badge-green" if r.get('九、區域風險 (5)', 0)>=5 else "quality-badge-yellow"
+            b10 = "quality-badge-green" if r.get('十、淨值波動與回撤 (5)', 0)>=5 else "quality-badge-yellow"
 
-            rows_list.append(f"<tr><td><b>{r['代號']}</b></td><td><b>{r['基金簡稱']}</b></td><td><span class='type-tag'>{r['基金類別']}</span></td><td><span class='yield-tag'>📈 {r['上月年化派息率 (%)']}%</span></td><td style='font-weight:bold; color:#059669;'>+{r['近1年總回報 (%)']}%</td><td style='font-weight:bold; color:#0284C7;'>+{r['近3年年化總回報 (%)']}%</td><td><span class='ms-star-tag'>{r['晨星評級']}</span></td><td style='font-size:15px; font-weight:800; color:#1E3A8A;'>{r['綜合風險總分']} / 100</td><td style='font-size:15px; font-weight:800; color:#059669;'><b>{r['風險與回報對比指數']}</b></td><td><span class='{b1}'>{r['一、派息可持續性 (20)']} 分</span></td><td><span class='{b2}'>{r['二、底層質素 (15)']} 分</span></td><td><span class='{b3}'>{r['三、集中度 (5)']} 分</span></td><td><span class='{b4}'>{r['四、信用與風控 (10)']} 分</span></td><td><span class='{b5}'>{r['五、槓桿與天花板 (10)']} 分</span></td><td><span class='{b6}'>{r['六、利率/大盤敏感度 (10)']} 分</span></td><td><span class='{b7}'>{r['七、流動性 (10)']} 分</span></td><td><span class='{b8}'>{r['八、匯率風險 (10)']} 分</span></td><td><span class='{b9}'>{r['九、區域風險 (5)']} 分</span></td><td><span class='{b10}'>{r['十、淨值波動 (5)']} 分</span></td></tr>")
+            code_str = r.get('代號', '-')
+            zh_str = r.get('基金簡稱', '-')
+            cat_str = r.get('基金類別', '-')
+            yield_str = r.get('上月年化派息率 (%)', 0)
+            r1_str = r.get('近1年總回報 (%)', 0)
+            r3_str = r.get('近3年年化總回報 (%)', 0)
+            star_str = r.get('晨星評級', '-')
+            score_str = r.get('綜合風險總分', 0)
+            eff_str = r.get('風險與回報對比指數', 0)
+
+            rows_list.append(f"<tr><td><b>{code_str}</b></td><td><b>{zh_str}</b></td><td><span class='type-tag'>{cat_str}</span></td><td><span class='yield-tag'>📈 {yield_str}%</span></td><td style='font-weight:bold; color:#059669;'>+{r1_str}%</td><td style='font-weight:bold; color:#0284C7;'>+{r3_str}%</td><td><span class='ms-star-tag'>{star_str}</span></td><td style='font-size:15px; font-weight:800; color:#1E3A8A;'>{score_str} / 100</td><td style='font-size:15px; font-weight:800; color:#059669;'><b>{eff_str}</b></td><td><span class='{b1}'>{r.get('一、派息可持續性 (20)', 0)} 分</span></td><td><span class='{b2}'>{r.get('二、底層質素 (15)', 0)} 分</span></td><td><span class='{b3}'>{r.get('三、集中度 (5)', 0)} 分</span></td><td><span class='{b4}'>{r.get('四、信用與風控 (10)', 0)} 分</span></td><td><span class='{b5}'>{r.get('五、槓桿與天花板 (10)', 0)} 分</span></td><td><span class='{b6}'>{r.get('六、利率/大盤敏感度 (10)', 0)} 分</span></td><td><span class='{b7}'>{r.get('七、流動性 (10)', 0)} 分</span></td><td><span class='{b8}'>{r.get('八、匯率風險 (10)', 0)} 分</span></td><td><span class='{b9}'>{r.get('九、區域風險 (5)', 0)} 分</span></td><td><span class='{b10}'>{r.get('十、淨值波動與回撤 (5)', 0)} 分</span></td></tr>")
 
         component_html = f"""
         <!DOCTYPE html><html><head><style>
@@ -204,7 +215,9 @@ with top_tab1:
                     f_obj = PRESET_FUNDS[f_name]
                     radar_scores = f_obj.get("radar_scores", [0]*10)
                     radar_dims = f_obj.get("radar_dimensions", ["維度"]*10)
-                    code_name = f_obj.get("code", "") + " " + f_obj.get("zh", f_name)
+                    code_val = f_obj.get("code") or f_obj.get("代號") or ""
+                    zh_val = f_obj.get("zh") or f_obj.get("基金簡稱") or f_name
+                    code_name = f"{code_val} {zh_val}"
                     for dim, score, m_score in zip(radar_dims, radar_scores, [20, 15, 5, 10, 10, 10, 10, 10, 5, 5]):
                         radar_data.append({"基金": code_name, "維度": dim, "得分率 (%)": (score / m_score) * 100})
                 fig_radar = px.line_polar(pd.DataFrame(radar_data), r='得分率 (%)', theta='維度', color='基金', line_close=True, markers=True, range_r=[0, 100], template="plotly_dark")
@@ -229,7 +242,7 @@ with top_tab2:
     default_index = 1 if category_val == "股票基金" else 2 if category_val == "股債混合基金" else 0
     with ctrl_col2: fund_type = st.selectbox("📌 風險評估類別：", ["債券基金", "股票基金", "股債混合基金"], index=default_index)
 
-    zh_name = curr_fund.get("zh", selected_preset)
+    zh_name = curr_fund.get("zh") or curr_fund.get("基金簡稱") or selected_preset
     en_name = curr_fund.get("en", "")
     last_yield_val = curr_fund.get("last_yield", 0)
     star_val = curr_fund.get("star", "未評級")
