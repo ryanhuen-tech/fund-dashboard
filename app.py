@@ -115,23 +115,37 @@ with top_tab1:
 
     matrix_data = []
     for key, f in PRESET_FUNDS.items():
-        if selected_category != "全部類別" and f["category"] != selected_category:
+        if selected_category != "全部類別" and f.get("category") != selected_category:
             continue
-        score_val = float(f["score"])
+        
+        score_val = float(f.get("score", 0))
         risk_deduction = 100.0 - score_val
-        return_1y_val = f["return_1y"]
+        return_1y_val = f.get("return_1y", 0)
         eff_score = round((return_1y_val / (risk_deduction + 10.0)) * 100, 2)
 
+        radar_scores = f.get("radar_scores", [0]*10)
+
         matrix_data.append({
-            "代號": f["code"], "基金簡稱": f["zh"], "基金類別": f["category"],
-            "晨星評級": f["star"], "star_num": f["star_num"], "上月年化派息率 (%)": f["last_yield"],
-            "近1年總回報 (%)": return_1y_val, "近3年年化總回報 (%)": f["return_3y"],
-            "綜合風險總分": score_val, "風險與回報對比指數": eff_score,
-            "一、派息可持續性 (20)": f["radar_scores"][0], "二、底層質素 (15)": f["radar_scores"][1],
-            "三、集中度 (5)": f["radar_scores"][2], "四、信用與風控 (10)": f["radar_scores"][3],
-            "五、槓桿與天花板 (10)": f["radar_scores"][4], "六、利率/大盤敏感度 (10)": f["radar_scores"][5],
-            "七、流動性 (10)": f["radar_scores"][6], "八、匯率風險 (10)": f["radar_scores"][7],
-            "九、區域風險 (5)": f["radar_scores"][8], "十、淨值波動與回撤 (5)": f["radar_scores"][9]
+            "代號": f.get("code", "N/A"), 
+            "基金簡稱": f.get("zh", key), 
+            "基金類別": f.get("category", "未分類"),
+            "晨星評級": f.get("star", "未評級"), 
+            "star_num": f.get("star_num", 0), 
+            "上月年化派息率 (%)": f.get("last_yield", 0),
+            "近1年總回報 (%)": return_1y_val, 
+            "近3年年化總回報 (%)": f.get("return_3y", 0),
+            "綜合風險總分": score_val, 
+            "風險與回報對比指數": eff_score,
+            "一、派息可持續性 (20)": radar_scores[0] if len(radar_scores) > 0 else 0, 
+            "二、底層質素 (15)": radar_scores[1] if len(radar_scores) > 1 else 0,
+            "三、集中度 (5)": radar_scores[2] if len(radar_scores) > 2 else 0, 
+            "四、信用與風控 (10)": radar_scores[3] if len(radar_scores) > 3 else 0,
+            "五、槓桿與天花板 (10)": radar_scores[4] if len(radar_scores) > 4 else 0, 
+            "六、利率/大盤敏感度 (10)": radar_scores[5] if len(radar_scores) > 5 else 0,
+            "七、流動性 (10)": radar_scores[6] if len(radar_scores) > 6 else 0, 
+            "八、匯率風險 (10)": radar_scores[7] if len(radar_scores) > 7 else 0,
+            "九、區域風險 (5)": radar_scores[8] if len(radar_scores) > 8 else 0, 
+            "十、淨值波動與回撤 (5)": radar_scores[9] if len(radar_scores) > 9 else 0
         })
     
     df_matrix = pd.DataFrame(matrix_data)
@@ -188,8 +202,11 @@ with top_tab1:
                 radar_data = []
                 for f_name in selected_compare:
                     f_obj = PRESET_FUNDS[f_name]
-                    for dim, score, m_score in zip(f_obj["radar_dimensions"], f_obj["radar_scores"], [20, 15, 5, 10, 10, 10, 10, 10, 5, 5]):
-                        radar_data.append({"基金": f_obj["code"] + " " + f_obj["zh"], "維度": dim, "得分率 (%)": (score / m_score) * 100})
+                    radar_scores = f_obj.get("radar_scores", [0]*10)
+                    radar_dims = f_obj.get("radar_dimensions", ["維度"]*10)
+                    code_name = f_obj.get("code", "") + " " + f_obj.get("zh", f_name)
+                    for dim, score, m_score in zip(radar_dims, radar_scores, [20, 15, 5, 10, 10, 10, 10, 10, 5, 5]):
+                        radar_data.append({"基金": code_name, "維度": dim, "得分率 (%)": (score / m_score) * 100})
                 fig_radar = px.line_polar(pd.DataFrame(radar_data), r='得分率 (%)', theta='維度', color='基金', line_close=True, markers=True, range_r=[0, 100], template="plotly_dark")
                 fig_radar.update_layout(height=450, paper_bgcolor="rgba(0,0,0,0)")
                 st.plotly_chart(fig_radar, use_container_width=True)
@@ -207,28 +224,39 @@ with top_tab2:
     ctrl_col1, ctrl_col2 = st.columns([1.8, 1.2])
     with ctrl_col1: selected_preset = st.selectbox("📌 選擇基金名稱：", list(PRESET_FUNDS.keys()))
     curr_fund = PRESET_FUNDS[selected_preset]
-    with ctrl_col2: fund_type = st.selectbox("📌 風險評估類別：", ["債券基金", "股票基金", "股債混合基金"], index=1 if curr_fund["category"]=="股票基金" else 0)
+    
+    category_val = curr_fund.get("category", "債券基金")
+    default_index = 1 if category_val == "股票基金" else 2 if category_val == "股債混合基金" else 0
+    with ctrl_col2: fund_type = st.selectbox("📌 風險評估類別：", ["債券基金", "股票基金", "股債混合基金"], index=default_index)
 
-    st.markdown(f'<div class="fund-header"><span class="source-tag">📍 {curr_fund["zh"]}</span> <span class="yield-tag">📈 派息率: {curr_fund["last_yield"]}%</span> <span class="ms-star-tag">⭐ {curr_fund.get("star")}</span><br><span style="font-size:20px; font-weight:bold; color:#FFF;">{curr_fund["zh"]}</span> <span style="font-size:14px; color:#AAA;">({curr_fund["en"]})</span></div>', unsafe_allow_html=True)
+    zh_name = curr_fund.get("zh", selected_preset)
+    en_name = curr_fund.get("en", "")
+    last_yield_val = curr_fund.get("last_yield", 0)
+    star_val = curr_fund.get("star", "未評級")
+    company_name = curr_fund.get("company_name", "未知機構")
+    company_profile = curr_fund.get("company_profile", [])
 
-    with st.expander(f"🏢 基金公司簡介 — {curr_fund['company_name']}", expanded=False):
-        st.markdown(f'<ul class="company-profile-list">{"".join([f"<li>{item}</li>" for item in curr_fund["company_profile"]])}</ul>', unsafe_allow_html=True)
+    st.markdown(f'<div class="fund-header"><span class="source-tag">📍 {zh_name}</span> <span class="yield-tag">📈 派息率: {last_yield_val}%</span> <span class="ms-star-tag">⭐ {star_val}</span><br><span style="font-size:20px; font-weight:bold; color:#FFF;">{zh_name}</span> <span style="font-size:14px; color:#AAA;">({en_name})</span></div>', unsafe_allow_html=True)
+
+    with st.expander(f"🏢 基金公司簡介 — {company_name}", expanded=False):
+        st.markdown(f'<ul class="company-profile-list">{"".join([f"<li>{item}</li>" for item in company_profile])}</ul>', unsafe_allow_html=True)
 
     st.markdown('<div class="data-disclaimer-note"><b>📑 數據來源聲明備註：</b> 本 Dashboard 內所有財務數據、持倉比率、派息成分與營運損益，均完全依據<b>基金官方發布之基金月報 (Factsheet)、派息分派紀錄及年度財務報告</b> 客觀建檔分析。</div>', unsafe_allow_html=True)
 
     # 取得安全預設 KPI 標籤
-    p2_delta = curr_fund['kpis'].get('p2_delta', '⚠️ 存在本金補貼風險')
-    p2_color = curr_fund['kpis'].get('p2_color', 'inverse')
-    p3_delta = curr_fund['kpis'].get('p3_delta', '⚠️ 非投資級/風險持倉')
-    p3_color = curr_fund['kpis'].get('p3_color', 'inverse')
-    p5_delta = curr_fund['kpis'].get('p5_delta', '流動資產')
-    p5_color = curr_fund['kpis'].get('p5_color', 'normal')
-    p9_delta = curr_fund['kpis'].get('p9_delta', '🟢 總收入-總支出')
-    p9_color = curr_fund['kpis'].get('p9_color', 'normal')
-    p10_delta = curr_fund['kpis'].get('p10_delta', '🟢 淨收益覆蓋佳')
-    p10_color = curr_fund['kpis'].get('p10_color', 'normal')
-    p11_delta = curr_fund['kpis'].get('p11_delta', '⚠️ 申購 - 贖回差距')
-    p11_color = curr_fund['kpis'].get('p11_color', 'inverse')
+    kpis = curr_fund.get('kpis', {})
+    p2_delta = kpis.get('p2_delta', '⚠️ 存在本金補貼風險')
+    p2_color = kpis.get('p2_color', 'inverse')
+    p3_delta = kpis.get('p3_delta', '⚠️ 非投資級/風險持倉')
+    p3_color = kpis.get('p3_color', 'inverse')
+    p5_delta = kpis.get('p5_delta', '流動資產')
+    p5_color = kpis.get('p5_color', 'normal')
+    p9_delta = kpis.get('p9_delta', '🟢 總收入-總支出')
+    p9_color = kpis.get('p9_color', 'normal')
+    p10_delta = kpis.get('p10_delta', '🟢 淨收益覆蓋佳')
+    p10_color = kpis.get('p10_color', 'normal')
+    p11_delta = kpis.get('p11_delta', '⚠️ 申購 - 贖回差距')
+    p11_color = kpis.get('p11_color', 'inverse')
 
     # --- 區塊一：📈 收益與回報指標 ---
     header_col1, eye_col1 = st.columns([4, 1])
@@ -237,12 +265,12 @@ with top_tab2:
     
     if show_g1:
         g1_c1, g1_c2, g1_c3, g1_c4, g1_c5, g1_c6 = st.columns(6)
-        with g1_c1: st.metric(label="現時派息率", value=curr_fund['kpis'].get('p1', '-'), delta="年化分派", delta_color="normal")
-        with g1_c2: st.metric(label="派息與收益息差", value=curr_fund['kpis'].get('p2', '-'), delta=p2_delta, delta_color=p2_color)
-        with g1_c3: st.metric(label="過往 1 年總回報率", value=f"+{curr_fund['return_1y']}%", delta="含股息再投資", delta_color="normal")
-        with g1_c4: st.metric(label="過往 3 年年化總回報", value=f"+{curr_fund['return_3y']}%", delta="晨星年化複合回報", delta_color="normal")
-        with g1_c5: st.metric(label="過往一年總派息金額", value=curr_fund['kpis'].get('p10', '-'), delta=p10_delta, delta_color=p10_color)
-        with g1_c6: st.metric(label="過往一年淨收益/權利金", value=curr_fund['kpis'].get('p9', '-'), delta=p9_delta, delta_color=p9_color)
+        with g1_c1: st.metric(label="現時派息率", value=kpis.get('p1', '-'), delta="年化分派", delta_color="normal")
+        with g1_c2: st.metric(label="派息與收益息差", value=kpis.get('p2', '-'), delta=p2_delta, delta_color=p2_color)
+        with g1_c3: st.metric(label="過往 1 年總回報率", value=f"+{curr_fund.get('return_1y', 0)}%", delta="含股息再投資", delta_color="normal")
+        with g1_c4: st.metric(label="過往 3 年年化總回報", value=f"+{curr_fund.get('return_3y', 0)}%", delta="晨星年化複合回報", delta_color="normal")
+        with g1_c5: st.metric(label="過往一年總派息金額", value=kpis.get('p10', '-'), delta=p10_delta, delta_color=p10_color)
+        with g1_c6: st.metric(label="過往一年淨收益/權利金", value=kpis.get('p9', '-'), delta=p9_delta, delta_color=p9_color)
 
     st.markdown("<hr style='margin: 10px 0; border: none; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
 
@@ -253,12 +281,12 @@ with top_tab2:
 
     if show_g2:
         g2_c1, g2_c2, g2_c3, g2_c4, g2_c5, g2_c6 = st.columns(6)
-        with g2_c1: st.metric(label="平均持有評級/屬性", value=curr_fund['kpis'].get('p3', '-'), delta=p3_delta, delta_color=p3_color)
-        with g2_c2: st.metric(label="存續期/Beta敏感度", value=curr_fund['kpis'].get('p4', '-'), delta="風險敏感指標", delta_color="normal")
-        with g2_c3: st.metric(label="手持現金/衍生品比率", value=curr_fund['kpis'].get('p5', '-'), delta=p5_delta, delta_color=p5_color)
+        with g2_c1: st.metric(label="平均持有評級/屬性", value=kpis.get('p3', '-'), delta=p3_delta, delta_color=p3_color)
+        with g2_c2: st.metric(label="存續期/Beta敏感度", value=kpis.get('p4', '-'), delta="風險敏感指標", delta_color="normal")
+        with g2_c3: st.metric(label="手持現金/衍生品比率", value=kpis.get('p5', '-'), delta=p5_delta, delta_color=p5_color)
         with g2_c4: st.metric(label="總持有資產數量", value=curr_fund.get('holdings_count', '-'), delta="底層持倉分散度", delta_color="normal")
-        with g2_c5: st.metric(label="前十大發行人/持股佔比", value=curr_fund['kpis'].get('p6', '-'), delta="集中度管控", delta_color="normal")
-        with g2_c6: st.metric(label="槓桿比率", value=curr_fund['kpis'].get('p7', '-'), delta="借貸/衍生品膨脹率", delta_color="normal")
+        with g2_c5: st.metric(label="前十大發行人/持股佔比", value=kpis.get('p6', '-'), delta="集中度管控", delta_color="normal")
+        with g2_c6: st.metric(label="槓桿比率", value=kpis.get('p7', '-'), delta="借貸/衍生品膨脹率", delta_color="normal")
 
     st.markdown("<hr style='margin: 10px 0; border: none; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
 
@@ -269,8 +297,8 @@ with top_tab2:
 
     if show_g3:
         g3_c1, g3_c2 = st.columns(2)
-        with g3_c1: st.metric(label="總基金資產值 (AUM)", value=curr_fund['kpis'].get('p8', '-'), delta="百萬計價 (Million)", delta_color="normal")
-        with g3_c2: st.metric(label="申購與贖回差距 (淨資金流向)", value=curr_fund['kpis'].get('p11', '-'), delta=p11_delta, delta_color=p11_color)
+        with g3_c1: st.metric(label="總基金資產值 (AUM)", value=kpis.get('p8', '-'), delta="百萬計價 (Million)", delta_color="normal")
+        with g3_c2: st.metric(label="申購與贖回差距 (淨資金流向)", value=kpis.get('p11', '-'), delta=p11_delta, delta_color=p11_color)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
@@ -287,29 +315,33 @@ with top_tab2:
 
     # Tab 1: 雷達圖
     with main_tab1:
+        radar_scores = curr_fund.get("radar_scores", [0]*10)
+        radar_dims = curr_fund.get("radar_dimensions", ["維度"]*10)
+        max_scores = [20,15,5,10,10,10,10,10,5,5]
+        
         df_chart = pd.DataFrame(dict(
-            Score=[(s/m)*100 for s,m in zip(curr_fund["radar_scores"], [20,15,5,10,10,10,10,10,5,5])], 
-            RawScore=curr_fund["radar_scores"],
-            MaxScore=[20,15,5,10,10,10,10,10,5,5],
-            Dimension=curr_fund["radar_dimensions"]
+            Score=[(s/m)*100 for s,m in zip(radar_scores, max_scores)], 
+            RawScore=radar_scores,
+            MaxScore=max_scores,
+            Dimension=radar_dims
         ))
         fig = px.line_polar(df_chart, r='Score', theta='Dimension', line_close=True, markers=True, range_r=[0, 100], color_discrete_sequence=['#00E676'])
         fig.update_traces(fill='toself', fillcolor='rgba(0, 230, 118, 0.35)', line=dict(color='#00E676', width=2.5))
         fig.update_layout(height=480, margin=dict(l=60, r=60, t=30, b=30), paper_bgcolor="rgba(0,0,0,0)", polar=dict(bgcolor="#1E222D"))
         st.plotly_chart(fig, use_container_width=True)
 
-    # Tab 2: Top 10 底層資產（完整 10 行渲染）
+    # Tab 2: Top 10 底層資產
     with main_tab2:
         top10_list = curr_fund.get("top10", [])
-        top10_rows_html = "".join([f"<tr><td><b>{r['排名']}</b></td><td><b>{r['持倉名稱']}</b></td><td style='color:#475569;'>{r.get('bg','')}</td><td>{r['資產類別']}</td><td style='font-weight:bold;'>{r['佔比 (%)']}</td><td style='text-align:center;'>{r['badge']}</td></tr>" for r in top10_list])
+        top10_rows_html = "".join([f"<tr><td><b>{r.get('排名', '-')}</b></td><td><b>{r.get('持倉名稱', '-')}</b></td><td style='color:#475569;'>{r.get('bg','')}</td><td>{r.get('資產類別', '-')}</td><td style='font-weight:bold;'>{r.get('佔比 (%)', '-')}</td><td style='text-align:center;'>{r.get('badge', '-')}</td></tr>" for r in top10_list])
         st.markdown(f'<table class="custom-table"><thead><tr><th>排名</th><th>底層資產名稱</th><th>資產背景簡介</th><th>資產類別</th><th>佔比 (%)</th><th style="text-align:center;">品質評級</th></tr></thead><tbody>{top10_rows_html}</tbody></table>', unsafe_allow_html=True)
 
-    # Tab 3: 歷史派息紀錄（完整 12 個月渲染）
+    # Tab 3: 歷史派息紀錄
     with main_tab3:
         h_rows = "".join([f"<tr><td>{r[0]}</td><td>{r[1]}</td><td>{r[2]}</td><td><b>{r[3]}</b></td><td>{r[4]}</td><td style='font-weight:bold; color:#059669;'>{r[5]}</td></tr>" for r in curr_fund.get("history_div", [])])
         st.markdown(f'<table class="custom-table"><thead><tr><th>除息日</th><th>記錄日</th><th>派息日</th><th>每單位股息</th><th>除息日每單位資產淨值</th><th>年度化派息率</th></tr></thead><tbody>{h_rows}</tbody></table>', unsafe_allow_html=True)
 
-    # Tab 4: 派息組成（完整 12 個月渲染）
+    # Tab 4: 派息組成
     with main_tab4:
         c_rows = "".join([f"<tr><td><b>{r[0]}</b></td><td>{r[1]}</td><td>{r[2]}</td><td style='font-weight:bold; color:#D97706;'>{r[3]}</td></tr>" for r in curr_fund.get("composition_div", [])])
         st.markdown(f'<table class="custom-table"><thead><tr><th>除息日</th><th>每股股息</th><th>可分派淨收益/權利金 %</th><th>由資本所分派之股息 % (ROC)</th></tr></thead><tbody>{c_rows}</tbody></table>', unsafe_allow_html=True)
@@ -326,9 +358,10 @@ with top_tab2:
 
     # Tab 7: 地區分佈歷年走勢
     with main_tab7:
-        if curr_fund.get("geo_dist_history"):
+        geo_hist = curr_fund.get("geo_dist_history", [])
+        if geo_hist:
             col_chart_geo, col_table_geo = st.columns([1.2, 1])
-            df_geo = pd.DataFrame(curr_fund["geo_dist_history"])
+            df_geo = pd.DataFrame(geo_hist)
             with col_chart_geo:
                 geo_y_cols = [c for c in df_geo.columns if c != '月份']
                 fig_geo = px.bar(df_geo, x='月份', y=geo_y_cols, title="地區分佈歷史走勢 (%)", template="plotly_white")
@@ -345,6 +378,7 @@ with top_tab2:
     # 基金深度風險評估明細表
     with st.expander("📋 點擊展開 / 折疊：基金深度風險評估明細表", expanded=True):
         eval_rows_html = "".join([f"<tr><td><b>{r[0]}</b></td><td>{r[1]}</td><td>{r[2]}</td><td>{r[3]}</td><td style='text-align:center; font-weight:bold;'>{r[4]}</td><td style='text-align:center;'>{r[5]}</td></tr>" for r in curr_fund.get("eval_table", [])])
+        score_val = curr_fund.get("score", "0")
         st.markdown(f'''
         <table class="custom-table">
             <thead>
@@ -361,9 +395,9 @@ with top_tab2:
         </table>
         <div class="summary-footer">
             <span class="summary-title">總得分 / 得分率：</span>
-            <span class="summary-score">{curr_fund["score"]} / 100</span>
-            <span class="quality-badge-green" style="font-size: 13px; padding: 5px 12px;">{curr_fund["score"]}% (極佳健康/低風險)</span>
+            <span class="summary-score">{score_val} / 100</span>
+            <span class="quality-badge-green" style="font-size: 13px; padding: 5px 12px;">{score_val}% (健康度評估)</span>
         </div>
         ''', unsafe_allow_html=True)
 
-    st.info(f"**💡 AI 智能洞察 ({curr_fund['zh']})**：{curr_fund['summary']}")
+    st.info(f"**💡 AI 智能洞察 ({zh_name})**：{curr_fund.get('summary', '無評語')}")
