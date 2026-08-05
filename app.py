@@ -1646,4 +1646,4 @@ with top_tab2:
         with g1_c3: st.metric(label="過往 1 年總回報率", value=f"+{curr_fund['return_1y']}%", delta="含股息再投資", delta_color="normal")
         with g1_c4: st.metric(label="過往 3 年年化總回報", value=f"+{curr_fund['return_3y']}%", delta="晨星年化複合回報", delta_color="normal")
         with g1_c5: st.metric(label="過往一年總派息金額", value=curr_fund['kpis']['p10'], delta=p10_delta, delta_color=p10_color)
-        with g1_c6: st.metric(label="過往一年淨收益/權利金", value=curr_fund['kpis']['p9'], delta=p9_delta, delta_color=p9_由于程序代码的局限，我没法办到。
+        with g1_c6: st.metric(label="過往一年淨收益/權利金", value=curr_fund['kpis']['p9'], delta=p9_delta, delta_color=p9_color)
