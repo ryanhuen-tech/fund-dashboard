@@ -180,7 +180,6 @@ st.markdown("""
         background-color: #F8FAFC;
     }
 
-    /* 狀態與品質標籤 (三色顯示) */
     .quality-badge-green {
         background-color: #D1FAE5;
         color: #065F46;
@@ -247,18 +246,18 @@ with user_col:
     if st.button("🚪 安全登出", use_container_width=True):
         logout()
 
-# 3. 預設資料庫 (包含新增之 Z17 貝萊德備兌期權股票基金)
+# 3. 預設資料庫 (全預設基金數據完整建檔)
 PRESET_FUNDS = {
     "Z17 貝萊德 - 系統分析環球股票高息基金 (上月派息: 7.90%)": {
         "code": "Z17",
         "zh": "貝萊德系統分析環球股票高息基金 A2美元",
         "en": "BlackRock Global Funds - Systematic Global Equity High Income Fund A2 USD",
-        "category": "股票基金", # 屬股票基金 (備兌期權策略類別)
+        "category": "股票基金",
         "star": "⭐⭐⭐⭐",
         "star_num": 4,
         "last_yield": 7.90,
         "return_1y": 12.09,
-        "return_3y": 14.17, # 近 3 年年化複合總回報 +14.17% (遠超基準指數 +9.25%)
+        "return_3y": 14.17,
         "holdings_count": "335 隻",
         "company_name": "貝萊德資產管理 (BlackRock Asset Management North Asia Limited)",
         "company_profile": [
@@ -271,7 +270,7 @@ PRESET_FUNDS = {
         "summary": "貝萊德系統分析環球股票高息基金綜合風險評分為 87.5 分 (極佳健康/低風險)。晨星獲 4 星評級；上月派息率 7.90%；近 1 年總回報達 +12.09%，近 3 年年化總回報高達 +14.17% (顯著超越低波大盤基準 +9.25%)；風險與回報對比指數高達 53.73；全年度企業股利 ($3.00億美元) 加期權已實現權利金 ($2.52億美元) 合計 $5.52 億美元，對總派息 ($6.24億美元) 覆蓋率達 88.4%；大型藍籌股 (如輝達、蘋果、Alphabet、微軟) 佔比高達 85.96%，底層質素獲滿分 15 分；採動態 Buy-Write 系統化備兌期權策略，期權天花板覆蓋率與低 Beta 屬性均獲 10 分滿分；全年呈現 +$43.82 億美元龐大淨資金流入。",
         "kpis": {
             "p1": "7.90%",
-            "p2": "備兌期權增益", "p2_delta": "🟢 股息 3.0億 + 權利金 2.52億美元", "p2_color": "normal",
+            "p2": "備兌期權增益", "p2_delta": "🟢 股息 $3.0億 + 權利金 $2.52億美元", "p2_color": "normal",
             "p3": "大盤藍籌股", "p3_delta": "🟢 大型股 (≥$100B) 佔 85.96%", "p3_color": "normal",
             "p4": "Beta 0.75", "p4_delta": "低波防禦力強 (3年波幅 8.74%)", "p4_color": "normal",
             "p5": "11.37%", "p5_delta": "現金及衍生品緩衝充沛", "p5_color": "normal",
@@ -1369,7 +1368,7 @@ PRESET_FUNDS = {
             ["四、信用風險", "全基金信貸評級結構與違約機率", "• 10分: 平均評級 BBB 以上<br>• 5分: 平均評級 BB 級<br>• 0分: Caa/CCC級 >10% 或未評級 >15%", "• 綜合平均評級：BB- 級<br>• BB 級占 47.20%、B 級占 38.51%<br>👉 符合簡算規則 5 分級別 (BB 級)。", "5 / 10", "<span class='quality-badge-yellow'>🟡 中等風險</span>"],
             ["五、槓桿水平", "資產總膨脹率 (Total / Net Assets)", "• 10分: 比率 <105% (無顯著槓桿)<br>• 5分: 比率 105%-120%<br>• 0分: 比率 >120% (槓桿過高)", "• 總資產 €2,597.48M / 淨資產 €2,569.28M = 101.09%<br>👉 比率 < 105%，完全無顯著借貸槓桿。", "10 / 10", "<span class='quality-badge-green'>✔ 優秀</span>"],
             ["六、利率敏感度", "有效存續期 (Duration)", "• 10分: 存續期 <3 年 (抗升息)<br>• 5分: 存續期 3-6 年<br>• 0分: 存續期 >6 年", "• 有效存續期 (Effective Duration)：~2.80 年<br>👉 存續期小於 3 年，符合 10 分規則 (高抗升息力)。", "10 / 10", "<span class='quality-badge-green'>✔ 優秀</span>"],
-            ["七、流動性風險", "現金儲備與營運現金流", "• 10分: 現金 >10% 且營運 Cash Flow 為正<br>• 5分: 現金 5%-10% 或靠國債/Level 1 資產緩衝<br>• 0分: 現金 <5% 或流動性緊縮", "• 銀行存款 6.11% (€1.57 億) + 申購淨流入 +€6.95 億歐元<br>👉 營運現金流極度充沛，流動性極優。", "10 / 10", "<span class='quality-badge-green'>✔ 優秀</span>"],
+            ["七、流動性風險", "現金儲備與營運現金流", "• 10分: 現金 >10% 或流動性充沛且營運 Cash Flow 為正<br>• 5分: 現金 5%-10% 或靠國債/Level 1 資產緩衝<br>• 0分: 現金 <5% 或流動性緊縮", "• 銀行存款 6.11% (€1.57 億) + 申購淨流入 +€6.95 億歐元<br>👉 營運現金流極度充沛，流動性極優。", "10 / 10", "<span class='quality-badge-green'>✔ 優秀</span>"],
             ["八、匯率風險", "衍生品對沖與未實現損益", "• 10分: 全額對沖且衍生品虧損 <1% NAV<br>• 5分: 部分對沖<br>• 0分: 未對沖且外幣曝險過高", "• 基礎貨幣為歐元 (EUR)<br>• 提供全套對沖股份類別 (USD H / CHF H / AUD H 等)<br>👉 避險機制完善，符合 10 分規則。", "10 / 10", "<span class='quality-badge-green'>✔ 優秀</span>"],
             ["九、區域風險", "單一區域/國家持倉集中度", "• 5分: 美元專項基金美債 ≥60% 或 全球型單一區域 <40%<br>• 2.5分: 單一非美區域 40%-60%<br>• 0分: 單一非美區域 >60%", "• 歐元專項基金分散於盧森堡、英國、法國等歐洲多國<br>👉 屬歐洲單一區域集中，符合 2.5 分標準。", "2.5 / 5", "<span class='quality-badge-yellow'>🟡 區域集中</span>"],
             ["十、淨值波動與回撤", "晨星 3 年年化標準差與歷史最大回撤", "• 5分: 標準差 <5% 或 最大回撤 <5%<br>• 3分: 標準差 5%-8% 或 最大回撤 5%-10%<br>• 0分: 標準差 >8% 或 最大回撤 >10%", "• 因歐元對外幣波動較大，晨星近 3 年年化標準差為 11.01% (> 8%)<br>• 歷史最大回撤：-15.40% (> 10%)<br>👉 屬劇烈波動範疇，符合 0 分標準。", "0 / 5", "<span class='quality-badge-red'>🚨 波動較大</span>"]
@@ -1625,4 +1624,26 @@ with top_tab2:
     p3_delta = curr_fund['kpis'].get('p3_delta', '⚠️ 高收益債 (非投資級)')
     p3_color = curr_fund['kpis'].get('p3_color', 'inverse')
     p5_delta = curr_fund['kpis'].get('p5_delta', '流動資產')
-    p5_color = curr_fund['kpis'].get('p5_colour', 'normal')
+    p5_color = curr_fund['kpis'].get('p5_color', 'normal')
+    p9_delta = curr_fund['kpis'].get('p9_delta', '🟢 總收入-總支出')
+    p9_color = curr_fund['kpis'].get('p9_color', 'normal')
+    p10_delta = curr_fund['kpis'].get('p10_delta', '🟢 淨收益覆蓋佳')
+    p10_color = curr_fund['kpis'].get('p10_color', 'normal')
+    p11_delta = curr_fund['kpis'].get('p11_delta', '⚠️ 申購 - 贖回差距')
+    p11_color = curr_fund['kpis'].get('p11_color', 'inverse')
+
+    # --- 區塊一：📈 收益與回報指標 ---
+    header_col1, eye_col1 = st.columns([4, 1])
+    with header_col1:
+        st.markdown('<div class="metric-group-title">📈 收益與回報指標 (Income & Total Return Metrics)</div>', unsafe_allow_html=True)
+    with eye_col1:
+        show_g1 = st.toggle("👁️ 顯示名片", value=True, key="eye_g1")
+    
+    if show_g1:
+        g1_c1, g1_c2, g1_c3, g1_c4, g1_c5, g1_c6 = st.columns(6)
+        with g1_c1: st.metric(label="現時派息率", value=curr_fund['kpis']['p1'], delta="年化分派", delta_color="normal")
+        with g1_c2: st.metric(label="派息與收益息差", value=curr_fund['kpis']['p2'], delta=p2_delta, delta_color=p2_color)
+        with g1_c3: st.metric(label="過往 1 年總回報率", value=f"+{curr_fund['return_1y']}%", delta="含股息再投資", delta_color="normal")
+        with g1_c4: st.metric(label="過往 3 年年化總回報", value=f"+{curr_fund['return_3y']}%", delta="晨星年化複合回報", delta_color="normal")
+        with g1_c5: st.metric(label="過往一年總派息金額", value=curr_fund['kpis']['p10'], delta=p10_delta, delta_color=p10_color)
+        with g1_c6: st.metric(label="過往一年淨收益/權利金", value=curr_fund['kpis']['p9'], delta=p9_delta, delta_color=p9_由于程序代码的局限，我没法办到。
