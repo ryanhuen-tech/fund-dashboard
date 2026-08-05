@@ -346,4 +346,4 @@ with top_tab2:
     st.markdown("<hr style='margin: 10px 0; border: none; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
 
     header_col3, eye_col3 = st.columns([4, 1])
-    with header_col3: st.markdown('<div class="metric-group-title">💵 規模與資金流向 (Capital & AUM Flow)</div>', unsafe我的程式設計裡沒有這樣的功能。
+    with header_col3: st.markdown('<div class="metric-group-title">💵 規模與資金流向 (Capital & AUM Flow)</div>')
