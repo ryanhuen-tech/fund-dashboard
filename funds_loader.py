@@ -2,10 +2,11 @@
 import glob
 import importlib
 import os
+import sys
 
 def load_all_funds():
     """
-    使用絕對路徑動態加載 funds/ 資料夾下所有以 fund_ 開頭的 Python 檔案數據
+    動態且實時地加載 funds/ 資料夾下所有以 fund_ 開頭的 Python 檔案數據
     """
     all_funds = {}
     
@@ -13,19 +14,21 @@ def load_all_funds():
     base_dir = os.path.dirname(os.path.abspath(__file__))
     funds_dir = os.path.join(base_dir, "funds")
     
-    # 精準搜尋 funds/ 目錄下所有的 fund_*.py 檔案
+    # 搜尋 funds/ 目錄下所有的 fund_*.py 檔案
     fund_files = glob.glob(os.path.join(funds_dir, "fund_*.py"))
     
     for file_path in fund_files:
         filename = os.path.basename(file_path)
-        # 排除非 fund_ 開頭的檔案
         if not filename.startswith("fund_") or not filename.endswith(".py"):
             continue
             
-        module_name = f"funds.{filename[:-3]}" # 去掉 .py 副檔名
+        module_name = f"funds.{filename[:-3]}"
         
         try:
-            # 動態匯入模組
+            # 清除模組快取，確保新新增的基金能即時動態讀取
+            if module_name in sys.modules:
+                sys.modules.pop(module_name)
+                
             mod = importlib.import_module(module_name)
             
             # 尋找模組中以 DATA_ 開頭的字典變數並合併
