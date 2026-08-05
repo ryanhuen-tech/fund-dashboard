@@ -1,8 +1,9 @@
+# app.py
 import streamlit as st
 import streamlit.components.v1 as components
 import pandas as pd
 import plotly.express as px
-from funds_data import PRESET_FUNDS # 引入獨立資料庫
+from funds_data import PRESET_FUNDS # 引入剛剛建立的資料庫檔案
 
 # 1. 網頁頁面配置
 st.set_page_config(
@@ -314,7 +315,6 @@ with top_tab2:
     p11_delta = curr_fund['kpis'].get('p11_delta', '⚠️ 申購 - 贖回差距')
     p11_color = curr_fund['kpis'].get('p11_color', 'inverse')
 
-    # --- 名片展示區塊 ---
     header_col1, eye_col1 = st.columns([4, 1])
     with header_col1: st.markdown('<div class="metric-group-title">📈 收益與回報指標 (Income & Total Return Metrics)</div>', unsafe_allow_html=True)
     with eye_col1: show_g1 = st.toggle("👁️ 顯示名片", value=True, key="eye_g1")
@@ -346,4 +346,69 @@ with top_tab2:
     st.markdown("<hr style='margin: 10px 0; border: none; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
 
     header_col3, eye_col3 = st.columns([4, 1])
-    with header_col3: st.markdown('<div class="metric-group-title">💵 規模與資金流向 (Capital & AUM Flow)</div>')
+    with header_col3: st.markdown('<div class="metric-group-title">💵 規模與資金流向 (Capital & AUM Flow)</div>', unsafe_allow_html=True)
+    with eye_col3: show_g3 = st.toggle("👁️ 顯示名片", value=True, key="eye_g3")
+
+    if show_g3:
+        g3_c1, g3_c2 = st.columns(2)
+        with g3_c1: st.metric(label="總基金資產值 (AUM)", value=curr_fund['kpis']['p8'], delta="百萬計價 (Million)", delta_color="normal")
+        with g3_c2: st.metric(label="申購與贖回差距 (淨資金流向)", value=curr_fund['kpis']['p11'], delta=p11_delta, delta_color=p11_color)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    st.markdown("### 📊 風險維度分析及基金底層資產數據")
+
+    main_tab1, main_tab2, main_tab3, main_tab4, main_tab5, main_tab6, main_tab7 = st.tabs([
+        "🕸️ 風險維度雷達圖", "📋 底層資產清單 (含背景與品質)", "📅 歷史派息紀錄", "💰 派息組成 (收益 vs 資本)", "🏭 十大行業分佈 (%)", "🛡️ 評級/市值分佈 (%)", "🌍 地區分佈歷年走勢 (%)"
+    ])
+
+    with main_tab1:
+        max_scores = [20, 15, 5, 10, 10, 10, 10, 10, 5, 5]
+        percentage_scores = [(s / m) * 100 for s, m in zip(curr_fund["radar_scores"], max_scores)]
+        df_chart = pd.DataFrame(dict(Score=percentage_scores, RawScore=curr_fund["radar_scores"], MaxScore=max_scores, Dimension=curr_fund["radar_dimensions"]))
+        fig_radar = px.line_polar(df_chart, r='Score', theta='Dimension', line_close=True, markers=True, range_r=[0, 100], color_discrete_sequence=['#00E676'])
+        fig_radar.update_traces(fill='toself', fillcolor='rgba(0, 230, 118, 0.35)', line=dict(color='#00E676', width=2.5), marker=dict(size=7, color='#00E676'))
+        fig_radar.update_layout(height=480, margin=dict(l=60, r=60, t=30, b=30), paper_bgcolor="rgba(0,0,0,0)", polar=dict(bgcolor="#1E222D", radialaxis=dict(visible=True, range=[0, 100], showticklabels=False, gridcolor="#334155")))
+        st.plotly_chart(fig_radar, use_container_width=True)
+
+    with main_tab2:
+        top10_rows_html = "".join([f"<tr><td><b>{row['排名']}</b></td><td><b>{row['持倉名稱']}</b></td><td style='color: #475569;'>{row.get('bg', '')}</td><td>{row['資產類別']}</td><td style='font-weight: bold;'>{row['佔比 (%)']}</td><td style='text-align: center;'>{row['badge']}</td></tr>" for row in curr_fund["top10"]])
+        st.markdown(f'<table class="custom-table"><thead><tr><th>排名</th><th>底層資產名稱</th><th>資產背景簡介</th><th>資產類別</th><th>佔比 (%)</th><th style="text-align: center;">品質評級</th></tr></thead><tbody>{top10_rows_html}</tbody></table>', unsafe_allow_html=True)
+
+    with main_tab3:
+        h_rows = "".join([f"<tr><td>{r[0]}</td><td>{r[1]}</td><td>{r[2]}</td><td><b>{r[3]}</b></td><td>{r[4]}</td><td style='font-weight:bold; color:#059669;'>{r[5]}</td></tr>" for r in curr_fund["history_div"]])
+        st.markdown(f'<table class="custom-table"><thead><tr><th>除息日</th><th>記錄日</th><th>派息日</th><th>每單位股息</th><th>除息日資產淨值</th><th>年度化派息率</th></tr></thead><tbody>{h_rows}</tbody></table>', unsafe_allow_html=True)
+
+    with main_tab4:
+        c_rows = "".join([f"<tr><td><b>{r[0]}</b></td><td>{r[1]}</td><td>{r[2]}</td><td style='font-weight:bold; color:#D97706;'>{r[3]}</td></tr>" for r in curr_fund["composition_div"]])
+        st.markdown(f'<table class="custom-table"><thead><tr><th>除息日</th><th>每股股息</th><th>可分派淨收益/權利金 %</th><th>由資本所分派 % (ROC)</th></tr></thead><tbody>{c_rows}</tbody></table>', unsafe_allow_html=True)
+
+    with main_tab5:
+        s_rows = "".join([f"<tr><td><b>{r[0]}</b></td><td style='font-weight:bold; color:#1E3A8A;'>{r[1]}</td></tr>" for r in curr_fund["sector_dist"]])
+        st.markdown(f'<table class="custom-table" style="width: 50%;"><thead><tr><th>行業類別</th><th>佔市值 %</th></tr></thead><tbody>{s_rows}</tbody></table>', unsafe_allow_html=True)
+
+    with main_tab6:
+        r_rows = "".join([f"<tr><td><b>{r[0]}</b></td><td style='font-weight:bold; color:#1E3A8A;'>{r[1]}</td></tr>" for r in curr_fund["rating_dist"]])
+        st.markdown(f'<table class="custom-table" style="width: 50%;"><thead><tr><th>信貸評級 / 市值分佈</th><th>佔市值 %</th></tr></thead><tbody>{r_rows}</tbody></table>', unsafe_allow_html=True)
+
+    with main_tab7:
+        col_chart_geo, col_table_geo = st.columns([1.2, 1])
+        df_geo = pd.DataFrame(curr_fund["geo_dist_history"])
+        with col_chart_geo:
+            geo_y_cols = [c for c in df_geo.columns if c != '月份']
+            fig_geo = px.bar(df_geo, x='月份', y=geo_y_cols, title="地區分佈歷史走勢 (%)", template="plotly_white")
+            fig_geo.update_layout(height=380, barmode='stack', yaxis_title="佔比 (%)")
+            st.plotly_chart(fig_geo, use_container_width=True)
+        with col_table_geo:
+            geo_cols = df_geo.columns.tolist()
+            geo_header_html = "".join([f"<th>{c} %</th>" if c != '月份' else "<th>月份</th>" for c in geo_cols])
+            geo_rows = "".join(["<tr>" + "".join([f"<td><b>{r[c]}</b></td>" if c == '月份' else f"<td>{r[c]}%</td>" for c in geo_cols]) + "</tr>" for _, r in df_geo.iterrows()])
+            st.markdown(f'<table class="custom-table"><thead><tr>{geo_header_html}</tr></thead><tbody>{geo_rows}</tbody></table>', unsafe_allow_html=True)
+
+    st.markdown("---")
+
+    with st.expander("📋 點擊展開 / 折疊：基金深度風險評估明細表", expanded=True):
+        eval_rows_html = "".join([f"<tr><td><b>{r[0]}</b></td><td>{r[1]}</td><td>{r[2]}</td><td>{r[3]}</td><td style='text-align:center; font-weight:bold;'>{r[4]}</td><td style='text-align:center;'>{r[5]}</td></tr>" for r in curr_fund["eval_table"]])
+        st.markdown(f'<table class="custom-table"><thead><tr><th>評估維度</th><th>具體檢查指標</th><th>專屬評分簡算規則</th><th>基金真實數據與解析</th><th style="text-align:center;">得分/滿分</th><th style="text-align:center;">風險狀態</th></tr></thead><tbody>{eval_rows_html}</tbody></table><div class="summary-footer"><span class="summary-title">總得分 / 得分率：</span><span class="summary-score">{curr_fund["score"]} / 100</span><span class="quality-badge-green" style="font-size: 13px; padding: 5px 12px;">{curr_fund["score"]}% (極佳健康/低風險)</span></div>', unsafe_allow_html=True)
+
+    st.info(f"**💡 AI 智能洞察 ({curr_fund['zh']})**：{curr_fund['summary']}")
