@@ -4,6 +4,7 @@ import streamlit.components.v1 as components
 import pandas as pd
 import plotly.express as px
 from funds_loader import PRESET_FUNDS # 從加載器自動動態匯入所有基金
+from utils.nav_calculator import calculate_realtime_nav_to_nav
 
 # 1. 網頁頁面配置
 st.set_page_config(
