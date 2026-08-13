@@ -122,9 +122,15 @@ with top_tab1:
         
         score_val = float(f.get("score", 0))
         risk_deduction = 100.0 - score_val
+        
+        # 🟢 自動採用最新 12 個月 NAV-to-NAV 動態回報算式
         return_1y_val = float(f.get("return_1y", 0))
-        eff_score = round((return_1y_val / (risk_deduction + 10.0)) * 100, 2)
+        if "history_div" in f and f["history_div"]:
+            nav_calc = calculate_realtime_nav_to_nav(f["history_div"])
+            if nav_calc.get("status") == "success":
+                return_1y_val = nav_calc["nav_to_nav_return_pct"]
 
+        eff_score = round((return_1y_val / (risk_deduction + 10.0)) * 100, 2)
         radar_scores = f.get("radar_scores", [0]*10)
 
         matrix_data.append({
@@ -200,7 +206,7 @@ with top_tab1:
         .ms-star-tag {{ background:#FEF08A; color:#854D0E; padding:3px 8px; border-radius:4px; font-weight:bold; }}
         .yield-tag {{ background:#E0F2FE; color:#0369A1; padding:3px 8px; border-radius:4px; font-weight:bold; }}
         </style></head><body><div style="overflow-x:auto;">
-        <table class="custom-table" style="min-width:1650px;"><thead><tr><th>代號</th><th>基金名稱</th><th>類別</th><th>上月派息率</th><th>近1年回報</th><th>近3年年化</th><th>晨星</th><th>風險總分</th><th>風險與回報對比指數 🏆</th><th>一、派息可持續性</th><th>二、底層質素</th><th>三、集中度</th><th>四、信用/風控</th><th>五、槓桿/天花板</th><th>六、敏感度/Beta</th><th>七、流動性</th><th>八、匯率風險</th><th>九、區域風險</th><th>十、淨值波動</th></tr></thead>
+        <table class="custom-table" style="min-width:1650px;"><thead><tr><th>代號</th><th>基金名稱</th><th>類別</th><th>上月派息率</th><th>近1年回報 (NAV-to-NAV)</th><th>近3年年化</th><th>晨星</th><th>風險總分</th><th>風險與回報對比指數 🏆</th><th>一、派息可持續性</th><th>二、底層質素</th><th>三、集中度</th><th>四、信用/風控</th><th>五、槓桿/天花板</th><th>六、敏感度/Beta</th><th>七、流動性</th><th>八、匯率風險</th><th>九、區域風險</th><th>十、淨值波動</th></tr></thead>
         <tbody>{"".join(rows_list)}</tbody></table></div></body></html>
         """
         components.html(component_html, height=360, scrolling=True)
@@ -257,6 +263,41 @@ with top_tab2:
 
     st.markdown('<div class="data-disclaimer-note"><b>📑 數據來源聲明備註：</b> 本 Dashboard 內所有財務數據、持倉比率、派息成分與營運損益，均完全依據<b>基金官方發布之基金月報 (Factsheet)、派息分派紀錄及年度財務報告</b> 客觀建檔分析。</div>', unsafe_allow_html=True)
 
+    # 🟢 區塊 0：🧮 通用最新 12 個月 NAV-to-NAV 實時精算卡片 (全基金適用)
+    if "history_div" in curr_fund and curr_fund["history_div"]:
+        nav_res = calculate_realtime_nav_to_nav(curr_fund["history_div"])
+        if nav_res.get("status") == "success":
+            st.markdown("### 🧮 最新 12 個月實時含息總回報精算 (NAV-to-NAV)")
+            st.caption("💡 本區塊根據該基金最新發放的 12 個月派息與動態 NAV 自動精算，非半年前之舊歷史數據。")
+            
+            c1, c2, c3 = st.columns(3)
+            with c1:
+                st.metric(
+                    label="🟢 最新 NAV-to-NAV 總回報 (股息再投資)",
+                    value=f"{'+' if nav_res['nav_to_nav_return_pct'] > 0 else ''}{nav_res['nav_to_nav_return_pct']}%",
+                    delta=f"持股單位滾存: 1,000 ➔ {nav_res['units_grown']} 單位"
+                )
+            with c2:
+                st.metric(
+                    label="🟡 最新實時純領現金總回報 (無再投資)",
+                    value=f"{'+' if nav_res['cash_payout_return_pct'] > 0 else ''}{nav_res['cash_payout_return_pct']}%",
+                    delta=f"現金利息收益: +{nav_res['simple_cash_yield_pct']}%"
+                )
+            with c3:
+                st.metric(
+                    label="📉 資本淨值 (NAV) 漲跌",
+                    value=f"{nav_res['nav_capital_change_pct']}%",
+                    delta=f"${nav_res['initial_nav']} ➔ ${nav_res['latest_nav']} 美元",
+                    delta_color="inverse" if nav_res['nav_capital_change_pct'] < 0 else "normal"
+                )
+            
+            st.info(f"""
+            **🗣️ 理專白話解說對白：**
+            * **每月領現金**：過去 12 個月落袋利息為 **+{nav_res['simple_cash_yield_pct']}%**，扣除淨值微幅波動後，純領現金實質總收益為 **+{nav_res['cash_payout_return_pct']}%**。
+            * **股息再投資**：若選擇利息滾存，單位數自動增加了 **+{nav_res['units_added']} 單位**，最新實時總資產增長率高達 **+{nav_res['nav_to_nav_return_pct']}%**！
+            """)
+            st.markdown("<hr style='margin: 15px 0; border: none; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
+
     # 取得安全預設 KPI 標籤
     kpis = curr_fund.get('kpis', {})
     p2_delta = kpis.get('p2_delta', '⚠️ 存在本金補貼風險')
@@ -277,11 +318,18 @@ with top_tab2:
     with header_col1: st.markdown('<div class="metric-group-title">📈 收益與回報指標 (Income & Total Return Metrics)</div>', unsafe_allow_html=True)
     with eye_col1: show_g1 = st.toggle("👁️ 顯示名片", value=True, key="eye_g1")
     
+    # 決定 1 年總回報率顯示值
+    display_1y_return = curr_fund.get('return_1y', 0)
+    if "history_div" in curr_fund and curr_fund["history_div"]:
+        nav_calc = calculate_realtime_nav_to_nav(curr_fund["history_div"])
+        if nav_calc.get("status") == "success":
+            display_1y_return = nav_calc["nav_to_nav_return_pct"]
+
     if show_g1:
         g1_c1, g1_c2, g1_c3, g1_c4, g1_c5, g1_c6 = st.columns(6)
         with g1_c1: st.metric(label="現時派息率", value=kpis.get('p1', '-'), delta="年化分派", delta_color="normal")
         with g1_c2: st.metric(label="派息與收益息差", value=kpis.get('p2', '-'), delta=p2_delta, delta_color=p2_color)
-        with g1_c3: st.metric(label="過往 1 年總回報率", value=f"+{curr_fund.get('return_1y', 0)}%", delta="含股息再投資", delta_color="normal")
+        with g1_c3: st.metric(label="過往 1 年總回報率", value=f"+{display_1y_return}%", delta="含股息再投資 (NAV-to-NAV)", delta_color="normal")
         with g1_c4: st.metric(label="過往 3 年年化總回報", value=f"+{curr_fund.get('return_3y', 0)}%", delta="晨星年化複合回報", delta_color="normal")
         with g1_c5: st.metric(label="過往一年總派息金額", value=kpis.get('p10', '-'), delta=p10_delta, delta_color=p10_color)
         with g1_c6: st.metric(label="過往一年淨收益/權利金", value=kpis.get('p9', '-'), delta=p9_delta, delta_color=p9_color)
