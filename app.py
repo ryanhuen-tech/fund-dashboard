@@ -120,7 +120,7 @@ with user_col:
 top_tab1, top_tab2, top_tab3 = st.tabs([
     "📊 跨基金總體風險比較表 (全基金縱覽)", 
     "🔍 單一基金深度風險剖析", 
-    "📚 衍生工具解密與客戶對白指南 🆕"
+    "📚 衍生工具解密與客戶對白指南"
 ])
 
 # ==============================================================================
@@ -267,7 +267,7 @@ with top_tab1:
             st.plotly_chart(fig_rank, use_container_width=True)
 
 # ==============================================================================
-# TAB 2: 🔍 單一基金深度風險剖析
+# TAB 2: 🔍 單一基金深度風險剖析 (含空值容錯機制)
 # ==============================================================================
 with top_tab2:
     ctrl_col1, ctrl_col2 = st.columns([1.8, 1.2])
@@ -415,25 +415,49 @@ with top_tab2:
 
     with main_tab2:
         top10_list = curr_fund.get("top10", [])
-        top10_rows_html = "".join([f"<tr><td><b>{r.get('排名', '-')}</b></td><td><b>{r.get('持倉名稱', '-')}</b></td><td style='color:#475569;'>{r.get('bg','')}</td><td>{r.get('資產類別', '-')}</td><td style='font-weight:bold;'>{r.get('佔比 (%)', '-')}</td><td style='text-align:center;'>{r.get('badge', '-')}</td></tr>" for r in top10_list])
-        st.markdown(f'<table class="custom-table"><thead><tr><th>排名</th><th>底層資產名稱</th><th>資產背景簡介</th><th>資產類別</th><th>佔比 (%)</th><th style="text-align:center;">品質評級</th></tr></thead><tbody>{top10_rows_html}</tbody></table>', unsafe_allow_html=True)
+        if top10_list:
+            top10_rows_html = "".join([f"<tr><td><b>{r.get('排名', '-')}</b></td><td><b>{r.get('持倉名稱', '-')}</b></td><td style='color:#475569;'>{r.get('bg','')}</td><td>{r.get('資產類別', '-')}</td><td style='font-weight:bold;'>{r.get('佔比 (%)', '-')}</td><td style='text-align:center;'>{r.get('badge', '-')}</td></tr>" for r in top10_list])
+            st.markdown(f'<table class="custom-table"><thead><tr><th>排名</th><th>底層資產名稱</th><th>資產背景簡介</th><th>資產類別</th><th>佔比 (%)</th><th style="text-align:center;">品質評級</th></tr></thead><tbody>{top10_rows_html}</tbody></table>', unsafe_allow_html=True)
+        else:
+            st.info("ℹ️ 官方 Factsheet 暫未提供此基金之 Top 10 詳細持倉清單。")
 
+    # 🟢 修正 3：歷史派息紀錄 (加入空值檢查防不顯示)
     with main_tab3:
-        h_rows = "".join([f"<tr><td>{r[0]}</td><td>{r[1]}</td><td>{r[2]}</td><td><b>{r[3]}</b></td><td>{r[4]}</td><td style='font-weight:bold; color:#059669;'>{r[5]}</td></tr>" for r in curr_fund.get("history_div", [])])
-        st.markdown(f'<table class="custom-table"><thead><tr><th>除息日</th><th>記錄日</th><th>派息日</th><th>每單位股息</th><th>除息日每單位資產淨值</th><th>年度化派息率</th></tr></thead><tbody>{h_rows}</tbody></table>', unsafe_allow_html=True)
+        h_div = curr_fund.get("history_div", [])
+        if h_div:
+            h_rows = "".join([f"<tr><td>{r[0]}</td><td>{r[1]}</td><td>{r[2]}</td><td><b>{r[3]}</b></td><td>{r[4]}</td><td style='font-weight:bold; color:#059669;'>{r[5]}</td></tr>" for r in h_div])
+            st.markdown(f'<table class="custom-table"><thead><tr><th>除息日</th><th>記錄日</th><th>派息日</th><th>每單位股息</th><th>除息日每單位資產淨值</th><th>年度化派息率</th></tr></thead><tbody>{h_rows}</tbody></table>', unsafe_allow_html=True)
+        else:
+            st.info("ℹ️ 該基金非分派/派息類別，或官方分派正本暫無提供歷史派息紀錄數據。")
 
+    # 🟢 修正 4：派息組成 (加入空值檢查防不顯示)
     with main_tab4:
-        c_rows = "".join([f"<tr><td><b>{r[0]}</b></td><td>{r[1]}</td><td>{r[2]}</td><td style='font-weight:bold; color:#D97706;'>{r[3]}</td></tr>" for r in curr_fund.get("composition_div", [])])
-        st.markdown(f'<table class="custom-table"><thead><tr><th>除息日</th><th>每股股息</th><th>可分派淨收益/權利金 %</th><th>由資本所分派之股息 % (ROC)</th></tr></thead><tbody>{c_rows}</tbody></table>', unsafe_allow_html=True)
+        c_div = curr_fund.get("composition_div", [])
+        if c_div:
+            c_rows = "".join([f"<tr><td><b>{r[0]}</b></td><td>{r[1]}</td><td>{r[2]}</td><td style='font-weight:bold; color:#D97706;'>{r[3]}</td></tr>" for r in c_div])
+            st.markdown(f'<table class="custom-table"><thead><tr><th>除息日</th><th>每股股息</th><th>可分派淨收益/權利金 %</th><th>由資本所分派之股息 % (ROC)</th></tr></thead><tbody>{c_rows}</tbody></table>', unsafe_allow_html=True)
+        else:
+            st.info("ℹ️ 官方派息成份報告 (Dividend Composition) 暫無提供此股份類別之分派來源拆解數據。")
 
+    # 🟢 修正 5：十大行業分佈 (加入空值檢查防不顯示)
     with main_tab5:
-        s_rows = "".join([f"<tr><td><b>{r[0]}</b></td><td style='font-weight:bold; color:#1E3A8A;'>{r[1]}</td></tr>" for r in curr_fund.get("sector_dist", [])])
-        st.markdown(f'<table class="custom-table" style="width:50%;"><thead><tr><th>行業類別</th><th>佔市值 %</th></tr></thead><tbody>{s_rows}</tbody></table>', unsafe_allow_html=True)
+        s_dist = curr_fund.get("sector_dist", [])
+        if s_dist:
+            s_rows = "".join([f"<tr><td><b>{r[0]}</b></td><td style='font-weight:bold; color:#1E3A8A;'>{r[1]}</td></tr>" for r in s_dist])
+            st.markdown(f'<table class="custom-table" style="width:50%;"><thead><tr><th>行業類別</th><th>佔市值 %</th></tr></thead><tbody>{s_rows}</tbody></table>', unsafe_allow_html=True)
+        else:
+            st.info("ℹ️ 官方月報暫無提供此基金之行業分佈占比數據。")
 
+    # 🟢 修正 6：評級/市值分佈 (加入空值檢查防不顯示)
     with main_tab6:
-        r_rows = "".join([f"<tr><td><b>{r[0]}</b></td><td style='font-weight:bold; color:#1E3A8A;'>{r[1]}</td></tr>" for r in curr_fund.get("rating_dist", [])])
-        st.markdown(f'<table class="custom-table" style="width:50%;"><thead><tr><th>信貸評級 / 市值分佈</th><th>佔市值 %</th></tr></thead><tbody>{r_rows}</tbody></table>', unsafe_allow_html=True)
+        r_dist = curr_fund.get("rating_dist", [])
+        if r_dist:
+            r_rows = "".join([f"<tr><td><b>{r[0]}</b></td><td style='font-weight:bold; color:#1E3A8A;'>{r[1]}</td></tr>" for r in r_dist])
+            st.markdown(f'<table class="custom-table" style="width:50%;"><thead><tr><th>信貸評級 / 市值分佈</th><th>佔市值 %</th></tr></thead><tbody>{r_rows}</tbody></table>', unsafe_allow_html=True)
+        else:
+            st.info("ℹ️ 官方月報暫無提供此基金之評級/市值分佈占比數據。")
 
+    # 🟢 修正 7：地區分佈歷年走勢 (加入空值檢查防不顯示)
     with main_tab7:
         geo_hist = curr_fund.get("geo_dist_history", [])
         if geo_hist:
@@ -449,6 +473,8 @@ with top_tab2:
                 geo_header_html = "".join([f"<th>{c} %</th>" if c != '月份' else "<th>月份</th>" for c in geo_cols])
                 geo_rows = "".join(["<tr>" + "".join([f"<td><b>{r[c]}</b></td>" if c == '月份' else f"<td>{r[c]}%</td>" for c in geo_cols]) + "</tr>" for _, r in df_geo.iterrows()])
                 st.markdown(f'<table class="custom-table"><thead><tr>{geo_header_html}</tr></thead><tbody>{geo_rows}</tbody></table>', unsafe_allow_html=True)
+        else:
+            st.info("ℹ️ 官方月報暫無提供此基金之地區歷史分佈走勢數據。")
 
     st.markdown("---")
 
@@ -489,13 +515,12 @@ with top_tab2:
         ''', unsafe_allow_html=True)
 
 # ==============================================================================
-# TAB 3: 📚 衍生工具解密與客戶對白指南 (全新功能)
+# TAB 3: 📚 衍生工具解密與客戶對白指南 (新增 TRS 詳細解說)
 # ==============================================================================
 with top_tab3:
     st.markdown("### 📚 基金衍生工具速查與理專話術寶典")
     st.caption("💡 本頁面將 Dashboard 中涉及的所有衍生工具進行白話解構，幫助您在面對客戶質疑或詢問時，能以最專業且易懂的方式應對。")
     
-    # 快速等級總覽
     col_t1, col_t2, col_t3 = st.columns(3)
     with col_t1:
         st.markdown("""
@@ -521,7 +546,7 @@ with top_tab3:
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # 1. Covered Call (覆蓋式看漲期權)
+    # 1. Covered Call
     st.markdown("""
     <div class="deriv-card">
         <div class="deriv-title">1. Covered Call（覆蓋式看漲期權） <span class="deriv-tag-l2">L2 級：收益封頂型</span></div>
@@ -535,7 +560,7 @@ with top_tab3:
     </div>
     """, unsafe_allow_html=True)
 
-    # 2. 144A ELN (股票掛鈎票據)
+    # 2. 144A ELN
     st.markdown("""
     <div class="deriv-card" style="border-left-color: #DC2626;">
         <div class="deriv-title" style="color: #991B1B;">2. 144A ELN（144A 私募股票掛鈎票據） <span class="deriv-tag-l3">L3 級：不對稱高危毒藥 (一票否決)</span></div>
@@ -549,24 +574,38 @@ with top_tab3:
     </div>
     """, unsafe_allow_html=True)
 
-    # 3. Swaps / Futures (掉期合約與期貨)
+    # 3. TRS (全新加入之總回報掉期專解)
     st.markdown("""
     <div class="deriv-card" style="border-left-color: #D97706;">
-        <div class="deriv-title" style="color: #B45309;">3. Swaps & Futures（總回報掉期 / 利率掉期 / 期貨） <span class="deriv-tag-l2">L2 / L4 級：資產調控與對沖</span></div>
-        <b>📍 代表基金：</b> Z20 (施羅德動力收息)、Z06 (柏瑞動態配置)、Z05 (路博邁新興債)、Z33 (駿利亨德森平衡)<br>
-        <b>⚙️ 工具運作原理：</b> 透過與合格投行簽署 ISDA 標準合約（Swaps）或在交易所買賣期貨（Futures），動態調整股票、債券或外匯的持倉比率，或進行久期（Duration）避險。<br>
-        <b>⚠️ 實質影響：</b> 屬於「線性工具」（漲 5% 賺 5%、跌 5% 虧 5%），且受到國際規定「每日保證金清算 (Daily Margin Call)」保護，不會產生不對稱的斷崖式虧損。<br>
+        <div class="deriv-title" style="color: #B45309;">3. TRS（Total Return Swap，總回報掉期） <span class="deriv-tag-l2">L4 級：合成資產與對沖調控</span></div>
+        <b>📍 代表基金：</b> Z17 (貝萊德高息)、Z20 (施羅德動力收息)<br>
+        <b>⚙️ 工具運作原理：</b> 基金不直接買賣實體股票/債券，而是與華爾街投行簽訂掉期合約。基金支付固定利息（如 SOFR 基準利率），換取投行手上某個資產組合（如美股指數或高息債）的「全部資本利得與股息總回報」。<br>
+        <b>⚠️ 實質影響：</b> 屬「雙向對等工具」（漲 5% 賺 5%、跌 5% 虧 5%），絕非像 ELN 那樣不對稱爆價；且每天受國際 ISDA/CSA 協議監管，投行與基金每日清算補足現金保證金（Daily Margin Call），對手方違約風險極低。<br>
         <div class="script-box">
             <b>🗣️ 客戶詢問對白（理專話術）：</b><br>
-            <i>「陳先生，這檔混合型基金使用掉期 (Swaps) 與期貨，主要是為了『靈活換檔』。比如當經理人看好股票時，不需要頻繁買賣實體股票，透過 Swaps 就能瞬間調高股票比重，省下高額交易成本。而且每天都有國際結算所監督追繳保證金，風險完全在掌控之中。」</i>
+            <i>「黃先生，這檔基金使用的 TRS（總回報掉期）是一種非常成熟的『合成配置工具』。就好比經理人想獲取某個指數的報酬，但他不需要大費周章在市場上買入幾百隻股票，而是直接跟投行做報酬交換。這屬於雙向對等的交易，漲跌跟實體股票一模一樣，而且每天都有現金保證金結算，沒有像 ELN 那種暴跌強行接股的毒藥條款，您可以完全放心。」</i>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-    # 4. CoCos / Subordinated Debt (應急可轉債與次級債)
+    # 4. Swaps & Futures
+    st.markdown("""
+    <div class="deriv-card" style="border-left-color: #D97706;">
+        <div class="deriv-title" style="color: #B45309;">4. Futures & Forwards（國債/指數期貨與外匯遠期） <span class="deriv-tag-l1">L1 級：流動性與避險工具</span></div>
+        <b>📍 代表基金：</b> Z06 (柏瑞動態配置)、Z05 (路博邁新興債)、Z33 (駿利亨德森平衡)<br>
+        <b>⚙️ 工具運作原理：</b> 透過在公開交易所買賣國債或股票指數期貨（Futures），或與銀行鎖定遠期匯率（Forward FX），達到調整組合存續期（久期）或外匯避險之目的。<br>
+        <b>⚠️ 實質影響：</b> 公開市場交易所擔保，無對手方違約風險，且用於降低匯率與利率波動，屬最健康的風控工具。<br>
+        <div class="script-box">
+            <b>🗣️ 客戶詢問對白（理專話術）：</b><br>
+            <i>「陳先生，這檔混合型基金使用期貨與遠期外匯，主要是為了『幫您的資產保險』。比如當聯準會打算升息或市場波動時，經理人透過期貨快速鎖定收益，並對沖掉台幣或歐元對美元的匯率風險，讓您的投資不會被匯率波動吃掉。」</i>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # 5. CoCos & Subordinated Debt
     st.markdown("""
     <div class="deriv-card" style="border-left-color: #059669;">
-        <div class="deriv-title" style="color: #065F46;">4. CoCos & Subordinated Debt（應急可轉債 / 優先股 / 次級債） <span class="deriv-tag-l1">L1 / L2 級：金融次級資本</span></div>
+        <div class="deriv-title" style="color: #065F46;">5. CoCos & Subordinated Debt（應急可轉債 / 優先股 / 次級債） <span class="deriv-tag-l1">L1 / L2 級：金融次級資本</span></div>
         <b>📍 代表基金：</b> ZP4 (信安優先證券)、Z03/Z07 (安聯可轉債端)<br>
         <b>⚙️ 工具運作原理：</b> 由大型銀行或保險公司發行的次級資本工具（如 Additional Tier 1 債券）。清償順序低於普通國債，但高於普通股，因此能提供 6%~8% 的高到期收益率。<br>
         <b>⚠️ 實質影響：</b> 只有在銀行發生極端系統性危機（資本適足率低於法定門檻）時才會被強行轉股或減記；發行人皆為全球巨無霸金融機構。<br>
