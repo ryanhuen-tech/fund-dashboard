@@ -20,6 +20,14 @@ DATA_Z20 = {
         ],
         "score": "58.3",  # 依『極致慎重原則』剛性 10 維度矩陣審計後之真實精算總分
         "score_ratio": "12.90",
+        "risk_derivatives": {
+            "has_high_risk": False,
+            "primary_type": "Futures / Swaps",
+            "exposure_pct": "多重配置 (無 ELN)",
+            "display_html": "<span class='badge-yellow'>🟡 Futures / Swaps (L4)</span>",
+            "risk_level": "L4",
+            "detail_note": "運用多重期貨 (Futures) 與掉期 (Swaps) 配置，未持有 144A ELN 結構商品"
+        },
         "summary": "施羅德動力收息基金 (Z20) 綜合風險評估得分為 58.3 分 (紅/黃燈高風險警示區)。經嚴格財報正本審計：核心指標『派息可持續性 (25分)』中，財年實質純投資淨收益 (NII $3.89M) 對 $9.02M 總派息之覆蓋率僅 43.06%，存在高達 56.94% 的嚴重本金侵蝕缺口 (依剛性 20/10/0 規則給予 0 分)；財年資本亦呈現 -$25.51M 之淨流出；雖然衍生品未觸發 20% 一票否決 (得 15.8/20 分)，但因高高息背後的資本侵蝕紅旗，綜合健康度落入警告範疇。",
         "kpis": {
             "p1": "8.72%",
