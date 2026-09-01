@@ -20,6 +20,14 @@ DATA_Z07 = {
         ],
         "score": "65.1",  # 依『極致慎重原則』剛性 10 維度矩陣審計後之真實精算總分
         "score_ratio": "14.72",
+        "risk_derivatives": {
+            "has_high_risk": False,
+            "primary_type": "Covered Call (ETD)",
+            "exposure_pct": "0.00%",
+            "display_html": "<span class='badge-green'>🟢 無 L3/L4 高風險產品 (0%)</span>",
+            "risk_level": "L2",
+            "detail_note": "33.3% 賣出 Call Option (交易所 ETD 掛牌，無 OTC 私募信用風險)"
+        },
         "summary": "安聯收益及增長基金 (Z07) 綜合風險評估得分為 65.1 分 (黃燈中度風險警示區)。經財年正本審計：核心指標『派息可持續性 (25分)』中，財年實質純投資淨收益 (Net Income $3.81億) 對 $21.99億總派息之覆蓋率僅 17.35%，存在高達 82.65% 的純息缺口 (依剛性 20/10/0 規則給予 0 分，顯示派息高度依賴 Option 權利金與資本補貼)；但其 33.3% 之 Covered Call 屬 L2 級交易所 ETD 工具，完全未持有一切 144A 私募 ELN，未觸發一票否決 (得 17.34/20 分)，且財年呈現 +$11.14 億美元強勁資金淨流入，展現出優異之結構安全性。",
         "kpis": {
             "p1": "7.71%",
