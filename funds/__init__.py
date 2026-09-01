@@ -1,5 +1,8 @@
 # funds/__init__.py
 
+import logging
+
+# 引入所有基金數據模組
 from funds.fund_z01 import DATA_Z01
 from funds.fund_z03 import DATA_Z03
 from funds.fund_z04 import DATA_Z04
@@ -23,27 +26,18 @@ from funds.fund_z77 import DATA_Z77
 from funds.fund_zp4 import DATA_ZP4
 from funds.fund_zu6 import DATA_ZU6
 
-ALL_FUNDS = {
-    **DATA_Z01,
-    **DATA_Z03,
-    **DATA_Z04,
-    **DATA_Z05,
-    **DATA_Z06,
-    **DATA_Z07,
-    **DATA_Z08,
-    **DATA_Z12,
-    **DATA_Z13,
-    **DATA_Z15,
-    **DATA_Z17,
-    **DATA_Z18,
-    **DATA_Z20,
-    **DATA_Z29,
-    **DATA_Z31,
-    **DATA_Z33,
-    **DATA_Z51,
-    **DATA_Z52,
-    **DATA_Z69,
-    **DATA_Z77,
-    **DATA_ZP4,
-    **DATA_ZU6,
-}
+# 定義所有要載入的數據列表
+FUND_MODULES = [
+    DATA_Z01, DATA_Z03, DATA_Z04, DATA_Z05, DATA_Z06, DATA_Z07, DATA_Z08,
+    DATA_Z12, DATA_Z13, DATA_Z15, DATA_Z17, DATA_Z18, DATA_Z20, DATA_Z29,
+    DATA_Z31, DATA_Z33, DATA_Z51, DATA_Z52, DATA_Z69, DATA_Z77, DATA_ZP4, DATA_ZU6
+]
+
+ALL_FUNDS = {}
+
+# 安全逐一對齊合併，防止單一格式問題導致整體失敗
+for fund_dict in FUND_MODULES:
+    if isinstance(fund_dict, dict):
+        ALL_FUNDS.update(fund_dict)
+    else:
+        logging.warning(f"跳過無效模組格式: {type(fund_dict)}")
