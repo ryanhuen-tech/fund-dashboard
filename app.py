@@ -71,11 +71,11 @@ if not st.session_state["authenticated"]:
 # 🎯 登入後的系統主要內容
 # ==============================================================================
 
-# 2. 注入自訂 CSS 樣式
+# 2. 注入自訂 CSS 樣式 (已加寬 padding-top 解決頁首遮擋)
 st.markdown("""
     <style>
-    .block-container { padding-top: 1.5rem !important; padding-bottom: 2rem !important; }
-    .main-title { font-size: 26px; font-weight: 800; color: #1E3A8A; margin-bottom: 15px; }
+    .block-container { padding-top: 3.5rem !important; padding-bottom: 2rem !important; }
+    .main-title { font-size: 26px; font-weight: 800; color: #1E3A8A; margin-bottom: 15px; margin-top: 10px; }
     .fund-header { background-color: #1E222D; padding: 16px 22px; border-radius: 8px; border-left: 5px solid #00E676; margin-bottom: 15px; }
     .source-tag { background-color: #00E676; color: #000; padding: 3px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; }
     .type-tag { background-color: #E0E7FF; color: #3730A3; padding: 3px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; margin-left: 8px; }
@@ -462,7 +462,6 @@ with top_tab2:
         
         eval_rows_html = ""
         for r in eval_list:
-            # 相容性處理：判斷陣列長度，避免 IndexError
             dim_name = r[0] if len(r) > 0 else "-"
             metric_name = r[1] if len(r) > 1 else "-"
             rule_text = r[2] if len(r) > 2 else "-"
