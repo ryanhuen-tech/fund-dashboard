@@ -218,7 +218,7 @@ with top_tab1:
                 score_str = r.get('綜合風險總分', 0)
                 eff_str = r.get('風險與回報對比指數', 0)
 
-                rows_list.append(f"<tr><td><b>{code_str}</b></td><td><b>{zh_str}</b></td><td><span class='type-tag'>{cat_str}</span></td><td style='text-align:center;'>{deriv_html}</td><td><span class='yield-tag'>📈 {yield_str}%</span></td><td style='font-weight:bold; color:#059669;'>+{r1_str}%</td><td style='font-weight:bold; color:#0284C7;'>+{r3_str}%</td><td><span class='ms-star-tag'>{star_str}</span></td><td style='font-size:15px; font-weight:800; color:#1E3A8A;'>{score_str} / 100</td><td style='font-size:15px; font-weight:800; color:#059669;'><b>{eff_str}</b></td><td><span class='{b1}'>{r.get('一、派息可持續性 (25)', 0)} 分</span></td><td><span class='{b2}'>{r.get('二、底層純資產質素 (15)', 0)} 分</span></td><td><span class='{b3}'>{r.get('三、衍生工具與槓桿 (20)', 0)} 分</span></td><td><span class='{b4}'>{r.get('四、集中度風險 (5)', 0)} 分</span></td><td><span class='{b5}'>{r.get('五、風險調整後回報 (10)', 0)} 分</span></td><td><span class='{b6}'>{r.get('六、大盤敏感度 (5)', 0)} 分</span></td><td><span class='{b7}'>{r.get('七、流動性與規模 (5)', 0)} 分</span></td><td><span class='{b8}'>{r.get('八、匯率風險 (5)', 0)} 分</span></td><td><span class='{b9}'>{r.get('九、區域集中度 (5)', 0)} 分</span></td><td><span class='{b10}'>{r.get('十、歷史相對波動 (5)', 0)} 分</span></td></tr>")
+                rows_list.append(f"<tr><td><b>{code_str}</b></td><td><b>{zh_str}</b></td><td><span class='type-tag'>{cat_str}</span></td><td style='text-align:center;'>{deriv_html}</td><td><span class='yield-tag'>📈 {yield_str}%</span></td><td style='font-weight:bold; color:#059669;'>+{r1_str}%</td><td style='font-weight:bold; color:#0284C7;'>+{r3_str}%</td><td><span class='ms-star-tag'>{star_str}</span></td><td style='font-size:15px; font-weight:800; color:#1E3A8A;'>{score_str} / 100</td><td style='font-size:15px; font-weight:800; color:#059669;'><b>{eff_str}</b></td><td><span class='{b1}'>{r.get('一、派息可持續性 (25)', 0)} 分</span></td><td><span class='{b2}'>{r.get('二、底層純資產質素 (15)', 0)} 分</span></td><td><span class='{b3}'>{r.get('三、衍生工具與槓桿 (20)', 0)} 分</span></td><td><span class='{b4}'>{r.get('四、集中度風險 (5)', 0)} 分</span></td><td><span class='{b5}'>{r.get('五、風險調整後回報 (10)', 0)} 分</span></td><td><span class='{b6}'>{r.get('六、大盤敏感度 (5)', 0)} 分</span></td><td><span class='{b7}'>{r.get('七、流動性與規模 (5)', 0)} 分</span></td><td><span class='{b8}'>{r.get('八、匯率風險 (5)', 0)} 分</span></td><td><span class='{b9}'>{r.get('九、區域風險 (5)', 0)} 分</span></td><td><span class='{b10}'>{r.get('十、歷史相對波動 (5)', 0)} 分</span></td></tr>")
 
             component_html = f"""
             <!DOCTYPE html><html><head><style>
@@ -268,7 +268,7 @@ with top_tab1:
                 st.plotly_chart(fig_rank, use_container_width=True)
 
 # ==============================================================================
-# TAB 2: 🔍 單一基金深度風險剖析 (含防爆空值保護機制)
+# TAB 2: 🔍 單一基金深度風險剖析 (100% 正本數據對齊)
 # ==============================================================================
 with top_tab2:
     if not PRESET_FUNDS:
@@ -278,7 +278,6 @@ with top_tab2:
         with ctrl_col1: 
             selected_preset = st.selectbox("📌 選擇基金名稱：", list(PRESET_FUNDS.keys()))
         
-        # 🟢 防爆關鍵機制：若選取的 Key 不存在，提供安全 Fallback
         curr_fund = PRESET_FUNDS.get(selected_preset, list(PRESET_FUNDS.values())[0])
         
         category_val = curr_fund.get("category", "債券基金")
@@ -299,8 +298,9 @@ with top_tab2:
 
         st.markdown('<div class="data-disclaimer-note"><b>📑 數據來源聲明備註：</b> 本 Dashboard 內所有財務數據、持倉比率、派息成分與營運損益，均完全依據<b>基金官方發布之基金月報 (Factsheet)、派息分派紀錄及年度財務報告</b> 客觀建檔分析。</div>', unsafe_allow_html=True)
 
-        if "history_div" in curr_fund and curr_fund["history_div"]:
-            nav_res = calculate_realtime_nav_to_nav(curr_fund["history_div"])
+        h_div = curr_fund.get("history_div", [])
+        if h_div:
+            nav_res = calculate_realtime_nav_to_nav(h_div)
             if nav_res.get("status") == "success":
                 st.markdown("### 🧮 最新 12 個月實時含息總回報精算 (NAV-to-NAV)")
                 st.caption("💡 本區塊根據該基金最新發放的 12 個月派息與動態 NAV 自動精算，非半年前之舊歷史數據。")
@@ -352,8 +352,8 @@ with top_tab2:
         with eye_col1: show_g1 = st.toggle("👁️ 顯示名片", value=True, key="eye_g1")
         
         display_1y_return = curr_fund.get('return_1y', 0)
-        if "history_div" in curr_fund and curr_fund["history_div"]:
-            nav_calc = calculate_realtime_nav_to_nav(curr_fund["history_div"])
+        if h_div:
+            nav_calc = calculate_realtime_nav_to_nav(h_div)
             if nav_calc.get("status") == "success":
                 display_1y_return = nav_calc["nav_to_nav_return_pct"]
 
@@ -426,23 +426,24 @@ with top_tab2:
                 top10_rows_html = "".join([f"<tr><td><b>{r.get('排名', '-')}</b></td><td><b>{r.get('持倉名稱', '-')}</b></td><td style='color:#475569;'>{r.get('bg','')}</td><td>{r.get('資產類別', '-')}</td><td style='font-weight:bold;'>{r.get('佔比 (%)', '-')}</td><td style='text-align:center;'>{r.get('badge', '-')}</td></tr>" for r in top10_list])
                 st.markdown(f'<table class="custom-table"><thead><tr><th>排名</th><th>底層資產名稱</th><th>資產背景簡介</th><th>資產類別</th><th>佔比 (%)</th><th style="text-align:center;">品質評級</th></tr></thead><tbody>{top10_rows_html}</tbody></table>', unsafe_allow_html=True)
             else:
-                st.info("ℹ️ 官方 Factsheet 暫未提供此基金之 Top 10 詳細持倉清單。")
+                st.warning("⚠️ 數據提示：官方 Factsheet 正本中未披露該基金之 Top 10 持倉明細。")
 
+        # 🟢 精準實審歷史派息渲染
         with main_tab3:
-            h_div = curr_fund.get("history_div", [])
-            if h_div:
+            if h_div and len(h_div) > 0:
                 h_rows = "".join([f"<tr><td>{r[0]}</td><td>{r[1]}</td><td>{r[2]}</td><td><b>{r[3]}</b></td><td>{r[4]}</td><td style='font-weight:bold; color:#059669;'>{r[5]}</td></tr>" for r in h_div])
                 st.markdown(f'<table class="custom-table"><thead><tr><th>除息日</th><th>記錄日</th><th>派息日</th><th>每單位股息</th><th>除息日每單位資產淨值</th><th>年度化派息率</th></tr></thead><tbody>{h_rows}</tbody></table>', unsafe_allow_html=True)
             else:
-                st.info("ℹ️ 該基金非分派/派息類別，或官方分派正本暫無提供歷史派息紀錄數據。")
+                st.warning("⚠️ 正本數據未匯入提示：該基金之《歷史派息紀錄 (Dividend History)》尚未補充 PDF 檔建檔。請提供該基金之官方分派紀錄 PDF 檔。")
 
+        # 🟢 精準實審派息成份渲染
         with main_tab4:
             c_div = curr_fund.get("composition_div", [])
-            if c_div:
+            if c_div and len(c_div) > 0:
                 c_rows = "".join([f"<tr><td><b>{r[0]}</b></td><td>{r[1]}</td><td>{r[2]}</td><td style='font-weight:bold; color:#D97706;'>{r[3]}</td></tr>" for r in c_div])
                 st.markdown(f'<table class="custom-table"><thead><tr><th>除息日</th><th>每股股息</th><th>可分派淨收益/權利金 %</th><th>由資本所分派之股息 % (ROC)</th></tr></thead><tbody>{c_rows}</tbody></table>', unsafe_allow_html=True)
             else:
-                st.info("ℹ️ 官方派息成份報告 (Dividend Composition) 暫無提供此股份類別之分派來源拆解數據。")
+                st.warning("⚠️ 正本數據未匯入提示：該基金之《派息成份報告 (Dividend Composition)》尚未補充 PDF 檔建檔。請提供官方發布之成份拆解 PDF 檔。")
 
         with main_tab5:
             s_dist = curr_fund.get("sector_dist", [])
@@ -450,7 +451,7 @@ with top_tab2:
                 s_rows = "".join([f"<tr><td><b>{r[0]}</b></td><td style='font-weight:bold; color:#1E3A8A;'>{r[1]}</td></tr>" for r in s_dist])
                 st.markdown(f'<table class="custom-table" style="width:50%;"><thead><tr><th>行業類別</th><th>佔市值 %</th></tr></thead><tbody>{s_rows}</tbody></table>', unsafe_allow_html=True)
             else:
-                st.info("ℹ️ 官方月報暫無提供此基金之行業分佈占比數據。")
+                st.warning("⚠️ 數據提示：官方月報正本未提供行業分佈數據。")
 
         with main_tab6:
             r_dist = curr_fund.get("rating_dist", [])
@@ -458,7 +459,7 @@ with top_tab2:
                 r_rows = "".join([f"<tr><td><b>{r[0]}</b></td><td style='font-weight:bold; color:#1E3A8A;'>{r[1]}</td></tr>" for r in r_dist])
                 st.markdown(f'<table class="custom-table" style="width:50%;"><thead><tr><th>信貸評級 / 市值分佈</th><th>佔市值 %</th></tr></thead><tbody>{r_rows}</tbody></table>', unsafe_allow_html=True)
             else:
-                st.info("ℹ️ 官方月報暫無提供此基金之評級/市值分佈占比數據。")
+                st.warning("⚠️ 數據提示：官方月報正本未提供評級分佈數據。")
 
         with main_tab7:
             geo_hist = curr_fund.get("geo_dist_history", [])
@@ -476,7 +477,7 @@ with top_tab2:
                     geo_rows = "".join(["<tr>" + "".join([f"<td><b>{r[c]}</b></td>" if c == '月份' else f"<td>{r[c]}%</td>" for c in geo_cols]) + "</tr>" for _, r in df_geo.iterrows()])
                     st.markdown(f'<table class="custom-table"><thead><tr>{geo_header_html}</tr></thead><tbody>{geo_rows}</tbody></table>', unsafe_allow_html=True)
             else:
-                st.info("ℹ️ 官方月報暫無提供此基金之地區歷史分佈走勢數據。")
+                st.warning("⚠️ 數據提示：官方月報正本未提供地區歷史走勢數據。")
 
         st.markdown("---")
 
