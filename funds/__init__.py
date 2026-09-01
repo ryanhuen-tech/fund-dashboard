@@ -6,7 +6,9 @@ from funds.fund_z18 import DATA_Z18
 from funds.fund_z20 import DATA_Z20
 from funds.fund_z33 import DATA_Z33
 from funds.fund_z77 import DATA_Z77
-from funds.fund_z77 import DATA_Z31
+from funds.fund_z31 import DATA_Z31
+from funds.fund_z05 import DATA_Z05
+from funds.fund_z06 import DATA_Z06
 
 ALL_FUNDS = {
     **DATA_Z03,
@@ -16,4 +18,6 @@ ALL_FUNDS = {
     **DATA_Z33,
     **DATA_Z77,
     **DATA_Z31,
+    **DATA_Z05,
+    **DATA_Z06,
 }
