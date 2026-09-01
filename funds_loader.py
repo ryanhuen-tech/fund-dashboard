@@ -5,7 +5,7 @@ import os
 
 def load_all_funds():
     """
-    安全加載 funds/ 資料夾下所有以 fund_ 開頭的 Python 檔案數據
+    安全且強制動態加載 funds/ 資料夾下所有以 fund_ 開頭的 Python 檔案數據
     """
     all_funds = {}
     
@@ -24,8 +24,10 @@ def load_all_funds():
         module_name = f"funds.{filename[:-3]}"
         
         try:
-            # 正常動態載入模組
+            # 1. 動態載入模組
             mod = importlib.import_module(module_name)
+            # 2. 強制 Reload 確保每次重置都抓取 GitHub 上的最新程式碼
+            importlib.reload(mod)
             
             # 尋找模組中以 DATA_ 開頭的字典變數並合併
             for var_name in dir(mod):
@@ -38,4 +40,5 @@ def load_all_funds():
                     
     return all_funds
 
+# 導出動態變數供 app.py 呼叫
 PRESET_FUNDS = load_all_funds()
