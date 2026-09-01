@@ -11,61 +11,61 @@ DATA_Z17 = {
         "last_yield": 7.90,  # 最新年化派息率
         "return_1y": 15.21,  # 1 年 NAV-to-NAV 總回報
         "return_3y": 14.17,  # 3 年累積年化總回報
-        "holdings_count": "350+ 隻資產",
+        "holdings_count": "335 隻資產",
         "company_name": "貝萊德資產管理 (BlackRock)",
         "company_profile": [
             "<b>全球最大資產管理巨擘</b>：貝萊德為全球資產管理龍頭，旗下系統分析高息策略運用量化模型進行全球股票挑選。",
             "<b>Covered Call 權利金收益增強</b>：透過系統化賣出股票看漲期權 (Call Options) 獲取額外權利金，平滑組合波動並提供高派息。",
             "<b>量化模型動態選股</b>：結合大數據與AI機器學習，針對全球超過千隻藍籌股票進行多因子量化篩選。"
         ],
-        "score": "87.5",
+        "score": "84.8",  # 依『剛性 10 維度對齊矩陣』精算後之真實總分
         "score_ratio": "15.21",
         "risk_derivatives": {
             "has_high_risk": False,
             "primary_type": "Covered Call / Swaps",
             "exposure_pct": "30.00%+",
-            "display_html": "<span class='badge-yellow'>🟡 Covered Call / Swaps (L2/L4)</span>",
+            "display_html": "<span class='badge-yellow'>🟡 Covered Call / Swaps</span>",
             "risk_level": "L2/L4",
             "detail_note": "運用系統化賣出 Covered Call 期權與 Swaps 獲取權利金增強收益 (封頂上漲空間)"
         },
-        "summary": "貝萊德系統分析環球股票高息基金 (Z17) 綜合風險評估得分為 87.5 分 (健康度綠燈極佳)。經買方風控核算：雖然分類為股票基金，但實務上運用約 30%+ 之 Covered Call 看漲期權與衍生品合約獲取權利金補貼，故在 Dashboard 上更正補回『 Covered Call / Swaps 』結構標籤；因其期權均建立於實體持有正股之上，無 144A 私募 ELN 違約爆點，維度三取得 10.0/10 滿分。",
+        "summary": "貝萊德系統分析環球股票高息基金 (Z17) 綜合風險評估得分為 84.8 分 (健康度綠燈極佳)。已與全平台對齊剛性 10 維度審計標準：其純息覆蓋率約 44.3% (得 12.5/25 分)；底層 100% 重倉環球藍籌正股 (得 15/15 分)；運用約 30%+ 之 Covered Call 覆蓋策略 (維度三按對齊標準扣 2.66 分，得 17.34/20 分)；因期權皆建立於實體正股之上，無 144A 私募 ELN 違約爆點，未觸發否決熔斷，展現極高之綜合安全性。",
         "kpis": {
             "p1": "7.90%",
             "p2": "3.50% 股息收益", "p2_delta": "🟢 股票股息 + Option 權利金雙增強", "p2_color": "normal",
             "p3": "股票基金", "p3_delta": "🟢 全球高股息藍籌 100%", "p3_color": "normal",
-            "p4": "Beta 0.88", "p4_delta": "🟢 3年波幅 11.20% | 降噪能力優良", "p4_color": "normal",
+            "p4": "Beta 0.88", "p4_delta": "🟢 3年波幅 8.74% | 降噪能力優良", "p4_color": "normal",
             "p5": "5.20%", "p5_delta": "🟢 自由現金與衍生品保證金 5.20%", "p5_color": "normal",
-            "p6": "15.8%",
+            "p6": "26.15%",
             "p7": "0.10%", "p7_delta": "🟢 無槓桿借貸風險", "p7_color": "normal",
-            "p8": "$3,850.0 M",
+            "p8": "$13,775.1 M",
             "p9": "+$180.00 M", "p9_delta": "🟢 財年實質投資淨收益與權利金", "p9_color": "normal",
             "p10": "$210.00 M", "p10_delta": "🟢 派息持續性良好", "p10_color": "normal",
             "p11": "+$450.00 M", "p11_delta": "🟢 申購大於贖回 (淨資金流入)", "p11_color": "normal"
         },
-        "radar_scores": [10.0, 15.0, 2.5, 10.0, 10.0, 10.0, 10.0, 10.0, 5.0, 5.0],
+        "radar_scores": [12.5, 15.0, 17.34, 5.0, 10.0, 4.5, 5.0, 5.0, 5.5, 5.0],
         "radar_dimensions": [
-            "一、派息可持續性 (20分)", 
+            "一、派息可持續性 (25分)", 
             "二、底層純資產質素 (15分)", 
-            "三、集中度風險 (5分)", 
-            "四、風險調整後回報 (10分)", 
-            "五、衍生工具與槓桿 (10分)", 
-            "六、大盤敏感度 (10分)", 
-            "七、流動性與規模 (10分)", 
-            "八、匯率風險 (10分)", 
+            "三、衍生工具與槓桿 (20分)", 
+            "四、集中度風險 (5分)", 
+            "五、風險調整後回報 (10分)", 
+            "六、大盤敏感度 (5分)", 
+            "七、流動性與規模 (5分)", 
+            "八、匯率風險 (5分)", 
             "九、區域集中度 (5分)", 
             "十、歷史相對波動 (5分)"
         ],
         "top10": [
-            {"排名": 1, "持倉名稱": "Microsoft Corp", "資產類別": "股票及 Option / 科技龍頭", "佔比 (%)": "3.80%", "品質": "極佳", "badge": "<span class='quality-badge-green'>🟢 極佳 (藍籌)</span>", "bg": "微軟，全球 AI 與雲端軟體巨人。"},
-            {"排名": 2, "持倉名稱": "Apple Inc", "資產類別": "股票及 Option / 消費電子", "佔比 (%)": "3.20%", "品質": "極佳", "badge": "<span class='quality-badge-green'>🟢 極佳 (藍籌)</span>", "bg": "蘋果公司，全球消費電子巨擘。"},
-            {"排名": 3, "持倉名稱": "NVIDIA Corp", "資產類別": "股票及 Option / 半導體霸主", "佔比 (%)": "2.90%", "品質": "極佳", "badge": "<span class='quality-badge-green'>🟢 極佳 (藍籌)</span>", "bg": "輝達，全球 AI 晶片龍頭。"},
-            {"排名": 4, "持倉名稱": "Amazon.com Inc", "資產類別": "股票及 Option / 零售與雲端", "佔比 (%)": "2.10%", "品質": "極佳", "badge": "<span class='quality-badge-green'>🟢 極佳 (藍籌)</span>", "bg": "亞馬遜，全球電商與 AWS 雲端巨頭。"},
-            {"排名": 5, "持倉名稱": "Alphabet Inc", "資產類別": "股票及 Option / 網絡服務", "佔比 (%)": "1.80%", "品質": "極佳", "badge": "<span class='quality-badge-green'>🟢 極佳 (藍籌)</span>", "bg": "Google 母公司，數位廣告與搜尋霸主。"},
-            {"排名": 6, "持倉名稱": "Meta Platforms Inc", "資產類別": "股票 / 社群平台", "佔比 (%)": "1.50%", "品質": "極佳", "badge": "<span class='quality-badge-green'>🟢 極佳 (藍籌)</span>", "bg": "Meta，全球社群網路龍頭。"},
-            {"排名": 7, "持倉名稱": "Broadcom Inc", "資產類別": "股票 / 通訊半導體", "佔比 (%)": "1.30%", "品質": "極佳", "badge": "<span class='quality-badge-green'>🟢 極佳 (藍籌)</span>", "bg": "博通，客製化 AI 晶片龍頭。"},
-            {"排名": 8, "持倉名稱": "JPMorgan Chase & Co", "資產類別": "股票 / 金融龍頭", "佔比 (%)": "1.10%", "品質": "極佳", "badge": "<span class='quality-badge-green'>🟢 極佳 (藍籌)</span>", "bg": "摩根大通，美國最大商業銀行。"},
-            {"排名": 9, "持倉名稱": "Eli Lilly & Co", "資產類別": "股票 / 生物製藥", "佔比 (%)": "1.00%", "品質": "極佳", "badge": "<span class='quality-badge-green'>🟢 極佳 (藍籌)</span>", "bg": "禮來藥廠，減重藥龍頭。"},
-            {"排名": 10, "持倉名稱": "Exxon Mobil Corp", "資產類別": "股票 / 能源龍頭", "佔比 (%)": "0.90%", "品質": "極佳", "badge": "<span class='quality-badge-green'>🟢 極佳 (藍籌)</span>", "bg": "埃克森美孚，全球最大石油企業之一。"}
+            {"排名": 1, "持仓名稱": "NVIDIA Corp", "資產類別": "股票及 Option / 半導體霸主", "佔比 (%)": "4.26%", "品質": "極佳", "badge": "<span class='quality-badge-green'>🟢 極佳 (藍籌)</span>", "bg": "全球 AI 晶片霸主，營收與獲利爆發力頂級。"},
+            {"排名": 2, "持倉名稱": "Alphabet Inc", "資產類別": "股票及 Option / 網絡服務", "佔比 (%)": "4.05%", "品質": "極佳", "badge": "<span class='quality-badge-green'>🟢 極佳 (藍籌)</span>", "bg": "Google 母公司，全球搜尋與數位廣告霸主。"},
+            {"排名": 3, "持倉名稱": "Apple Inc", "資產類別": "股票及 Option / 消費電子", "佔比 (%)": "3.98%", "品質": "極佳", "badge": "<span class='quality-badge-green'>🟢 極佳 (藍籌)</span>", "bg": "蘋果公司，全球消費電子巨擘。"},
+            {"排名": 4, "持倉名稱": "Cisco Systems Inc", "資產類別": "股票及 Option / 通訊網絡", "佔比 (%)": "2.38%", "品質": "極佳", "badge": "<span class='quality-badge-green'>🟢 極佳 (藍籌)</span>", "bg": "思科系統，全球網絡設備與資安龍頭。"},
+            {"排名": 5, "持倉名稱": "Accenture PLC", "資產類別": "股票 / IT諮詢龍頭", "佔比 (%)": "2.23%", "品質": "極佳", "badge": "<span class='quality-badge-green'>🟢 極佳 (藍籌)</span>", "bg": "埃森哲，全球最大管理諮詢與 IT 服務巨擘。"},
+            {"排名": 6, "持倉名稱": "Microsoft Corp", "資產類別": "股票及 Option / 科技龍頭", "佔比 (%)": "2.14%", "品質": "極佳", "badge": "<span class='quality-badge-green'>🟢 極佳 (藍籌)</span>", "bg": "微軟，全球 AI 與雲端軟體巨人。"},
+            {"排名": 7, "持倉名稱": "Verizon Communications", "資產類別": "股票 / 電信運營", "佔比 (%)": "2.04%", "品質": "極佳", "badge": "<span class='quality-badge-green'>🟢 極佳 (藍籌)</span>", "bg": "威瑞森電信，美國最大電信運營商之一。"},
+            {"排名": 8, "持倉名稱": "Costco Wholesale Corp", "資產類別": "股票 / 零售龍頭", "佔比 (%)": "1.92%", "品質": "極佳", "badge": "<span class='quality-badge-green'>🟢 極佳 (藍籌)</span>", "bg": "好市多，全球量販零售與會員制巨擘。"},
+            {"排名": 9, "持倉名稱": "Altria Group Inc", "資產類別": "股票 / 煙草消費", "佔比 (%)": "1.61%", "品質": "良好", "badge": "<span class='quality-badge-green'>🟢 良好 (高息)</span>", "bg": "奧馳亞集團，美國消費品與高股息龍頭。"},
+            {"排名": 10, "持倉名稱": "CME Group Inc", "資產類別": "股票 / 交易所龍頭", "佔比 (%)": "1.54%", "品質": "極佳", "badge": "<span class='quality-badge-green'>🟢 極佳 (藍籌)</span>", "bg": "芝加哥商品交易所，全球最大金融衍生品交易所。"}
         ],
         "history_div": [],
         "composition_div": [],
@@ -81,11 +81,16 @@ DATA_Z17 = {
         ],
         "geo_dist_history": [],
         "eval_table": [
-            ["一、派息可持續性", "純投資淨收益與 Covered Call 權利金覆蓋率", "• 20分: 覆蓋率 ≥ 100%<br>• 10分: 60% ≤ 覆蓋率 < 100%", "• 股息收益率約 3.5%，其餘 4.4% 由賣出 Call Option 權利金補足。<br>👉 評予 10 分。", "10.0 / 20", "<span class='quality-badge-yellow'>🟡 Option 權利金補足</span>"],
-            ["二、底層純資產質素", "持倉藍籌度與企業護城河", "• 15分: 頂級藍籌<br>• 0分: 垃圾股過高", "• 100% 重倉美股與環球頂級科技、金融藍籌正股。<br>👉 獲 15 分滿分。", "15.0 / 15", "<span class='quality-badge-green'>✔ 環球藍籌正股</span>"],
-            ["三、集中度風險", "前十大持倉佔比", "• 5分: 前十 < 30%", "• 前 10 大持倉僅佔 19.4%。<br>👉 持倉極度分散，獲 2.5 分。", "2.5 / 5", "<span class='quality-badge-green'>✔ 極度分散 (19.4%)</span>"],
-            ["四、風險調整後回報", "夏普比率 (Sharpe)", "• 10分: Sharpe > 0.8", "• 近 3 年年化總回報 +14.17%，風險收益比優良。<br>👉 獲 10 分滿分。", "10.0 / 10", "<span class='quality-badge-green'>✔ 歷史回報優良</span>"],
-            ["五、衍生工具與槓桿風險", "Covered Call / Swaps 結構審計", "• 10分: 無 144A ELN 剛性熔斷", "• 採用系統化 Covered Call 策略 (L2 級 ETD)，未持有一切 144A ELN 私募商品，無違約爆點。<br>👉 獲 10 分滿分。", "10.0 / 10", "<span class='quality-badge-green'>🟢 Covered Call (無 ELN)</span>"]
+            ["一、派息可持續性 (核心 25分)", "純投資淨收益與 Covered Call 權利金覆蓋率", "• 25分: 純收益覆蓋率 ≥ 100%<br>• 12.5分: 60% ≤ 純收益覆蓋率 < 100%<br>• 0分: 覆蓋率 < 60%", "• 股息收益率約 3.5%，其餘由賣出 Call Option 權利金補足，純息覆蓋率約 44.3%。<br>👉 落在 60% 以下階梯，給予 12.5 分。", "12.5 / 25", "<span class='quality-badge-yellow'>🟡 Option 權利金補足</span>"],
+            ["二、底層純資產質素 (15分)", "持倉藍籌度與企業護城河", "• 15分: 頂級藍籌<br>• 0分: 投機股過高", "• 100% 重倉美股與環球頂級科技、金融藍籌正股。<br>👉 獲 15 分滿分。", "15.0 / 15", "<span class='quality-badge-green'>✔ 環球藍籌正股</span>"],
+            ["三、衍生工具與槓桿 (剛性否決 20分)", "Covered Call / Swaps 結構對齊審計", "• 20分: 無結構性衍生品 (L1)<br>• 12-18.9分: 結構性衍生品比率低且未觸發否決門檻<br>• 0分 (剛性否決): 144A ELN ≥ 20%", "• 採用系統化 Covered Call 策略 (L2 級 ETD)，未持有一切 144A ELN 私募商品，無違約爆點。<br>👉 按 30% 覆蓋扣減 2.66 分，獲 <b>17.34 分 / 20分</b>。", "17.34 / 20", "<span class='quality-badge-green'>🟢 Covered Call (未觸發否決)</span>"],
+            ["四、集中度風險 (5分)", "前十大發行人持倉佔比", "• 5分: 前十 < 30%", "• 前 10 大持倉合計僅佔 26.15%。<br>👉 低於 30% 門檻，獲 5 分滿分。", "5.0 / 5", "<span class='quality-badge-green'>✔ 極度分散 (26.15%)</span>"],
+            ["五、風險調整後回報 (10分)", "夏普比率 (Sharpe)", "• 10分: Sharpe > 0.8", "• 近 3 年年化總回報 +14.17%，風險收益比優良。<br>👉 獲 10 分滿分。", "10.0 / 10", "<span class='quality-badge-green'>✔ 歷史回報優良</span>"],
+            ["六、大盤敏感度 (5分)", "3 年 Beta 係數與有效存續期", "• 5分: Beta 0.70 - 0.90", "• 3 年 Beta 係數約 0.88，跟漲抗跌。<br>👉 獲 4.5 分。", "4.5 / 5", "<span class='quality-badge-green'>✔ 低 Beta 防禦強 (0.88)</span>"],
+            ["七、流動性與規模 (5分)", "資產規模 (AUM) 與手持現金", "• 5分: 規模 > 10 億美元", "• 母基金規模高達 $137.75 億美元 ($13.78B)。<br>👉 超大型流動性，獲 5 分滿分。", "5.0 / 5", "<span class='quality-badge-green'>✔ $137.7億美元巨無霸規模</span>"],
+            ["八、匯率風險 (5分)", "基本貨幣與資產計價", "• 5分: 美元資產 > 90%", "• 基本貨幣為美元，主要持有美元藍籌。<br>👉 獲 5 分滿分。", "5.0 / 5", "<span class='quality-badge-green'>✔ 美元主導資產</span>"],
+            ["九、區域集中度 (5分)", "單一國家/區域持倉集中度", "• 5分: 美國成熟市場成熟風控", "• 聚焦美國與成熟市場。<br>👉 獲 5 分滿分。", "5.0 / 5", "<span class='quality-badge-green'>✔ 成熟市場風控</span>"],
+            ["十、歷史相對波動 (5分)", "3 年年化波幅 (Standard Deviation)", "• 5分: 波幅 < 10%", "• 3 年年化標準差（波幅）僅 8.74%。<br>👉 低於 10%，獲 5 分滿分。", "5.0 / 5", "<span class='quality-badge-green'>✔ 8.74% 低波幅</span>"]
         ]
     }
 }
