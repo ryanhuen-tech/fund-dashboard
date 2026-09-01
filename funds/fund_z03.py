@@ -20,6 +20,14 @@ DATA_Z03 = {
         ],
         "score": "77.6",  # 依『極致慎重原則』剛性 10 維度矩陣審計後之真實總分
         "score_ratio": "14.20",
+        "risk_derivatives": {
+            "has_high_risk": False,
+            "primary_type": "Covered Call (ETD)",
+            "exposure_pct": "0.00%",
+            "display_html": "<span class='badge-green'>🟢 無 L3/L4 高風險產品 (0%)</span>",
+            "risk_level": "L2",
+            "detail_note": "33.3% 賣出 Call Option (交易所 ETD 掛牌，無 OTC 私募信用風險)"
+        },
         "summary": "安聯收益成長基金 (Z03) 綜合風險評估得分為 77.6 分 (黃燈良好/健康度佳)。採極致慎重風控矩陣審視：核心指標『派息可持續性 (25分)』中，純投資淨收益 (NII) 對總派息覆蓋率約 63.00% (得 12.5/25 分，約 37% 由 Option 權利金補足)；其 33.3% 之 Covered Call 屬 L2 級交易所掛牌 (ETD) 工具，無 144A 私募或投行 OTC 違約風險，完全未觸發 20% 剛性一票否決熔斷，維度三取得 17.34/20 分優等評價，展現出比同業更嚴密之結構安全性。",
         "kpis": {
             "p1": "8.12%",
