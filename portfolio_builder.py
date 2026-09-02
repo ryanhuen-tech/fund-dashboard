@@ -42,7 +42,7 @@ def get_exact_asset_alloc(target_fund):
         return 52, 48
     return 50, 50
 
-# 3. 初始化內建與自訂模版字典
+# 3. 初始化內建與自訂模版字典 (所有賞金預設為 0.0%)
 def init_custom_templates():
     if "saved_templates" not in st.session_state:
         st.session_state.saved_templates = {
@@ -361,7 +361,13 @@ def render_portfolio_builder_tab():
         code = f.get("code", "Z01")
         fund_info = ALL_FUNDS.get(code, {})
 
-        score_val = float(fund_info.get("score", 85.0))
+        # 🟢 精確讀取資料庫專屬分數 (完全消除盲目 85.0 預設顯示，如 Z15 為 75.5)
+        raw_score = fund_info.get("score")
+        if raw_score is not None:
+            score_val = float(raw_score)
+        else:
+            score_val = float(fund_info.get("risk_score", fund_info.get("overall_score", 75.0)))
+            
         weighted_score_sum += score_val * init_val
 
         der_level = fund_info.get("risk_derivatives", {}).get("risk_level", "L1")
