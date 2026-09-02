@@ -55,7 +55,7 @@ def render_portfolio_builder_tab():
     </style>
     """, unsafe_allow_html=True)
 
-    # 1. Session State 組合資料初始化 (包含預設費用參數)
+    # 1. Session State 組合資料初始化 (包含完整的預設費率)
     if "portfolio_funds" not in st.session_state:
         st.session_state.portfolio_funds = [
             {"code": "Z04", "amount": 100000.0, "bonus": 4.0, "buy_price": 8.52, "curr_price": 8.00, "high": 12.96, "low": 7.99, "stock_pct": 100, "bond_pct": 0, "yield_pct": 8.13, "upf": 1.35, "m1": 1.00, "m6": 1.00},
@@ -81,7 +81,7 @@ def render_portfolio_builder_tab():
 
     st.markdown("---")
 
-    # 2. 優先同步 UI 畫面的最新輸入參數
+    # 2. 優先同步 UI 畫面的最新輸入參數 (.get 安全防護)
     for idx, fund_item in enumerate(st.session_state.portfolio_funds):
         code = fund_item["code"]
         f_key = f"{idx}_{code}"
@@ -96,7 +96,7 @@ def render_portfolio_builder_tab():
         if f"m1_{f_key}" in st.session_state: fund_item["m1"] = st.session_state[f"m1_{f_key}"]
         if f"m6_{f_key}" in st.session_state: fund_item["m6"] = st.session_state[f"m6_{f_key}"]
 
-    # 3. 逐月模擬演算 (完全還原舊 Dashboard 手續費與賞金邏輯)
+    # 3. 逐月模擬演算 (安全使用 .get 防止 KeyError)
     total_months = plan_years * 12
     total_cost = 0.0          
     total_initial_val = 0.0   
@@ -107,27 +107,26 @@ def render_portfolio_builder_tab():
     portfolio_geo_weighted = {}
     portfolio_sector_weighted = {}
 
-    # 初始化個股滾存單位數
     calc_funds = []
     for f in st.session_state.portfolio_funds:
-        amt = f["amount"]
-        bonus_pct = f["bonus"]
+        amt = f.get("amount", 100000.0)
+        bonus_pct = f.get("bonus", 0.0)
         init_val = amt * (1.0 + bonus_pct / 100.0)
-        price0 = f["buy_price"] if f["buy_price"] > 0 else 10.0
+        price0 = f.get("buy_price", 10.0) if f.get("buy_price", 10.0) > 0 else 10.0
         units = init_val / price0
         
         total_cost += amt
         total_initial_val += init_val
         
-        s_pct = f["stock_pct"]
-        b_pct = f["bond_pct"]
+        s_pct = f.get("stock_pct", 50)
+        b_pct = f.get("bond_pct", 50)
         total_stock_amt += init_val * (s_pct / 100.0)
         total_bond_amt += init_val * (b_pct / 100.0)
         
-        monthly_div = init_val * (f["yield_pct"] / 100.0) / 12.0
+        monthly_div = init_val * (f.get("yield_pct", 8.0) / 100.0) / 12.0
         total_curr_monthly_div += monthly_div
 
-        code = f["code"]
+        code = f.get("code", "Z01")
         fund_info = ALL_FUNDS.get(code, {})
 
         # 地區加權
@@ -153,11 +152,11 @@ def render_portfolio_builder_tab():
             "p": amt,
             "units": units,
             "price0": price0,
-            "price1": f["curr_price"],
-            "upf": f["upf"],
-            "m1": f["m1"],
-            "m6": f["m6"],
-            "div": f["yield_pct"],
+            "price1": f.get("curr_price", price0),
+            "upf": f.get("upf", 1.35),   # 🟢 安全容錯讀取
+            "m1": f.get("m1", 1.00),     # 🟢 安全容錯讀取
+            "m6": f.get("m6", 1.50),     # 🟢 安全容錯讀取
+            "div": f.get("yield_pct", 8.0),
             "final_val": 0.0,
             "val_before_bonus": 0.0
         })
@@ -170,18 +169,15 @@ def render_portfolio_builder_tab():
     for m in range(1, total_months + 1):
         m_val_before_b = 0.0
         
-        # 扣除前期費與管理費
         for f in calc_funds:
             if f["units"] > 0:
                 cur_p = f["price0"] + (f["price1"] - f["price0"]) * (m / total_months)
                 
                 if m <= 60:
-                    # 前 5 年：扣除前期費與首 5 年管理費
                     u_deduct_upf = (f["p"] * (f["upf"] / 100.0) / 12.0) / cur_p
                     fee_cash = (f["p"] * (f["upf"] / 100.0) / 12.0) + (f["units"] * cur_p * (f["m1"] / 100.0) / 12.0)
                     f["units"] = (f["units"] * (1.0 - (f["m1"] / 100.0) / 12.0)) - u_deduct_upf
                 else:
-                    # 6 年後：改扣 6 年後管理費
                     fee_cash = f["units"] * cur_p * (f["m6"] / 100.0) / 12.0
                     f["units"] *= (1.0 - (f["m6"] / 100.0) / 12.0)
                 
@@ -193,21 +189,18 @@ def render_portfolio_builder_tab():
         if m <= 60:
             values_first_60.append(m_val_before_b)
 
-        # 第 61 個月發放長期客戶獎賞 (Long-term Bonus)
         month_bonus = 0.0
         if m > 60 and len(values_first_60) == 60:
             avg_60m = sum(values_first_60) / 60.0
             month_bonus = calculate_long_term_bonus(avg_60m)
             cum_bonus_earned += month_bonus
 
-            # 將賞金依比例分派回各基金再投資
             if m_val_before_b > 0:
                 for f in calc_funds:
                     if f["units"] > 0:
                         cur_p = f["price0"] + (f["price1"] - f["price0"]) * (m / total_months)
                         f["units"] += (month_bonus * (f["val_before_bonus"] / m_val_before_b)) / cur_p
 
-    # 期末市值與最終金額
     total_final_val = sum(f["units"] * f["price1"] for f in calc_funds)
 
     total_asset_alloc = total_stock_amt + total_bond_amt
@@ -217,7 +210,7 @@ def render_portfolio_builder_tab():
     else:
         overall_stock_pct, overall_bond_pct = 0, 0
 
-    # 5. 頂部名片渲染 (新增手續費與長期賞金方框)
+    # 5. 頂部名片渲染
     k1, k2, k3, k4 = st.columns(4)
     with k1:
         st.markdown(f'<div class="kpi-card"><div class="kpi-title">總投入成本 ($)</div><div class="kpi-value">${total_cost:,.0f}</div></div>', unsafe_allow_html=True)
@@ -237,7 +230,7 @@ def render_portfolio_builder_tab():
 
     st.markdown("---")
 
-    # 6. 基金配置編輯區 (包含手續費輸入欄位)
+    # 6. 基金配置編輯區 (.get 安全賦值)
     st.markdown("### 📁 組合內基金詳細配置與手續費設定")
     
     fund_options = {f"{f_data.get('code', '')} {f_data.get('zh', '')}": f_code for f_code, f_data in ALL_FUNDS.items()}
@@ -251,7 +244,7 @@ def render_portfolio_builder_tab():
             with cols[idx]:
                 st.markdown(f"#### 基金 #{idx + 1}")
                 
-                current_code = fund_item["code"]
+                current_code = fund_item.get("code", "Z01")
                 default_index = 0
                 for label_idx, label_str in enumerate(fund_labels):
                     if current_code in label_str:
@@ -276,20 +269,22 @@ def render_portfolio_builder_tab():
                         fund_item["bond_pct"] = 48
                     
                     fund_item["yield_pct"] = float(target_fund.get("last_yield", 8.0))
+                    fund_item["upf"] = 1.35
+                    fund_item["m1"] = 1.00
+                    fund_item["m6"] = 1.50
                     st.rerun()
 
                 f_key = f"{idx}_{selected_code}"
 
-                st.number_input("帳面本金 ($):", value=float(fund_item["amount"]), step=10000.0, key=f"amt_{f_key}")
-                st.number_input("開戶獎賞 (%):", value=float(fund_item["bonus"]), step=0.5, key=f"bonus_{f_key}")
+                st.number_input("帳面本金 ($):", value=float(fund_item.get("amount", 100000.0)), step=10000.0, key=f"amt_{f_key}")
+                st.number_input("開戶獎賞 (%):", value=float(fund_item.get("bonus", 0.0)), step=0.5, key=f"bonus_{f_key}")
 
                 col_s, col_b = st.columns(2)
                 with col_s:
-                    st.number_input("股票 (%):", value=int(fund_item["stock_pct"]), min_value=0, max_value=100, key=f"stk_{f_key}")
+                    st.number_input("股票 (%):", value=int(fund_item.get("stock_pct", 50)), min_value=0, max_value=100, key=f"stk_{f_key}")
                 with col_b:
-                    st.number_input("債券 (%):", value=100 - int(fund_item["stock_pct"]), disabled=True, key=f"bnd_disp_{f_key}")
+                    st.number_input("債券 (%):", value=100 - int(fund_item.get("stock_pct", 50)), disabled=True, key=f"bnd_disp_{f_key}")
 
-                # 手續費微調欄位
                 col_f1, col_f2, col_f3 = st.columns(3)
                 with col_f1:
                     st.number_input("前期費(%):", value=float(fund_item.get("upf", 1.35)), step=0.01, key=f"upf_{f_key}")
@@ -300,21 +295,23 @@ def render_portfolio_builder_tab():
 
                 col_p1, col_p2 = st.columns(2)
                 with col_p1:
-                    st.number_input("買入價 ($):", value=float(fund_item["buy_price"]), step=0.01, key=f"buy_{f_key}")
+                    st.number_input("買入價 ($):", value=float(fund_item.get("buy_price", 10.0)), step=0.01, key=f"buy_{f_key}")
                 with col_p2:
-                    st.number_input("即時現價 ($):", value=float(fund_item["curr_price"]), step=0.01, key=f"curr_{f_key}")
+                    st.number_input("即時現價 ($):", value=float(fund_item.get("curr_price", 10.0)), step=0.01, key=f"curr_{f_key}")
 
-                if fund_item["buy_price"] > 0:
-                    chg_pct = ((fund_item["curr_price"] - fund_item["buy_price"]) / fund_item["buy_price"]) * 100.0
+                buy_p = fund_item.get("buy_price", 10.0)
+                curr_p = fund_item.get("curr_price", 10.0)
+                if buy_p > 0:
+                    chg_pct = ((curr_p - buy_p) / buy_p) * 100.0
                     st.caption(f"📈 帳面升跌: **{chg_pct:+.2f}%**")
 
                 col_h, col_l = st.columns(2)
                 with col_h:
-                    st.text_input("歷史高位:", value=f"${fund_item['high']:.2f}", disabled=True, key=f"hi_{f_key}")
+                    st.text_input("歷史高位:", value=f"${fund_item.get('high', 12.0):.2f}", disabled=True, key=f"hi_{f_key}")
                 with col_l:
-                    st.text_input("歷史低位:", value=f"${fund_item['low']:.2f}", disabled=True, key=f"lo_{f_key}")
+                    st.text_input("歷史低位:", value=f"${fund_item.get('low', 8.0):.2f}", disabled=True, key=f"lo_{f_key}")
 
-                st.number_input("年派息率 (%):", value=float(fund_item["yield_pct"]), step=0.1, key=f"yld_{f_key}")
+                st.number_input("年派息率 (%):", value=float(fund_item.get("yield_pct", 8.0)), step=0.1, key=f"yld_{f_key}")
 
                 if st.button("🗑️ 移除此基金", key=f"del_{f_key}"):
                     st.session_state.portfolio_funds.pop(idx)
