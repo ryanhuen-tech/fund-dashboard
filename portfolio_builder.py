@@ -42,11 +42,10 @@ def on_fund_select_change(f_id, fund_item):
         return
         
     target_fund = ALL_FUNDS.get(selected_code, {})
-    
     fund_item["code"] = selected_code
     cat = target_fund.get("category", "")
     
-    # 硬性覆寫 UI Session State
+    # 強制覆寫 Session State 與字典
     if "債券" in cat:
         st.session_state[f"stk_{f_id}"] = 0
         fund_item["stock_pct"] = 0
@@ -196,15 +195,32 @@ def render_portfolio_builder_tab():
 
     st.markdown("---")
 
-    # 2. 優先同步 UI 最新動態輸入值
+    # 2. 優先同步 UI 最新動態輸入值 (解決股債比與派息率鎖死機制)
     for fund_item in st.session_state.portfolio_funds:
         f_id = fund_item.get("id")
-        
+        code = fund_item.get("code", "Z01")
+        target_fund = ALL_FUNDS.get(code, {})
+        cat = target_fund.get("category", "")
+
+        # 防護：確保股票 % 與債券 % 剛性符合基金類別正本
+        if f"stk_{f_id}" in st.session_state:
+            s_val = st.session_state[f"stk_{f_id}"]
+            fund_item["stock_pct"] = s_val
+            fund_item["bond_pct"] = 100 - s_val
+        else:
+            if "債券" in cat:
+                fund_item["stock_pct"] = 0
+                fund_item["bond_pct"] = 100
+            elif "股票" in cat and "混合" not in cat:
+                fund_item["stock_pct"] = 100
+                fund_item["bond_pct"] = 0
+            else:
+                fund_item["stock_pct"] = 52
+                fund_item["bond_pct"] = 48
+            st.session_state[f"stk_{f_id}"] = fund_item["stock_pct"]
+
         if f"amt_{f_id}" in st.session_state: fund_item["amount"] = st.session_state[f"amt_{f_id}"]
         if f"bonus_{f_id}" in st.session_state: fund_item["bonus"] = st.session_state[f"bonus_{f_id}"]
-        if f"stk_{f_id}" in st.session_state: 
-            fund_item["stock_pct"] = st.session_state[f"stk_{f_id}"]
-            fund_item["bond_pct"] = 100 - st.session_state[f"stk_{f_id}"]
         if f"yld_{f_id}" in st.session_state: fund_item["yield_pct"] = st.session_state[f"yld_{f_id}"]
         if f"upf_{f_id}" in st.session_state: fund_item["upf"] = st.session_state[f"upf_{f_id}"]
         if f"anf_{f_id}" in st.session_state: fund_item["annual_fee"] = st.session_state[f"anf_{f_id}"]
@@ -237,7 +253,9 @@ def render_portfolio_builder_tab():
         total_initial_val += init_val
         
         s_pct = f.get("stock_pct", 50)
-        b_pct = f.get("bond_pct", 50)
+        b_pct = 100 - s_pct
+        f["bond_pct"] = b_pct
+        
         total_stock_amt += init_val * (s_pct / 100.0)
         total_bond_amt += init_val * (b_pct / 100.0)
         
@@ -399,7 +417,7 @@ def render_portfolio_builder_tab():
 
     st.markdown("---")
 
-    # 7. 基金配置編輯區 (已移除歷史高低位欄位，更名為「現價」)
+    # 7. 基金配置編輯區
     st.markdown("### 📁 組合內基金詳細配置與手續費設定")
     
     fund_options = {f"{f_data.get('code', '')} {f_data.get('zh', '')}": f_code for f_code, f_data in ALL_FUNDS.items()}
@@ -432,9 +450,6 @@ def render_portfolio_builder_tab():
                 
                 selected_code = fund_options[selected_label]
 
-                if f"stk_{f_id}" not in st.session_state:
-                    st.session_state[f"stk_{f_id}"] = int(fund_item.get("stock_pct", 50))
-
                 st.number_input("帳面本金 ($):", value=float(fund_item.get("amount", 100000.0)), step=10000.0, key=f"amt_{f_id}")
                 st.number_input("開戶獎賞 (%):", value=float(fund_item.get("bonus", 0.0)), step=0.5, key=f"bonus_{f_id}")
 
@@ -442,7 +457,9 @@ def render_portfolio_builder_tab():
                 with col_s:
                     st.number_input("股票 (%):", value=int(fund_item.get("stock_pct", 50)), min_value=0, max_value=100, key=f"stk_{f_id}")
                 with col_b:
-                    st.number_input("債券 (%):", value=100 - int(st.session_state.get(f"stk_{f_id}", fund_item.get("stock_pct", 50))), disabled=True, key=f"bnd_disp_{f_id}")
+                    # 🟢 剛性動態計算債券 %，防止畫面出現 0:0
+                    calc_bond_pct = 100 - int(st.session_state.get(f"stk_{f_id}", fund_item.get("stock_pct", 50)))
+                    st.number_input("債券 (%):", value=calc_bond_pct, disabled=True, key=f"bnd_disp_{f_id}")
 
                 col_f1, col_f2 = st.columns(2)
                 with col_f1:
@@ -450,7 +467,6 @@ def render_portfolio_builder_tab():
                 with col_f2:
                     st.number_input("每年手續費 (%):", value=float(fund_item.get("annual_fee", 1.00)), step=0.01, key=f"anf_{f_id}")
 
-                # 🟢 已更名為「現價 ($)」，並移除歷史高低位欄位
                 col_p1, col_p2 = st.columns(2)
                 with col_p1:
                     st.number_input("買入價 ($):", value=float(fund_item.get("buy_price", 10.0)), step=0.01, key=f"buy_{f_id}")
