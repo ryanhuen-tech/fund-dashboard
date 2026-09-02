@@ -1,14 +1,64 @@
 import streamlit as st
 import requests
 import re
+import uuid
 import pandas as pd
 import plotly.express as px
 from funds import ALL_FUNDS  # 匯入系統所有基金資料庫
 
-# 精確提取短代號 (例如從 "Z51 友邦股票入息" 提取 "Z51")
+# 精確提取短代號
 def extract_fund_code(label_str):
     match = re.search(r'([A-Z0-9]{2,4})', label_str)
     return match.group(1) if match else label_str
+
+# 獲取正本派息紀錄中的真實派息率 %
+def get_exact_yield_from_fund(target_fund):
+    history_div = target_fund.get("history_div", [])
+    if history_div and len(history_div) > 0:
+        latest_record = history_div[0]
+        if len(latest_record) >= 6:
+            yield_str = str(latest_record[5]).replace("%", "").strip()
+            try:
+                return float(yield_str)
+            except ValueError:
+                pass
+    
+    last_y = target_fund.get("last_yield")
+    if last_y is not None:
+        try:
+            return float(str(last_y).replace("%", "").strip())
+        except ValueError:
+            pass
+            
+    return 7.50
+
+# 下拉選單切換時強制硬性重置 UI 狀態 (徹底解決股債比跳回 100% 的 BUG)
+def on_fund_select_change(f_id, fund_item):
+    sel_label = st.session_state[f"sel_{f_id}"]
+    fund_options = {f"{f_data.get('code', '')} {f_data.get('zh', '')}": f_code for f_code, f_data in ALL_FUNDS.items()}
+    selected_code = fund_options[sel_label]
+    target_fund = ALL_FUNDS.get(selected_code, {})
+    
+    fund_item["code"] = selected_code
+    cat = target_fund.get("category", "")
+    
+    # 硬性覆寫 UI Session State
+    if "債券" in cat:
+        st.session_state[f"stk_{f_id}"] = 0
+        fund_item["stock_pct"] = 0
+        fund_item["bond_pct"] = 100
+    elif "股票" in cat and "混合" not in cat:
+        st.session_state[f"stk_{f_id}"] = 100
+        fund_item["stock_pct"] = 100
+        fund_item["bond_pct"] = 0
+    else:  # 混合型 (如 Z18)
+        st.session_state[f"stk_{f_id}"] = 52
+        fund_item["stock_pct"] = 52
+        fund_item["bond_pct"] = 48
+        
+    exact_yield = get_exact_yield_from_fund(target_fund)
+    st.session_state[f"yld_{f_id}"] = exact_yield
+    fund_item["yield_pct"] = exact_yield
 
 # 安全防護版 AIA API 實時爬蟲
 def fetch_aia_fund_data(fund_code):
@@ -35,7 +85,7 @@ def fetch_aia_fund_data(fund_code):
         pass
     return None
 
-# 計算第 61 個月起的長期客戶獎賞 (Long-term Bonus) 階梯算式
+# 計算第 61 個月起的長期客戶獎賞 (Long-term Bonus)
 def calculate_long_term_bonus(avg_value_60m):
     av = avg_value_60m
     bonus = 0.0
@@ -115,11 +165,25 @@ def render_portfolio_builder_tab():
     </style>
     """, unsafe_allow_html=True)
 
-    # 預設基金組合資料結構 (精確對齊正本數據)
+    # 2. 初始化預設基金 (Z04 股票 100%, Z13 債券 100%)
     if "portfolio_funds" not in st.session_state:
+        f_z04 = ALL_FUNDS.get("Z04", {})
+        f_z13 = ALL_FUNDS.get("Z13", {})
         st.session_state.portfolio_funds = [
-            {"code": "Z04", "amount": 100000.0, "bonus": 4.0, "buy_price": 8.52, "curr_price": 8.00, "high": 12.96, "low": 7.99, "stock_pct": 100, "bond_pct": 0, "yield_pct": 9.40, "upf": 1.35, "annual_fee": 1.00},
-            {"code": "Z13", "amount": 100000.0, "bonus": 4.0, "buy_price": 9.20, "curr_price": 7.82, "high": 9.39, "low": 7.47, "stock_pct": 0, "bond_pct": 100, "yield_pct": 7.20, "upf": 1.35, "annual_fee": 1.00}
+            {
+                "id": str(uuid.uuid4()),
+                "code": "Z04", "amount": 100000.0, "bonus": 4.0, "buy_price": 8.52, "curr_price": 8.00,
+                "high": 12.96, "low": 7.99, "stock_pct": 100, "bond_pct": 0,
+                "yield_pct": get_exact_yield_from_fund(f_z04),
+                "upf": 1.35, "annual_fee": 1.00
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "code": "Z13", "amount": 100000.0, "bonus": 4.0, "buy_price": 9.20, "curr_price": 7.82,
+                "high": 9.39, "low": 7.47, "stock_pct": 0, "bond_pct": 100,
+                "yield_pct": get_exact_yield_from_fund(f_z13),
+                "upf": 1.35, "annual_fee": 1.00
+            }
         ]
 
     # 工具列
@@ -129,8 +193,15 @@ def render_portfolio_builder_tab():
     with col_tb2:
         st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
         if st.button("➕ 新增一隻基金", use_container_width=True):
+            f_default = ALL_FUNDS.get("Z01", {})
             st.session_state.portfolio_funds.append(
-                {"code": "Z01", "amount": 100000.0, "bonus": 0.0, "buy_price": 10.0, "curr_price": 10.0, "high": 12.0, "low": 8.0, "stock_pct": 100, "bond_pct": 0, "yield_pct": 5.0, "upf": 1.35, "annual_fee": 1.00}
+                {
+                    "id": str(uuid.uuid4()),
+                    "code": "Z01", "amount": 100000.0, "bonus": 0.0, "buy_price": 10.0, "curr_price": 10.0,
+                    "high": 12.0, "low": 8.0, "stock_pct": 100, "bond_pct": 0,
+                    "yield_pct": get_exact_yield_from_fund(f_default),
+                    "upf": 1.35, "annual_fee": 1.00
+                }
             )
             st.rerun()
     with col_tb3:
@@ -141,21 +212,20 @@ def render_portfolio_builder_tab():
 
     st.markdown("---")
 
-    # 2. 優先同步 UI 最新動態輸入值 (解決派息率與輸入框沒變動問題)
-    for idx, fund_item in enumerate(st.session_state.portfolio_funds):
-        code = fund_item.get("code", "Z01")
-        f_key = f"{idx}_{code}"
+    # 3. 優先同步 UI 最新動態輸入值
+    for fund_item in st.session_state.portfolio_funds:
+        f_id = fund_item["id"]
         
-        if f"amt_{f_key}" in st.session_state: fund_item["amount"] = st.session_state[f"amt_{f_key}"]
-        if f"bonus_{f_key}" in st.session_state: fund_item["bonus"] = st.session_state[f"bonus_{f_key}"]
-        if f"stk_{f_key}" in st.session_state: 
-            fund_item["stock_pct"] = st.session_state[f"stk_{f_key}"]
-            fund_item["bond_pct"] = 100 - st.session_state[f"stk_{f_key}"]
-        if f"yld_{f_key}" in st.session_state: fund_item["yield_pct"] = st.session_state[f"yld_{f_key}"]
-        if f"upf_{f_key}" in st.session_state: fund_item["upf"] = st.session_state[f"upf_{f_key}"]
-        if f"anf_{f_key}" in st.session_state: fund_item["annual_fee"] = st.session_state[f"anf_{f_key}"]
+        if f"amt_{f_id}" in st.session_state: fund_item["amount"] = st.session_state[f"amt_{f_id}"]
+        if f"bonus_{f_id}" in st.session_state: fund_item["bonus"] = st.session_state[f"bonus_{f_id}"]
+        if f"stk_{f_id}" in st.session_state: 
+            fund_item["stock_pct"] = st.session_state[f"stk_{f_id}"]
+            fund_item["bond_pct"] = 100 - st.session_state[f"stk_{f_id}"]
+        if f"yld_{f_id}" in st.session_state: fund_item["yield_pct"] = st.session_state[f"yld_{f_id}"]
+        if f"upf_{f_id}" in st.session_state: fund_item["upf"] = st.session_state[f"upf_{f_id}"]
+        if f"anf_{f_id}" in st.session_state: fund_item["annual_fee"] = st.session_state[f"anf_{f_id}"]
 
-    # 3. 精算全組合數據 (含動態風控評分加權)
+    # 4. 精算全組合數據
     total_months = plan_years * 12
     total_cost = 0.0          
     total_initial_val = 0.0   
@@ -185,7 +255,6 @@ def render_portfolio_builder_tab():
         total_stock_amt += init_val * (s_pct / 100.0)
         total_bond_amt += init_val * (b_pct / 100.0)
         
-        # 精確派息計算 (連動 UI 最新修改值)
         yield_val = f.get("yield_pct", 8.0)
         monthly_div = init_val * (yield_val / 100.0) / 12.0
         total_curr_monthly_div += monthly_div
@@ -193,7 +262,6 @@ def render_portfolio_builder_tab():
         code = f.get("code", "Z01")
         fund_info = ALL_FUNDS.get(code, {})
 
-        # 風控評分動態加權 (本金比重加權)
         score_val = float(fund_info.get("score", 85.0))
         weighted_score_sum += score_val * init_val
 
@@ -275,7 +343,7 @@ def render_portfolio_builder_tab():
     portfolio_yield_pct = (total_curr_monthly_div * 12 / total_initial_val * 100) if total_initial_val > 0 else 0.0
     avg_score = (weighted_score_sum / total_initial_val) if total_initial_val > 0 else 0.0
 
-    # 4. KPI 名片資料結構
+    # 5. KPI 名片資料結構
     cards_data = {
         "c1": {"title": "總投入成本", "val": f"${total_cost:,.0f}", "class": "kpi-border-slate", "val_class": "text-green"},
         "c2": {"title": "期末總剩餘市值", "val": f"${total_final_val:,.0f}", "class": "kpi-border-red", "val_class": "text-red"},
@@ -291,7 +359,7 @@ def render_portfolio_builder_tab():
         "c12": {"title": "組合股債比例 (股 : 債)", "val": f"{overall_stock_pct}% : {overall_bond_pct}%", "class": "kpi-border-blue", "val_class": "text-blue"}
     }
 
-    # 5. 渲染 12 張 KPI 名片
+    # 6. 渲染 12 張 KPI 名片
     st.markdown("### 📊 投資組合核心 KPI 儀表板")
 
     row1_keys = ["c1", "c2", "c3", "c4", "c5", "c6"]
@@ -327,7 +395,7 @@ def render_portfolio_builder_tab():
                     st.session_state.hidden_cards[c_key] = True
                     st.rerun()
 
-    # 6. 🙈 已隱藏名片托盤
+    # 7. 🙈 已隱藏名片托盤
     hidden_any = any(st.session_state.hidden_cards.values())
     if hidden_any:
         st.markdown("<br>", unsafe_allow_html=True)
@@ -345,7 +413,7 @@ def render_portfolio_builder_tab():
 
     st.markdown("---")
 
-    # 7. 基金配置編輯區 (優先以 Factsheet 正本派息率載入，絕不捏造)
+    # 8. 基金配置編輯區 (掛載 on_change 重置機制)
     st.markdown("### 📁 組合內基金詳細配置與手續費設定")
     
     fund_options = {f"{f_data.get('code', '')} {f_data.get('zh', '')}": f_code for f_code, f_data in ALL_FUNDS.items()}
@@ -359,6 +427,7 @@ def render_portfolio_builder_tab():
             with cols[idx]:
                 st.markdown(f"#### 基金 #{idx + 1}")
                 
+                f_id = fund_item["id"]  # 固定 UUID 識別碼
                 current_code = fund_item.get("code", "Z01")
                 default_index = 0
                 for label_idx, label_str in enumerate(fund_labels):
@@ -366,67 +435,43 @@ def render_portfolio_builder_tab():
                         default_index = label_idx
                         break
 
-                selected_label = st.selectbox("選擇基金:", options=fund_labels, index=default_index, key=f"sel_f_{idx}")
+                # 💡 掛載 on_change 機制，切換選單時硬性刷新 UI 快取
+                selected_label = st.selectbox(
+                    "選擇基金:", 
+                    options=fund_labels, 
+                    index=default_index, 
+                    key=f"sel_{f_id}",
+                    on_change=on_fund_select_change,
+                    args=(f_id, fund_item)
+                )
+                
                 selected_code = fund_options[selected_label]
                 target_fund = ALL_FUNDS.get(selected_code, {})
 
-                # 切換基金時，精確載入 Factsheet 派息率與股債比
-                if selected_code != fund_item["code"]:
-                    fund_item["code"] = selected_code
-                    cat = target_fund.get("category", "")
-                    if "債券" in cat:
-                        fund_item["stock_pct"] = 0
-                        fund_item["bond_pct"] = 100
-                    elif "股票" in cat and "混合" not in cat:
-                        fund_item["stock_pct"] = 100
-                        fund_item["bond_pct"] = 0
-                    else:  # 混合型 (如 Z18)
-                        fund_item["stock_pct"] = 52
-                        fund_item["bond_pct"] = 48
-                    
-                    # 剛性載入 Factsheet 正本精確年派息率
-                    fund_item["yield_pct"] = float(target_fund.get("last_yield", 8.0))
-                    
-                    fund_item["buy_price"] = 10.00
-                    fund_item["curr_price"] = 10.00
-                    fund_item["high"] = 12.00
-                    fund_item["low"] = 8.00
-                    fund_item["upf"] = 1.35
-                    fund_item["annual_fee"] = 1.00
+                # 確保初始股債比正確
+                if f"stk_{f_id}" not in st.session_state:
+                    st.session_state[f"stk_{f_id}"] = int(fund_item.get("stock_pct", 50))
 
-                    # 背景安全發送 AIA 爬蟲請求
-                    clean_code = extract_fund_code(selected_code)
-                    aia_data = fetch_aia_fund_data(clean_code)
-                    if aia_data and aia_data.get("price"):
-                        fund_item["curr_price"] = aia_data["price"]
-                        fund_item["buy_price"] = aia_data["price"]
-                        if aia_data.get("high"): fund_item["high"] = aia_data["high"]
-                        if aia_data.get("low"): fund_item["low"] = aia_data["low"]
-
-                    st.rerun()
-
-                f_key = f"{idx}_{selected_code}"
-
-                st.number_input("帳面本金 ($):", value=float(fund_item.get("amount", 100000.0)), step=10000.0, key=f"amt_{f_key}")
-                st.number_input("開戶獎賞 (%):", value=float(fund_item.get("bonus", 0.0)), step=0.5, key=f"bonus_{f_key}")
+                st.number_input("帳面本金 ($):", value=float(fund_item.get("amount", 100000.0)), step=10000.0, key=f"amt_{f_id}")
+                st.number_input("開戶獎賞 (%):", value=float(fund_item.get("bonus", 0.0)), step=0.5, key=f"bonus_{f_id}")
 
                 col_s, col_b = st.columns(2)
                 with col_s:
-                    st.number_input("股票 (%):", value=int(fund_item.get("stock_pct", 50)), min_value=0, max_value=100, key=f"stk_{f_key}")
+                    st.number_input("股票 (%):", value=int(fund_item.get("stock_pct", 50)), min_value=0, max_value=100, key=f"stk_{f_id}")
                 with col_b:
-                    st.number_input("債券 (%):", value=100 - int(fund_item.get("stock_pct", 50)), disabled=True, key=f"bnd_disp_{f_key}")
+                    st.number_input("債券 (%):", value=100 - int(st.session_state.get(f"stk_{f_id}", fund_item.get("stock_pct", 50))), disabled=True, key=f"bnd_disp_{f_id}")
 
                 col_f1, col_f2 = st.columns(2)
                 with col_f1:
-                    st.number_input("前期費 (%):", value=float(fund_item.get("upf", 1.35)), step=0.01, key=f"upf_{f_key}")
+                    st.number_input("前期費 (%):", value=float(fund_item.get("upf", 1.35)), step=0.01, key=f"upf_{f_id}")
                 with col_f2:
-                    st.number_input("每年手續費 (%):", value=float(fund_item.get("annual_fee", 1.00)), step=0.01, key=f"anf_{f_key}")
+                    st.number_input("每年手續費 (%):", value=float(fund_item.get("annual_fee", 1.00)), step=0.01, key=f"anf_{f_id}")
 
                 col_p1, col_p2 = st.columns(2)
                 with col_p1:
-                    st.number_input("買入價 ($):", value=float(fund_item.get("buy_price", 10.0)), step=0.01, key=f"buy_{f_key}")
+                    st.number_input("買入價 ($):", value=float(fund_item.get("buy_price", 10.0)), step=0.01, key=f"buy_{f_id}")
                 with col_p2:
-                    st.number_input("即時現價 ($):", value=float(fund_item.get("curr_price", 10.0)), step=0.01, key=f"curr_{f_key}")
+                    st.number_input("即時現價 ($):", value=float(fund_item.get("curr_price", 10.0)), step=0.01, key=f"curr_{f_id}")
 
                 buy_p = fund_item.get("buy_price", 10.0)
                 curr_p = fund_item.get("curr_price", 10.0)
@@ -436,18 +481,18 @@ def render_portfolio_builder_tab():
 
                 col_h, col_l = st.columns(2)
                 with col_h:
-                    st.text_input("歷史高位:", value=f"${fund_item.get('high', 12.0):.2f}", disabled=True, key=f"hi_{f_key}")
+                    st.text_input("歷史高位:", value=f"${fund_item.get('high', 12.0):.2f}", disabled=True, key=f"hi_{f_id}")
                 with col_l:
-                    st.text_input("歷史低位:", value=f"${fund_item.get('low', 8.0):.2f}", disabled=True, key=f"lo_{f_key}")
+                    st.text_input("歷史低位:", value=f"${fund_item.get('low', 8.0):.2f}", disabled=True, key=f"lo_{f_id}")
 
-                # 精確帶入並允許微調派息率 %
-                st.number_input("年派息率 (%):", value=float(fund_item.get("yield_pct", 8.0)), step=0.1, key=f"yld_{f_key}")
+                # 🟢 年派息率：精確讀取正本
+                st.number_input("年派息率 (%):", value=float(fund_item.get("yield_pct", 7.5)), step=0.1, key=f"yld_{f_id}")
 
-                if st.button("🗑️ 移除此基金", key=f"del_{f_key}"):
+                if st.button("🗑️ 移除此基金", key=f"del_{f_id}"):
                     st.session_state.portfolio_funds.pop(idx)
                     st.rerun()
 
-    # 8. 地區與行業加權圓餅圖
+    # 9. 地區與行業加權圓餅圖
     st.markdown("---")
     st.markdown("### 📊 組合總體風險分散度分析 (地區與行業加權分佈)")
 
@@ -481,11 +526,10 @@ def render_portfolio_builder_tab():
         else:
             st.info("尚無數據繪製行業分佈圖。")
 
-    # 9. 動態連動版：組合風險評估與理專建議報告區塊
+    # 10. 組合風險評估與理專建議報告區塊
     st.markdown("---")
     st.markdown("### 🛡️ 組合風險評估與顧問建議報告")
 
-    # 動態建議生成邏輯
     alloc_comment = "屬防守型組合，淨值波動風險較低。" if overall_bond_pct >= 50 else "屬成長型組合，需留意股票市場下行波動風險。"
     deriv_comment = "⚠️ <b style='color:#DC2626;'>警示：</b> 組合內含有 L3 (144A ELN) 或 L4 (TRS) 高風險衍生工具基金（如 Z18/Z17），建議控制該類基金持倉比例不超過 20%。" if has_l3_l4 else "🟢 <b style='color:#059669;'>安全：</b> 組合內全數基金皆未包含 L3 (144A ELN) 高危否決級別衍生品，資產結構極度健康。"
 
