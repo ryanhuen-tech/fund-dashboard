@@ -38,12 +38,11 @@ def render_portfolio_builder_tab():
     </style>
     """, unsafe_allow_html=True)
 
-    # 1. Session State 組合資料初始化
+    # 1. Session State 組合資料初始化 (對齊正本)
     if "portfolio_funds" not in st.session_state:
         st.session_state.portfolio_funds = [
-            {"code": "Z04", "amount": 100000.0, "bonus": 3.0, "buy_price": 10.40, "curr_price": 10.40, "high": 12.96, "low": 7.99, "stock_pct": 100, "bond_pct": 0, "yield_pct": 8.13},
-            {"code": "Z15", "amount": 100000.0, "bonus": 0.0, "buy_price": 76.67, "curr_price": 76.67, "high": 78.23, "low": 73.05, "stock_pct": 0, "bond_pct": 100, "yield_pct": 9.40},
-            {"code": "Z13", "amount": 100000.0, "bonus": 0.0, "buy_price": 9.20, "curr_price": 7.82, "high": 9.39, "low": 7.47, "stock_pct": 0, "bond_pct": 100, "yield_pct": 7.20}
+            {"code": "Z04", "amount": 100000.0, "bonus": 4.0, "buy_price": 10.40, "curr_price": 10.40, "high": 12.96, "low": 7.99, "stock_pct": 100, "bond_pct": 0, "yield_pct": 4.60},
+            {"code": "Z13", "amount": 100000.0, "bonus": 0.0, "buy_price": 10.00, "curr_price": 10.00, "high": 12.00, "low": 8.00, "stock_pct": 0, "bond_pct": 100, "yield_pct": 4.60}
         ]
 
     # 工具列
@@ -65,7 +64,7 @@ def render_portfolio_builder_tab():
 
     st.markdown("---")
 
-    # 2. 核心：優先同步 UI 畫面的最新輸入值 (解決即時連動問題)
+    # 2. 優先從 UI 畫面同步最新的動態輸入值 (並剛性計算債券 %)
     for idx, fund_item in enumerate(st.session_state.portfolio_funds):
         if f"amt_{idx}" in st.session_state:
             fund_item["amount"] = st.session_state[f"amt_{idx}"]
@@ -73,7 +72,7 @@ def render_portfolio_builder_tab():
             fund_item["bonus"] = st.session_state[f"bonus_{idx}"]
         if f"stk_{idx}" in st.session_state:
             fund_item["stock_pct"] = st.session_state[f"stk_{idx}"]
-            fund_item["bond_pct"] = 100 - st.session_state[f"stk_{idx}"]
+            fund_item["bond_pct"] = 100 - st.session_state[f"stk_{idx}"]  # 剛性連動，防止出現 100:100
         if f"yld_{idx}" in st.session_state:
             fund_item["yield_pct"] = st.session_state[f"yld_{idx}"]
         if f"buy_{idx}" in st.session_state:
@@ -110,7 +109,7 @@ def render_portfolio_builder_tab():
         code = fund_item["code"]
         fund_info = ALL_FUNDS.get(code, {})
 
-        # 地區加權 (100% 精確連動)
+        # 地區分佈 100% 精確加權
         if code == "Z04" or "中國" in fund_info.get("zh", ""):
             portfolio_geo_weighted["中國/大中華"] = portfolio_geo_weighted.get("中國/大中華", 0.0) + init_val
         elif "環球" in fund_info.get("zh", "") or "全球" in fund_info.get("zh", ""):
@@ -135,7 +134,7 @@ def render_portfolio_builder_tab():
     else:
         overall_stock_pct, overall_bond_pct = 0, 0
 
-    # 4. 渲染頂部名片 (100% 即時同步)
+    # 4. 渲染頂部名片
     k1, k2, k3, k4 = st.columns(4)
     with k1:
         st.markdown(f'<div class="kpi-card"><div class="kpi-title">總投入成本 ($)</div><div class="kpi-value">${total_cost:,.0f}</div></div>', unsafe_allow_html=True)
@@ -155,7 +154,7 @@ def render_portfolio_builder_tab():
 
     st.markdown("---")
 
-    # 5. 基金配置編輯區 (加入 on_change 觸發名片即時連動)
+    # 5. 基金配置編輯區 (修復下方 UI 債券 % 顯示矛盾)
     st.markdown("### 📁 組合內基金詳細配置")
     
     fund_options = {f"{f_data.get('code', '')} {f_data.get('zh', '')}": f_code for f_code, f_data in ALL_FUNDS.items()}
@@ -210,7 +209,6 @@ def render_portfolio_builder_tab():
 
                     st.rerun()
 
-                # 輸入框皆掛載即時連動
                 st.number_input("帳面本金 ($):", value=float(fund_item["amount"]), step=10000.0, key=f"amt_{idx}")
                 st.number_input("開戶獎賞 (%):", value=float(fund_item["bonus"]), step=0.5, key=f"bonus_{idx}")
 
@@ -218,7 +216,9 @@ def render_portfolio_builder_tab():
                 with col_s:
                     st.number_input("股票 (%):", value=int(fund_item["stock_pct"]), min_value=0, max_value=100, key=f"stk_{idx}")
                 with col_b:
-                    st.number_input("債券 (%):", value=int(fund_item["bond_pct"]), disabled=True, key=f"bnd_{idx}")
+                    # 💡 修復重點：直接從算好的 fund_item["bond_pct"] 剛性帶入，完全不設 key 防止狀態死鎖
+                    calc_bond = 100 - int(fund_item["stock_pct"])
+                    st.number_input("債券 (%):", value=calc_bond, disabled=True)
 
                 col_p1, col_p2 = st.columns(2)
                 with col_p1:
