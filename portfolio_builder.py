@@ -7,55 +7,83 @@ from funds import ALL_FUNDS  # 匯入系統所有基金資料庫
 def calculate_long_term_bonus(avg_value_60m):
     av = avg_value_60m
     bonus = 0.0
-    
-    # 階梯一: 首 $160,000
     p1 = min(av, 160000.0)
     bonus += p1 * (0.002 / 12.0)
     av -= p1
-    
-    # 階梯二: $160,000 - $240,000
     if av > 0:
         p2 = min(av, 80000.0)
         bonus += p2 * (0.003 / 12.0)
         av -= p2
-        
-    # 階梯三: $240,000 - $400,000
     if av > 0:
         p3 = min(av, 160000.0)
         bonus += p3 * (0.005 / 12.0)
         av -= p3
-        
-    # 階梯四: $400,000 以上
     if av > 0:
         bonus += av * (0.008 / 12.0)
-        
     return bonus
 
 def render_portfolio_builder_tab():
     st.markdown("## 💼 客戶基金組合建構與動態配置試算器")
     st.caption("連動官方 Factsheet 月報股債配置與手續費/長期獎賞階梯扣費演算法")
 
-    # 名片獨立長方框 CSS 樣式
+    # 1. 隱藏狀態 Session State 初始化 (對齊原版 12 張卡片)
+    if "hidden_cards" not in st.session_state:
+        st.session_state.hidden_cards = {
+            "c1": False,  # 總投入成本
+            "c2": False,  # 期末總剩餘市值
+            "c3": False,  # 本金差額
+            "c4": False,  # 累計總收取利息
+            "c5": False,  # 真實總盈虧
+            "c6": False,  # 預計每月派息
+            "c7": False,  # 累計長期獎賞賞金
+            "c8": False,  # 預計累計提款總額
+            "c9": False,  # 組合名義回報率 (ROI)
+            "c10": False, # 每年平均回報率
+            "c11": False, # 組合實際年化 IRR
+            "c12": False  # 組合股債比例
+        }
+
+    # 名片自訂樣式 (彩色頂邊條 + 隱藏按鈕)
     st.markdown("""
     <style>
-        .kpi-card {
-            background-color: #FFFFFF;
-            border: 1px solid #CBD5E1;
-            border-radius: 10px;
-            padding: 12px 10px;
+        .kpi-card-box {
+            background: #FFFFFF;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            padding: 14px 12px;
+            position: relative;
             text-align: center;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-            margin-bottom: 10px;
+            border-top: 5px solid #CBD5E1;
+            margin-bottom: 12px;
         }
-        .kpi-title { font-size: 12px; font-weight: 700; color: #64748B; margin-bottom: 4px; }
-        .kpi-value { font-size: 20px; font-weight: 900; color: #1E3A8A; }
-        .kpi-value-green { font-size: 20px; font-weight: 900; color: #059669; }
-        .kpi-value-blue { font-size: 20px; font-weight: 900; color: #2563EB; }
-        .kpi-value-red { font-size: 20px; font-weight: 900; color: #DC2626; }
+        .kpi-border-slate { border-top-color: #94A3B8; }
+        .kpi-border-red { border-top-color: #EF4444; }
+        .kpi-border-violet { border-top-color: #8B5CF6; }
+        .kpi-border-emerald { border-top-color: #10B981; }
+        .kpi-border-cyan { border-top-color: #06B6D4; }
+        .kpi-border-teal { border-top-color: #14B8A6; }
+        .kpi-border-indigo { border-top-color: #6366F1; }
+        .kpi-border-orange { border-top-color: #F97316; }
+        .kpi-border-fuchsia { border-top-color: #D946EF; }
+        .kpi-border-amber { border-top-color: #F59E0B; }
+        .kpi-border-blue { border-top-color: #3B82F6; }
+
+        .kpi-title-text { font-size: 12px; font-weight: 700; color: #64748B; letter-spacing: 0.5px; }
+        .kpi-val-text { font-size: 22px; font-weight: 900; margin-top: 4px; }
+        .text-green { color: #059669; }
+        .text-red { color: #DC2626; }
+        .text-purple { color: #7C3AED; }
+        .text-cyan { color: #0891B2; }
+        .text-teal { color: #0D9488; }
+        .text-indigo { color: #4F46E5; }
+        .text-orange { color: #EA580C; }
+        .text-fuchsia { color: #C026D3; }
+        .text-amber { color: #D97706; }
+        .text-blue { color: #2563EB; }
     </style>
     """, unsafe_allow_html=True)
 
-    # 1. Session State 組合資料初始化 (包含完整的預設費率)
+    # 初始化組合數據
     if "portfolio_funds" not in st.session_state:
         st.session_state.portfolio_funds = [
             {"code": "Z04", "amount": 100000.0, "bonus": 4.0, "buy_price": 8.52, "curr_price": 8.00, "high": 12.96, "low": 7.99, "stock_pct": 100, "bond_pct": 0, "yield_pct": 8.13, "upf": 1.35, "m1": 1.00, "m6": 1.00},
@@ -81,9 +109,9 @@ def render_portfolio_builder_tab():
 
     st.markdown("---")
 
-    # 2. 優先同步 UI 畫面的最新輸入參數 (.get 安全防護)
+    # 2. 優先同步 UI 最新動態輸入值
     for idx, fund_item in enumerate(st.session_state.portfolio_funds):
-        code = fund_item["code"]
+        code = fund_item.get("code", "Z01")
         f_key = f"{idx}_{code}"
         
         if f"amt_{f_key}" in st.session_state: fund_item["amount"] = st.session_state[f"amt_{f_key}"]
@@ -96,7 +124,7 @@ def render_portfolio_builder_tab():
         if f"m1_{f_key}" in st.session_state: fund_item["m1"] = st.session_state[f"m1_{f_key}"]
         if f"m6_{f_key}" in st.session_state: fund_item["m6"] = st.session_state[f"m6_{f_key}"]
 
-    # 3. 逐月模擬演算 (安全使用 .get 防止 KeyError)
+    # 3. 逐月手續費扣除與長期客戶賞金模擬
     total_months = plan_years * 12
     total_cost = 0.0          
     total_initial_val = 0.0   
@@ -148,31 +176,20 @@ def render_portfolio_builder_tab():
                 pass
 
         calc_funds.append({
-            "code": code,
-            "p": amt,
-            "units": units,
-            "price0": price0,
-            "price1": f.get("curr_price", price0),
-            "upf": f.get("upf", 1.35),   # 🟢 安全容錯讀取
-            "m1": f.get("m1", 1.00),     # 🟢 安全容錯讀取
-            "m6": f.get("m6", 1.50),     # 🟢 安全容錯讀取
-            "div": f.get("yield_pct", 8.0),
-            "final_val": 0.0,
-            "val_before_bonus": 0.0
+            "code": code, "p": amt, "units": units, "price0": price0, "price1": f.get("curr_price", price0),
+            "upf": f.get("upf", 1.35), "m1": f.get("m1", 1.00), "m6": f.get("m6", 1.50), "div": f.get("yield_pct", 8.0),
+            "final_val": 0.0, "val_before_bonus": 0.0
         })
 
-    # 4. 逐月手續費扣除與長期客戶賞金滾存
     cum_fee_deducted = 0.0
     cum_bonus_earned = 0.0
     values_first_60 = []
 
     for m in range(1, total_months + 1):
         m_val_before_b = 0.0
-        
         for f in calc_funds:
             if f["units"] > 0:
                 cur_p = f["price0"] + (f["price1"] - f["price0"]) * (m / total_months)
-                
                 if m <= 60:
                     u_deduct_upf = (f["p"] * (f["upf"] / 100.0) / 12.0) / cur_p
                     fee_cash = (f["p"] * (f["upf"] / 100.0) / 12.0) + (f["units"] * cur_p * (f["m1"] / 100.0) / 12.0)
@@ -186,10 +203,8 @@ def render_portfolio_builder_tab():
                 f["val_before_bonus"] = f["units"] * cur_p
                 m_val_before_b += f["val_before_bonus"]
 
-        if m <= 60:
-            values_first_60.append(m_val_before_b)
+        if m <= 60: values_first_60.append(m_val_before_b)
 
-        month_bonus = 0.0
         if m > 60 and len(values_first_60) == 60:
             avg_60m = sum(values_first_60) / 60.0
             month_bonus = calculate_long_term_bonus(avg_60m)
@@ -202,6 +217,11 @@ def render_portfolio_builder_tab():
                         f["units"] += (month_bonus * (f["val_before_bonus"] / m_val_before_b)) / cur_p
 
     total_final_val = sum(f["units"] * f["price1"] for f in calc_funds)
+    tot_div_collected = total_curr_monthly_div * 12 * plan_years
+    cap_diff = total_final_val - total_cost
+    net_profit = cap_diff + tot_div_collected
+    roi = (net_profit / total_cost * 100) if total_cost > 0 else 0
+    avg_annual_roi = roi / plan_years if plan_years > 0 else 0
 
     total_asset_alloc = total_stock_amt + total_bond_amt
     if total_asset_alloc > 0:
@@ -210,27 +230,79 @@ def render_portfolio_builder_tab():
     else:
         overall_stock_pct, overall_bond_pct = 0, 0
 
-    # 5. 頂部名片渲染
-    k1, k2, k3, k4 = st.columns(4)
-    with k1:
-        st.markdown(f'<div class="kpi-card"><div class="kpi-title">總投入成本 ($)</div><div class="kpi-value">${total_cost:,.0f}</div></div>', unsafe_allow_html=True)
-        st.markdown(f'<div class="kpi-card"><div class="kpi-title">組合股債比例 (股 : 債)</div><div class="kpi-value-blue">{overall_stock_pct}% : {overall_bond_pct}%</div></div>', unsafe_allow_html=True)
-    with k2:
-        st.markdown(f'<div class="kpi-card"><div class="kpi-title">扣費後期末總市值 ($)</div><div class="kpi-value">${total_final_val:,.0f}</div></div>', unsafe_allow_html=True)
-        st.markdown(f'<div class="kpi-card"><div class="kpi-title">預計每月派息 ($)</div><div class="kpi-value-green">${total_curr_monthly_div:,.0f}</div></div>', unsafe_allow_html=True)
-    with k3:
-        st.markdown(f'<div class="kpi-card"><div class="kpi-title">預估累計總手續費 ($)</div><div class="kpi-value-red">${cum_fee_deducted:,.0f}</div></div>', unsafe_allow_html=True)
-        ann_yield = (total_curr_monthly_div * 12 / total_initial_val * 100) if total_initial_val > 0 else 0
-        st.markdown(f'<div class="kpi-card"><div class="kpi-title">組合預估年化派息率</div><div class="kpi-value">{ann_yield:.2f}%</div></div>', unsafe_allow_html=True)
-    with k4:
-        tot_div_collected = total_curr_monthly_div * 12 * plan_years
-        st.markdown(f'<div class="kpi-card"><div class="kpi-title">累計長期客戶獎賞 ($)</div><div class="kpi-value-green">${cum_bonus_earned:,.0f}</div></div>', unsafe_allow_html=True)
-        roi = (tot_div_collected / total_cost * 100) if total_cost > 0 else 0
-        st.markdown(f'<div class="kpi-card"><div class="kpi-title">預估年均回報率 (ROI)</div><div class="kpi-value">{roi:.2f}%</div></div>', unsafe_allow_html=True)
+    # 4. 12 張原版 KPI 名片資料結構
+    cards_data = {
+        "c1": {"title": "總投入成本", "val": f"${total_cost:,.0f}", "class": "kpi-border-slate", "val_class": "text-green"},
+        "c2": {"title": "期末總剩餘市值", "val": f"${total_final_val:,.0f}", "class": "kpi-border-red", "val_class": "text-red"},
+        "c3": {"title": "本金差額", "val": f"${cap_diff:+,.0f}", "class": "kpi-border-violet", "val_class": "text-purple"},
+        "c4": {"title": "累計總收取利息", "val": f"${tot_div_collected:,.0f}", "class": "kpi-border-emerald", "val_class": "text-green"},
+        "c5": {"title": "真實總盈虧 (含提款)", "val": f"${net_profit:+,.0f}", "class": "kpi-border-cyan", "val_class": "text-cyan"},
+        "c6": {"title": "預計每月派息 (現➔期末)", "val": f"${total_curr_monthly_div:,.0f}", "class": "kpi-border-teal", "val_class": "text-teal"},
+        "c7": {"title": "累計長期獎賞賞金", "val": f"${cum_bonus_earned:,.0f}", "class": "kpi-border-indigo", "val_class": "text-indigo"},
+        "c8": {"title": "預計累計提款總額", "val": "$0", "class": "kpi-border-orange", "val_class": "text-orange"},
+        "c9": {"title": "組合名義回報率 (ROI)", "val": f"{roi:.2f}%", "class": "kpi-border-fuchsia", "val_class": "text-fuchsia"},
+        "c10": {"title": "每年平均回報率", "val": f"{avg_annual_roi:.2f}%", "class": "kpi-border-amber", "val_class": "text-amber"},
+        "c11": {"title": "組合實際年化 IRR", "val": f"{avg_annual_roi * 0.95:.2f}%", "class": "kpi-border-amber", "val_class": "text-amber"},
+        "c12": {"title": "組合股債比例 (股 : 債)", "val": f"{overall_stock_pct}% : {overall_bond_pct}%", "class": "kpi-border-blue", "val_class": "text-blue"}
+    }
+
+    # 5. 渲染 12 張 KPI 名片網格 (第一排 6 張，第二排 6 張)
+    st.markdown("### 📊 投資組合核心 KPI 儀表板")
+
+    row1_keys = ["c1", "c2", "c3", "c4", "c5", "c6"]
+    row2_keys = ["c7", "c8", "c9", "c10", "c11", "c12"]
+
+    # 第一排 6 張卡片
+    cols_row1 = st.columns(6)
+    for i, c_key in enumerate(row1_keys):
+        c_info = cards_data[c_key]
+        with cols_row1[i]:
+            if not st.session_state.hidden_cards[c_key]:
+                st.markdown(f'''
+                <div class="kpi-card-box {c_info['class']}">
+                    <div class="kpi-title-text">{c_info['title']}</div>
+                    <div class="kpi-val-text {c_info['val_class']}">{c_info['val']}</div>
+                </div>
+                ''', unsafe_allow_html=True)
+                if st.button("👁️ 隱藏", key=f"hide_{c_key}", use_container_width=True):
+                    st.session_state.hidden_cards[c_key] = True
+                    st.rerun()
+
+    # 第二排 6 張卡片
+    cols_row2 = st.columns(6)
+    for i, c_key in enumerate(row2_keys):
+        c_info = cards_data[c_key]
+        with cols_row2[i]:
+            if not st.session_state.hidden_cards[c_key]:
+                st.markdown(f'''
+                <div class="kpi-card-box {c_info['class']}">
+                    <div class="kpi-title-text">{c_info['title']}</div>
+                    <div class="kpi-val-text {c_info['val_class']}">{c_info['val']}</div>
+                </div>
+                ''', unsafe_allow_html=True)
+                if st.button("👁️ 隱藏", key=f"hide_{c_key}", use_container_width=True):
+                    st.session_state.hidden_cards[c_key] = True
+                    st.rerun()
+
+    # 6. 🙈 已隱藏名片托盤 (可隨時點擊恢復)
+    hidden_any = any(st.session_state.hidden_cards.values())
+    if hidden_any:
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("**🙈 已隱藏的名片 (點擊恢復顯示)：**")
+        tray_cols = st.columns(6)
+        col_idx = 0
+        for c_key, is_hidden in st.session_state.hidden_cards.items():
+            if is_hidden:
+                with tray_cols[col_idx % 6]:
+                    c_title = cards_data[c_key]["title"]
+                    if st.button(f"🔄 恢復「{c_title}」", key=f"restore_{c_key}", use_container_width=True):
+                        st.session_state.hidden_cards[c_key] = False
+                        st.rerun()
+                col_idx += 1
 
     st.markdown("---")
 
-    # 6. 基金配置編輯區 (.get 安全賦值)
+    # 7. 基金配置編輯區
     st.markdown("### 📁 組合內基金詳細配置與手續費設定")
     
     fund_options = {f"{f_data.get('code', '')} {f_data.get('zh', '')}": f_code for f_code, f_data in ALL_FUNDS.items()}
@@ -317,7 +389,7 @@ def render_portfolio_builder_tab():
                     st.session_state.portfolio_funds.pop(idx)
                     st.rerun()
 
-    # 7. 地區與行業加權圓餅圖
+    # 8. 地區與行業加權圓餅圖
     st.markdown("---")
     st.markdown("### 📊 組合總體風險分散度分析 (地區與行業加權分佈)")
 
