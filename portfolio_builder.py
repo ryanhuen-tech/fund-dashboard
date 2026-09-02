@@ -42,49 +42,53 @@ def get_exact_asset_alloc(target_fund):
         return 52, 48
     return 50, 50
 
-# 3. 預設組合模版資料庫生成器
-def create_template_portfolio(template_name):
-    templates = {
-        "低風險組合 (保守型 - 高收益債券)": [
-            {"code": "Z13", "amt": 100000.0, "bonus": 4.0},
-            {"code": "Z15", "amt": 100000.0, "bonus": 0.0}
-        ],
-        "中風險組合 (平衡型 - 股債對半)": [
-            {"code": "Z04", "amt": 100000.0, "bonus": 4.0},
-            {"code": "Z13", "amt": 100000.0, "bonus": 4.0}
-        ],
-        "高風險組合 (積極型 - 股票入息)": [
-            {"code": "Z04", "amt": 100000.0, "bonus": 4.0},
-            {"code": "Z51", "amt": 100000.0, "bonus": 0.0}
-        ]
-    }
-    
-    selected_items = templates.get(template_name, [])
+# 3. 初始化內建與自訂模版字典
+def init_custom_templates():
+    if "saved_templates" not in st.session_state:
+        st.session_state.saved_templates = {
+            "低風險組合 (保守型 - 高收益債券)": [
+                {"code": "Z13", "amt": 100000.0, "bonus": 4.0, "stk": 0, "bnd": 100},
+                {"code": "Z15", "amt": 100000.0, "bonus": 0.0, "stk": 0, "bnd": 100}
+            ],
+            "中風險組合 (平衡型 - 股債對半)": [
+                {"code": "Z04", "amt": 100000.0, "bonus": 4.0, "stk": 100, "bnd": 0},
+                {"code": "Z13", "amt": 100000.0, "bonus": 4.0, "stk": 0, "bnd": 100}
+            ],
+            "高風險組合 (積極型 - 股票入息)": [
+                {"code": "Z04", "amt": 100000.0, "bonus": 4.0, "stk": 100, "bnd": 0},
+                {"code": "Z51", "amt": 100000.0, "bonus": 0.0, "stk": 100, "bnd": 0}
+            ]
+        }
+
+# 4. 根據名稱建立組合物件
+def create_portfolio_from_template(template_name):
+    selected_items = st.session_state.saved_templates.get(template_name, [])
     new_funds = []
     
     for item in selected_items:
         code = item["code"]
         target_fund = ALL_FUNDS.get(code, {})
-        stk, bnd = get_exact_asset_alloc(target_fund)
-        yld = get_exact_yield_from_fund(target_fund)
+        stk = item.get("stk", 50)
+        bnd = item.get("bnd", 50)
+        yld = item.get("yld", get_exact_yield_from_fund(target_fund))
         
         new_funds.append({
             "id": str(uuid.uuid4()),
             "code": code,
-            "amount": item["amt"],
-            "bonus": item["bonus"],
-            "buy_price": 10.00,
-            "curr_price": 10.00,
+            "amount": item.get("amt", 100000.0),
+            "bonus": item.get("bonus", 0.0),
+            "buy_price": item.get("buy_price", 10.00),
+            "curr_price": item.get("curr_price", 10.00),
             "stock_pct": stk,
             "bond_pct": bnd,
             "yield_pct": yld,
-            "upf": 1.35,
-            "annual_fee": 1.00
+            "upf": item.get("upf", 1.35),
+            "annual_fee": item.get("annual_fee", 1.00)
         })
         
     return new_funds
 
-# 4. 下拉選單切換時，強制更新 UI 狀態
+# 5. 下拉選單切換時強制更新 UI 狀態
 def on_fund_select_change(f_id, fund_item):
     sel_label = st.session_state.get(f"sel_{f_id}")
     if not sel_label:
@@ -143,6 +147,8 @@ def render_portfolio_builder_tab():
     st.markdown("## 💼 客戶基金組合建構與動態配置試算器")
     st.caption("連動官方 Factsheet 月報股債配置與簡化版手續費/長期獎賞階梯扣費演算法")
 
+    init_custom_templates()
+
     # 1. 隱藏狀態 Session State 初始化
     if "hidden_cards" not in st.session_state:
         st.session_state.hidden_cards = {
@@ -200,32 +206,61 @@ def render_portfolio_builder_tab():
     </style>
     """, unsafe_allow_html=True)
 
-    # 預設組合模版清單
-    template_options = [
-        "自訂組合 (自選基金)",
-        "低風險組合 (保守型 - 高收益債券)",
-        "中風險組合 (平衡型 - 股債對半)",
-        "高風險組合 (積極型 - 股票入息)"
-    ]
-
-    # 工具列第一排：模版快速載入
-    st.markdown("#### ⚡ 快速載入預設組合模版")
-    col_tpl, col_tpl_btn = st.columns([3, 1])
-    with col_tpl:
-        selected_template = st.selectbox("選擇預設策略模版:", options=template_options, key="tpl_select")
-    with col_tpl_btn:
+    # 🟢 頂部模版管理區塊 (載入 / 命名儲存 / 刪除)
+    st.markdown("#### ⚡ 投資組合策略模版管理")
+    
+    template_list = list(st.session_state.saved_templates.keys())
+    
+    col_tpl_sel, col_tpl_act1, col_tpl_act2 = st.columns([2.5, 1, 1])
+    with col_tpl_sel:
+        selected_template = st.selectbox("選擇預設或自訂模版:", options=template_list, key="tpl_select")
+    with col_tpl_act1:
         st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
-        if st.button("🚀 套用此組合", use_container_width=True):
-            if "自訂" not in selected_template:
-                st.session_state.portfolio_funds = create_template_portfolio(selected_template)
-                st.success(f"已成功載入「{selected_template}」！")
+        if st.button("🚀 載入此組合", use_container_width=True):
+            st.session_state.portfolio_funds = create_portfolio_from_template(selected_template)
+            st.toast(f"已載入模版：「{selected_template}」", icon="✅")
+            st.rerun()
+    with col_tpl_act2:
+        st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
+        if st.button("🗑️ 刪除此模版", use_container_width=True):
+            if selected_template in st.session_state.saved_templates:
+                del st.session_state.saved_templates[selected_template]
+                st.toast(f"已刪除模版：「{selected_template}」", icon="🗑️")
                 st.rerun()
+
+    # 🟢 自訂名稱並儲存當前畫面的組合
+    col_save_name, col_save_btn = st.columns([3, 1])
+    with col_save_name:
+        new_template_name = st.text_input("輸入自訂組合名稱 (例：張先生 - 20萬美金高派息方案):", placeholder="請輸入組合名稱...", key="new_tpl_name_input")
+    with col_save_btn:
+        st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
+        if st.button("💾 儲存當前組合", use_container_width=True):
+            if new_template_name.strip():
+                saved_data = []
+                for f in st.session_state.portfolio_funds:
+                    saved_data.append({
+                        "code": f.get("code", "Z01"),
+                        "amt": f.get("amount", 100000.0),
+                        "bonus": f.get("bonus", 0.0),
+                        "stk": f.get("stock_pct", 50),
+                        "bnd": f.get("bond_pct", 50),
+                        "yld": f.get("yield_pct", 7.5),
+                        "buy_price": f.get("buy_price", 10.0),
+                        "curr_price": f.get("curr_price", 10.0),
+                        "upf": f.get("upf", 1.35),
+                        "annual_fee": f.get("annual_fee", 1.00)
+                    })
+                st.session_state.saved_templates[new_template_name.strip()] = saved_data
+                st.toast(f"🎉 成功儲存組合：「{new_template_name.strip()}」", icon="💾")
+                st.rerun()
+            else:
+                st.warning("請先輸入組合名稱再儲存！")
 
     st.markdown("---")
 
     # 初始化預設基金 (中風險平衡型預設)
     if "portfolio_funds" not in st.session_state:
-        st.session_state.portfolio_funds = create_template_portfolio("中風險組合 (平衡型 - 股債對半)")
+        st.session_state.portfolio_funds = create_portfolio_from_template("中風險組合 (平衡型 - 股債對半)")
 
     for fund_item in st.session_state.portfolio_funds:
         if "id" not in fund_item:
