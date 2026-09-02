@@ -3,3 +3,4 @@ pandas
 plotly
 pdfplumber
 google-genai
+requests
