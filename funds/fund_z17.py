@@ -1,4 +1,5 @@
 # funds/fund_z17.py
+# 貝萊德環球基金 - 系統分析環球股票高息基金 (BlackRock Systematic Global Equity High Income Fund)
 
 DATA_Z17 = {
     "Z17 貝萊德系統分析環球股票高息基金 (上月派息: 7.90%)": {
@@ -18,14 +19,14 @@ DATA_Z17 = {
             "<b>Covered Call 權利金收益增強</b>：透過系統化賣出股票看漲期權 (Call Options) 獲取額外權利金，平滑組合波動並提供高派息。",
             "<b>量化模型動態選股</b>：結合大數據與AI機器學習，針對全球超過千隻藍籌股票進行多因子量化篩選。"
         ],
-        "score": "84.8",  # 依『剛性 10 維度對齊矩陣』精算後之真實總分
+        "score": 84.8,  # 轉為 float 數字型態，便利 portfolio_builder 試算
         "score_ratio": "15.21",
         "risk_derivatives": {
             "has_high_risk": False,
             "primary_type": "Covered Call / Swaps",
             "exposure_pct": "30.00%+",
             "display_html": "<span class='badge-yellow'>🟡 Covered Call / Swaps</span>",
-            "risk_level": "L2/L4",
+            "risk_level": "L4",
             "detail_note": "運用系統化賣出 Covered Call 期權與 Swaps 獲取權利金增強收益 (封頂上漲空間)"
         },
         "summary": "貝萊德系統分析環球股票高息基金 (Z17) 綜合風險評估得分為 84.8 分 (健康度綠燈極佳)。已與全平台對齊剛性 10 維度審計標準：其純息覆蓋率約 44.3% (得 12.5/25 分)；底層 100% 重倉環球藍籌正股 (得 15/15 分)；運用約 30%+ 之 Covered Call 覆蓋策略 (維度三按對齊標準扣 2.66 分，得 17.34/20 分)；因期權皆建立於實體正股之上，無 144A 私募 ELN 違約爆點，未觸發否決熔斷，展現極高之綜合安全性。",
@@ -119,4 +120,13 @@ DATA_Z17 = {
             ["十、歷史相對波動 (5分)", "3 年年化波幅 (Standard Deviation)", "• 5分: 波幅 < 10%<br>• 2.5分: 波幅 10%-15%<br>• 0分: 波幅 > 15%", "• 3 年年化標準差（波幅）僅 8.74% (低於 10%)。<br>👉 獲 <b>5.0 分滿分</b>。", "5.0 / 5", "<span class='quality-badge-green'>✔ 8.74% 低波幅 (5分)</span>"]
         ]
     }
+}
+
+# 🟢 追加對接建構器 (Portfolio Builder) 的標準導出對象
+FUND_Z17 = list(DATA_Z17.values())[0]
+FUND_Z17["risk_derivatives"] = {
+    "risk_level": "L4",
+    "has_eln": False,
+    "has_trs": True,
+    "description": "⚠️ 含有 OTC 總回報掉期 (TRS) 及賣出認購期權 (Written Call Options)，屬於 L4 高風險衍生工具級別，建議持倉比例控制在 20% 以內。"
 }
