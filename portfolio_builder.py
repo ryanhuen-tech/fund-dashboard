@@ -71,10 +71,19 @@ def render_portfolio_builder_tab():
         .text-fuchsia { color: #C026D3; }
         .text-amber { color: #D97706; }
         .text-blue { color: #2563EB; }
+
+        .advice-box {
+            background-color: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            border-left: 5px solid #3B82F6;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin-top: 15px;
+        }
     </style>
     """, unsafe_allow_html=True)
 
-    # 預設基金組合資料結構 (更新為統一「每年手續費」)
+    # 預設基金組合資料結構
     if "portfolio_funds" not in st.session_state:
         st.session_state.portfolio_funds = [
             {"code": "Z04", "amount": 100000.0, "bonus": 4.0, "buy_price": 8.52, "curr_price": 8.00, "high": 12.96, "low": 7.99, "stock_pct": 100, "bond_pct": 0, "yield_pct": 8.13, "upf": 1.35, "annual_fee": 1.00},
@@ -126,6 +135,9 @@ def render_portfolio_builder_tab():
     portfolio_sector_weighted = {}
 
     calc_funds = []
+    portfolio_scores = []
+    has_l3_l4 = False
+
     for f in st.session_state.portfolio_funds:
         amt = f.get("amount", 100000.0)
         bonus_pct = f.get("bonus", 0.0)
@@ -146,6 +158,14 @@ def render_portfolio_builder_tab():
 
         code = f.get("code", "Z01")
         fund_info = ALL_FUNDS.get(code, {})
+
+        # 風險評估資料收集
+        score_val = float(fund_info.get("score", 70.0))
+        portfolio_scores.append(score_val)
+
+        der_level = fund_info.get("risk_derivatives", {}).get("risk_level", "L1")
+        if der_level in ["L3", "L4"]:
+            has_l3_l4 = True
 
         # 地區加權
         if code == "Z04" or "中國" in fund_info.get("zh", ""):
@@ -181,7 +201,6 @@ def render_portfolio_builder_tab():
             if f["units"] > 0:
                 cur_p = f["price0"] + (f["price1"] - f["price0"]) * (m / total_months)
                 
-                # 統一每年手續費扣除 (前 60 個月額外按月扣前期費)
                 u_deduct_upf = ((f["p"] * (f["upf"] / 100.0) / 12.0) / cur_p) if m <= 60 else 0.0
                 fee_cash = ((f["p"] * (f["upf"] / 100.0) / 12.0) if m <= 60 else 0.0) + (f["units"] * cur_p * (f["annual_fee"] / 100.0) / 12.0)
                 
@@ -219,7 +238,10 @@ def render_portfolio_builder_tab():
     else:
         overall_stock_pct, overall_bond_pct = 0, 0
 
-    # 4. KPI 名片資料結構
+    portfolio_yield_pct = (total_curr_monthly_div * 12 / total_initial_val * 100) if total_initial_val > 0 else 0.0
+    avg_score = (sum(portfolio_scores) / len(portfolio_scores)) if portfolio_scores else 0.0
+
+    # 4. KPI 名片資料結構（c8 修改為「組合派息率」）
     cards_data = {
         "c1": {"title": "總投入成本", "val": f"${total_cost:,.0f}", "class": "kpi-border-slate", "val_class": "text-green"},
         "c2": {"title": "期末總剩餘市值", "val": f"${total_final_val:,.0f}", "class": "kpi-border-red", "val_class": "text-red"},
@@ -228,7 +250,7 @@ def render_portfolio_builder_tab():
         "c5": {"title": "真實總盈虧 (含提款)", "val": f"${net_profit:+,.0f}", "class": "kpi-border-cyan", "val_class": "text-cyan"},
         "c6": {"title": "預計每月派息 (現➔期末)", "val": f"${total_curr_monthly_div:,.0f}", "class": "kpi-border-teal", "val_class": "text-teal"},
         "c7": {"title": "累計長期獎賞賞金", "val": f"${cum_bonus_earned:,.0f}", "class": "kpi-border-indigo", "val_class": "text-indigo"},
-        "c8": {"title": "預計累計提款總額", "val": "$0", "class": "kpi-border-orange", "val_class": "text-orange"},
+        "c8": {"title": "組合派息率", "val": f"{portfolio_yield_pct:.2f}%", "class": "kpi-border-orange", "val_class": "text-orange"},
         "c9": {"title": "組合名義回報率 (ROI)", "val": f"{roi:.2f}%", "class": "kpi-border-fuchsia", "val_class": "text-fuchsia"},
         "c10": {"title": "每年平均回報率", "val": f"{avg_annual_roi:.2f}%", "class": "kpi-border-amber", "val_class": "text-amber"},
         "c11": {"title": "組合實際年化 IRR", "val": f"{avg_annual_roi * 0.95:.2f}%", "class": "kpi-border-amber", "val_class": "text-amber"},
@@ -289,7 +311,7 @@ def render_portfolio_builder_tab():
 
     st.markdown("---")
 
-    # 7. 基金配置編輯區 (簡化為 2 個費率欄位)
+    # 7. 基金配置編輯區
     st.markdown("### 📁 組合內基金詳細配置與手續費設定")
     
     fund_options = {f"{f_data.get('code', '')} {f_data.get('zh', '')}": f_code for f_code, f_data in ALL_FUNDS.items()}
@@ -343,7 +365,6 @@ def render_portfolio_builder_tab():
                 with col_b:
                     st.number_input("債券 (%):", value=100 - int(fund_item.get("stock_pct", 50)), disabled=True, key=f"bnd_disp_{f_key}")
 
-                # 🟢 精簡手續費欄位：僅保留「前期費 (%)」與「每年手續費 (%)」
                 col_f1, col_f2 = st.columns(2)
                 with col_f1:
                     st.number_input("前期費 (%):", value=float(fund_item.get("upf", 1.35)), step=0.01, key=f"upf_{f_key}")
@@ -407,3 +428,23 @@ def render_portfolio_builder_tab():
             st.plotly_chart(fig_sec, use_container_width=True)
         else:
             st.info("尚無數據繪製行業分佈圖。")
+
+    # 9. 新增：組合風險評估與理專建議報告區塊
+    st.markdown("---")
+    st.markdown("### 🛡️ 組合風險評估與顧問建議報告")
+
+    st.markdown(f"""
+    <div class="advice-box">
+        <h4 style="color:#1E3A8A; margin-bottom:10px;">📊 組合風險診斷結論 (平均風控得分: {avg_score:.1f} / 100)</h4>
+        <ul style="color:#334155; font-size:14px; line-height:1.8;">
+            <li><b>股債配置評價：</b> 當前組合股票比例為 <b>{overall_stock_pct}%</b>，債券比例為 <b>{overall_bond_pct}%</b>。{"屬穩健防守型組合，淨值波動風險較低。" if overall_bond_pct >= 50 else "屬成長型組合，需留意股票市場下行波動風險。"}</li>
+            <li><b>衍生工具風險審計：</b> {"⚠️ <b style='color:#DC2626;'>警示：</b> 組合內包含含有 L3 (144A ELN) 或 L4 (TRS) 衍生工具之基金，建議控制單一高風險基金持倉比例不超過 20%。" if has_l3_l4 else "🟢 <b style='color:#059669;'>安全：</b> 組合內未包含 L3 (144A ELN) 高危否決級別衍生品，資產結構健全。"}</li>
+            <li><b>現金流與派息評估：</b> 組合平均年化派息率為 <b>{portfolio_yield_pct:.2f}%</b>，每月可提供 <b>${total_curr_monthly_div:,.0f}</b> 被動現金流收入。</li>
+        </ul>
+        <hr style="border-top: 1px dashed #CBD5E1; margin: 12px 0;">
+        <h5 style="color:#0D9488; margin-bottom:6px;">🗣️ 建議對客戶銷售對白：</h5>
+        <p style="color:#475569; font-size:13px; font-style:italic;">
+            「張先生/小姐，為您配置的這個基金組合，平均派息率達到 <b>{portfolio_yield_pct:.2f}%</b>，每月能穩定帶來約 <b>${total_curr_monthly_div:,.0f}</b> 的現金收入。在風險控制上，我們嚴格過濾了私募結構性風險（如 144A ELN），股債比保持在 <b>{overall_stock_pct}:{overall_bond_pct}</b>，既能享受資本利得空間，又能透過每月派息對沖市場波動，非常符合您追求穩健高派息的理財目標。」
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
