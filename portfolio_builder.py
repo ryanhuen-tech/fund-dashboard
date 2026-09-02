@@ -10,7 +10,7 @@ def extract_fund_code(label_str):
     match = re.search(r'([A-Z0-9]{2,4})', label_str)
     return match.group(1) if match else label_str
 
-# 獲取正本派息紀錄中的真實派息率 %
+# 1. 從資料庫正本提取真實派息率
 def get_exact_yield_from_fund(target_fund):
     history_div = target_fund.get("history_div", [])
     if history_div and len(history_div) > 0:
@@ -31,7 +31,7 @@ def get_exact_yield_from_fund(target_fund):
             
     return 7.50
 
-# 從資料庫提取預設真實股債配置
+# 2. 從資料庫正本提取真實股債配置
 def get_exact_asset_alloc(target_fund):
     cat = target_fund.get("category", "")
     if "債券" in cat:
@@ -42,7 +42,49 @@ def get_exact_asset_alloc(target_fund):
         return 52, 48
     return 50, 50
 
-# 下拉選單切換時，強制更新 UI 狀態 (完全解鎖並重置股債比)
+# 3. 預設組合模版資料庫生成器
+def create_template_portfolio(template_name):
+    templates = {
+        "低風險組合 (保守型 - 高收益債券)": [
+            {"code": "Z13", "amt": 100000.0, "bonus": 4.0},
+            {"code": "Z15", "amt": 100000.0, "bonus": 0.0}
+        ],
+        "中風險組合 (平衡型 - 股債對半)": [
+            {"code": "Z04", "amt": 100000.0, "bonus": 4.0},
+            {"code": "Z13", "amt": 100000.0, "bonus": 4.0}
+        ],
+        "高風險組合 (積極型 - 股票入息)": [
+            {"code": "Z04", "amt": 100000.0, "bonus": 4.0},
+            {"code": "Z51", "amt": 100000.0, "bonus": 0.0}
+        ]
+    }
+    
+    selected_items = templates.get(template_name, [])
+    new_funds = []
+    
+    for item in selected_items:
+        code = item["code"]
+        target_fund = ALL_FUNDS.get(code, {})
+        stk, bnd = get_exact_asset_alloc(target_fund)
+        yld = get_exact_yield_from_fund(target_fund)
+        
+        new_funds.append({
+            "id": str(uuid.uuid4()),
+            "code": code,
+            "amount": item["amt"],
+            "bonus": item["bonus"],
+            "buy_price": 10.00,
+            "curr_price": 10.00,
+            "stock_pct": stk,
+            "bond_pct": bnd,
+            "yield_pct": yld,
+            "upf": 1.35,
+            "annual_fee": 1.00
+        })
+        
+    return new_funds
+
+# 4. 下拉選單切換時，強制更新 UI 狀態
 def on_fund_select_change(f_id, fund_item):
     sel_label = st.session_state.get(f"sel_{f_id}")
     if not sel_label:
@@ -55,19 +97,16 @@ def on_fund_select_change(f_id, fund_item):
     target_fund = ALL_FUNDS.get(selected_code, {})
     fund_item["code"] = selected_code
     
-    # 動態賦予正確的股債比
     stk, bnd = get_exact_asset_alloc(target_fund)
     st.session_state[f"stk_{f_id}"] = stk
     st.session_state[f"bnd_{f_id}"] = bnd
     fund_item["stock_pct"] = stk
     fund_item["bond_pct"] = bnd
         
-    # 動態獲取該基金在歷史紀錄中的真實派息率
     exact_yield = get_exact_yield_from_fund(target_fund)
     st.session_state[f"yld_{f_id}"] = exact_yield
     fund_item["yield_pct"] = exact_yield
 
-# 當手動修改股票 % 時，自動同步連動債券 %
 def on_stock_change(f_id, fund_item):
     new_stk = st.session_state.get(f"stk_{f_id}", 50)
     new_bnd = 100 - new_stk
@@ -75,7 +114,6 @@ def on_stock_change(f_id, fund_item):
     fund_item["stock_pct"] = new_stk
     fund_item["bond_pct"] = new_bnd
 
-# 當手動修改債券 % 時，自動同步連動股票 %
 def on_bond_change(f_id, fund_item):
     new_bnd = st.session_state.get(f"bnd_{f_id}", 50)
     new_stk = 100 - new_bnd
@@ -83,7 +121,6 @@ def on_bond_change(f_id, fund_item):
     fund_item["stock_pct"] = new_stk
     fund_item["bond_pct"] = new_bnd
 
-# 計算第 61 個月起的長期客戶獎賞 (Long-term Bonus)
 def calculate_long_term_bonus(avg_value_60m):
     av = avg_value_60m
     bonus = 0.0
@@ -163,33 +200,38 @@ def render_portfolio_builder_tab():
     </style>
     """, unsafe_allow_html=True)
 
-    # 初始化預設基金 (Z04, Z13, Z15, Z51 正確預設)
-    if "portfolio_funds" not in st.session_state:
-        f_z04 = ALL_FUNDS.get("Z04", {})
-        f_z13 = ALL_FUNDS.get("Z13", {})
-        st.session_state.portfolio_funds = [
-            {
-                "id": str(uuid.uuid4()),
-                "code": "Z04", "amount": 100000.0, "bonus": 4.0, "buy_price": 8.52, "curr_price": 8.00,
-                "stock_pct": 100, "bond_pct": 0,
-                "yield_pct": get_exact_yield_from_fund(f_z04),
-                "upf": 1.35, "annual_fee": 1.00
-            },
-            {
-                "id": str(uuid.uuid4()),
-                "code": "Z13", "amount": 100000.0, "bonus": 4.0, "buy_price": 9.20, "curr_price": 7.82,
-                "stock_pct": 0, "bond_pct": 100,
-                "yield_pct": get_exact_yield_from_fund(f_z13),
-                "upf": 1.35, "annual_fee": 1.00
-            }
-        ]
+    # 預設組合模版清單
+    template_options = [
+        "自訂組合 (自選基金)",
+        "低風險組合 (保守型 - 高收益債券)",
+        "中風險組合 (平衡型 - 股債對半)",
+        "高風險組合 (積極型 - 股票入息)"
+    ]
 
-    # 確保所有基金字典都有 id
+    # 工具列第一排：模版快速載入
+    st.markdown("#### ⚡ 快速載入預設組合模版")
+    col_tpl, col_tpl_btn = st.columns([3, 1])
+    with col_tpl:
+        selected_template = st.selectbox("選擇預設策略模版:", options=template_options, key="tpl_select")
+    with col_tpl_btn:
+        st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
+        if st.button("🚀 套用此組合", use_container_width=True):
+            if "自訂" not in selected_template:
+                st.session_state.portfolio_funds = create_template_portfolio(selected_template)
+                st.success(f"已成功載入「{selected_template}」！")
+                st.rerun()
+
+    st.markdown("---")
+
+    # 初始化預設基金 (中風險平衡型預設)
+    if "portfolio_funds" not in st.session_state:
+        st.session_state.portfolio_funds = create_template_portfolio("中風險組合 (平衡型 - 股債對半)")
+
     for fund_item in st.session_state.portfolio_funds:
         if "id" not in fund_item:
             fund_item["id"] = str(uuid.uuid4())
 
-    # 工具列
+    # 工具列第二排：基礎設定與增刪
     col_tb1, col_tb2, col_tb3 = st.columns([1.5, 1.5, 1.5])
     with col_tb1:
         plan_years = st.number_input("總投資年期 (Years):", min_value=1, max_value=30, value=10, step=1, key="plan_years_input")
@@ -197,11 +239,12 @@ def render_portfolio_builder_tab():
         st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
         if st.button("➕ 新增一隻基金", use_container_width=True):
             f_default = ALL_FUNDS.get("Z01", {})
+            stk, bnd = get_exact_asset_alloc(f_default)
             st.session_state.portfolio_funds.append(
                 {
                     "id": str(uuid.uuid4()),
                     "code": "Z01", "amount": 100000.0, "bonus": 0.0, "buy_price": 10.0, "curr_price": 10.0,
-                    "stock_pct": 100, "bond_pct": 0,
+                    "stock_pct": stk, "bond_pct": bnd,
                     "yield_pct": get_exact_yield_from_fund(f_default),
                     "upf": 1.35, "annual_fee": 1.00
                 }
@@ -221,7 +264,6 @@ def render_portfolio_builder_tab():
         code = fund_item.get("code", "Z01")
         target_fund = ALL_FUNDS.get(code, {})
 
-        # 初始化 Session State 中的股債值
         if f"stk_{f_id}" not in st.session_state or f"bnd_{f_id}" not in st.session_state:
             stk_init, bnd_init = get_exact_asset_alloc(target_fund)
             st.session_state[f"stk_{f_id}"] = stk_init
@@ -429,7 +471,7 @@ def render_portfolio_builder_tab():
 
     st.markdown("---")
 
-    # 7. 基金配置編輯區 (徹底解鎖股債，允許自由點擊修改)
+    # 7. 基金配置編輯區
     st.markdown("### 📁 組合內基金詳細配置與手續費設定")
     
     fund_options = {f"{f_data.get('code', '')} {f_data.get('zh', '')}": f_code for f_code, f_data in ALL_FUNDS.items()}
@@ -463,7 +505,6 @@ def render_portfolio_builder_tab():
                 st.number_input("帳面本金 ($):", value=float(fund_item.get("amount", 100000.0)), step=10000.0, key=f"amt_{f_id}")
                 st.number_input("開戶獎賞 (%):", value=float(fund_item.get("bonus", 0.0)), step=0.5, key=f"bonus_{f_id}")
 
-                # 🟢 徹底解鎖！股票 (%) 與 債券 (%) 皆可自由編輯且雙向自動同步
                 col_s, col_b = st.columns(2)
                 with col_s:
                     st.number_input(
