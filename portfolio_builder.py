@@ -1,54 +1,22 @@
 import streamlit as st
-import requests
-import re
 import pandas as pd
 import plotly.express as px
 from funds import ALL_FUNDS  # 匯入系統所有基金資料庫
 
-# 精確提取短代號 (例如從 "Z51 友邦股票入息" 提取 "Z51")
-def extract_fund_code(label_str):
-    match = re.search(r'([A-Z0-9]{2,4})', label_str)
-    return match.group(1) if match else label_str
-
-# 升級版防阻擋爬蟲函數
-def fetch_aia_fund_data(fund_code):
-    clean_code = extract_fund_code(fund_code)
-    url = f"https://aia-fund-api.vercel.app/api/getFund?id={clean_code}"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "application/json, text/plain, */*"
-    }
-    try:
-        response = requests.get(url, headers=headers, timeout=5)
-        if response.status_code == 200:
-            data = response.json()
-            price_val = data.get("currentPrice") or data.get("nav") or data.get("price") or data.get("latestPrice")
-            high_val = data.get("historyHigh") or data.get("high")
-            low_val = data.get("historyLow") or data.get("low")
-            
-            return {
-                "price": float(price_val) if price_val else None,
-                "high": float(high_val) if high_val else None,
-                "low": float(low_val) if low_val else None
-            }
-    except Exception:
-        pass
-    return None
-
 def render_portfolio_builder_tab():
     st.markdown("## 💼 客戶基金組合建構與動態配置試算器")
-    st.caption("連動官方 Factsheet 月報股債配置與 AIA 即時爬蟲現價，提供動態組合試算")
+    st.caption("連動官方 Factsheet 月報股債配置與資產分佈，提供動態組合試算")
 
-    # 名片圓角外框 CSS
+    # 名片獨立長方框 CSS 樣式
     st.markdown("""
     <style>
         .kpi-card {
             background-color: #FFFFFF;
-            border: 1px solid #E2E8F0;
+            border: 1px solid #CBD5E1;
             border-radius: 10px;
             padding: 15px 12px;
             text-align: center;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
             margin-bottom: 10px;
         }
         .kpi-title { font-size: 13px; font-weight: 700; color: #64748B; margin-bottom: 6px; }
@@ -58,11 +26,11 @@ def render_portfolio_builder_tab():
     </style>
     """, unsafe_allow_html=True)
 
-    # 1. 初始化 Session State 組合資料
+    # 1. 初始化組合數據
     if "portfolio_funds" not in st.session_state:
         st.session_state.portfolio_funds = [
-            {"code": "Z51", "amount": 100000.0, "bonus": 4.0, "buy_price": 10.40, "curr_price": 10.40, "high": 11.47, "low": 8.88, "stock_pct": 100, "bond_pct": 0, "yield_pct": 8.10},
-            {"code": "Z15", "amount": 100000.0, "bonus": 0.0, "buy_price": 76.67, "curr_price": 76.67, "high": 78.23, "low": 73.05, "stock_pct": 0, "bond_pct": 100, "yield_pct": 9.40}
+            {"code": "Z04", "amount": 100000.0, "bonus": 4.0, "buy_price": 8.52, "curr_price": 8.00, "high": 12.96, "low": 7.99, "stock_pct": 100, "bond_pct": 0, "yield_pct": 8.13},
+            {"code": "Z13", "amount": 100000.0, "bonus": 0.0, "buy_price": 9.20, "curr_price": 7.82, "high": 9.39, "low": 7.47, "stock_pct": 0, "bond_pct": 100, "yield_pct": 7.20}
         ]
 
     # 工具列
@@ -84,7 +52,7 @@ def render_portfolio_builder_tab():
 
     st.markdown("---")
 
-    # 2. 實時精算頂部數據
+    # 2. 實時算總 (直接讀取 Session State 最新動態輸入)
     total_cost = 0.0          
     total_initial_val = 0.0   
     total_stock_amt = 0.0     
@@ -94,23 +62,34 @@ def render_portfolio_builder_tab():
     portfolio_geo_weighted = {}
     portfolio_sector_weighted = {}
 
-    for fund_item in st.session_state.portfolio_funds:
-        amt = fund_item["amount"]
-        bonus_pct = fund_item["bonus"]
+    for idx, fund_item in enumerate(st.session_state.portfolio_funds):
+        code = fund_item["code"]
+        f_key = f"{idx}_{code}"
+
+        # 若用戶在 UI 上修改，實時覆蓋
+        amt = st.session_state.get(f"amt_{f_key}", fund_item["amount"])
+        bonus_pct = st.session_state.get(f"bonus_{f_key}", fund_item["bonus"])
+        s_pct = st.session_state.get(f"stk_{f_key}", fund_item["stock_pct"])
+        b_pct = 100 - s_pct
+        yld_pct = st.session_state.get(f"yld_{f_key}", fund_item["yield_pct"])
+
+        fund_item["amount"] = amt
+        fund_item["bonus"] = bonus_pct
+        fund_item["stock_pct"] = s_pct
+        fund_item["bond_pct"] = b_pct
+        fund_item["yield_pct"] = yld_pct
+
         init_val = amt * (1.0 + bonus_pct / 100.0)
         
         total_cost += amt
         total_initial_val += init_val
         
-        s_pct = fund_item["stock_pct"]
-        b_pct = fund_item["bond_pct"]
         total_stock_amt += init_val * (s_pct / 100.0)
         total_bond_amt += init_val * (b_pct / 100.0)
         
-        monthly_div = init_val * (fund_item["yield_pct"] / 100.0) / 12.0
+        monthly_div = init_val * (yld_pct / 100.0) / 12.0
         total_curr_monthly_div += monthly_div
 
-        code = fund_item["code"]
         fund_info = ALL_FUNDS.get(code, {})
 
         # 地區加權
@@ -138,7 +117,7 @@ def render_portfolio_builder_tab():
     else:
         overall_stock_pct, overall_bond_pct = 0, 0
 
-    # 3. 渲染頂部獨立長方框名片
+    # 3. 渲染頂部名片 (包含獨立方框)
     k1, k2, k3, k4 = st.columns(4)
     with k1:
         st.markdown(f'<div class="kpi-card"><div class="kpi-title">總投入成本 ($)</div><div class="kpi-value">${total_cost:,.0f}</div></div>', unsafe_allow_html=True)
@@ -158,7 +137,7 @@ def render_portfolio_builder_tab():
 
     st.markdown("---")
 
-    # 4. 基金配置編輯區 (解決 AIA 爬蟲 Session State 動態連動)
+    # 4. 基金配置編輯區
     st.markdown("### 📁 組合內基金詳細配置")
     
     fund_options = {f"{f_data.get('code', '')} {f_data.get('zh', '')}": f_code for f_code, f_data in ALL_FUNDS.items()}
@@ -183,10 +162,7 @@ def render_portfolio_builder_tab():
                 selected_code = fund_options[selected_label]
                 target_fund = ALL_FUNDS.get(selected_code, {})
 
-                # 動態元件 Key
-                f_key = f"{idx}_{selected_code}"
-
-                # 當切換基金時，強制更正並執行 AIA 防阻擋爬蟲
+                # 切換基金時自動更新類別預設值
                 if selected_code != fund_item["code"]:
                     fund_item["code"] = selected_code
                     
@@ -202,48 +178,24 @@ def render_portfolio_builder_tab():
                         fund_item["bond_pct"] = 48
                     
                     fund_item["yield_pct"] = float(target_fund.get("last_yield", 8.0))
-
-                    # ⚡ 精確提取短代號爬蟲 AIA API
-                    clean_code = extract_fund_code(selected_code)
-                    aia_data = fetch_aia_fund_data(clean_code)
-                    if aia_data and aia_data["price"]:
-                        fund_item["curr_price"] = aia_data["price"]
-                        fund_item["buy_price"] = aia_data["price"]
-                        if aia_data["high"]:
-                            fund_item["high"] = aia_data["high"]
-                        if aia_data["low"]:
-                            fund_item["low"] = aia_data["low"]
-
-                        # 強制同步至 Session State 輸入組件，確保 UI 100% 更新
-                        st.session_state[f"curr_{f_key}"] = aia_data["price"]
-                        st.session_state[f"buy_{f_key}"] = aia_data["price"]
-
-                        st.toast(f"✅ 已為 {clean_code} 成功抓取 AIA 最新現價: ${aia_data['price']}", icon="📈")
-
                     st.rerun()
 
-                # 輸入組件綁定
-                amt_val = st.number_input("帳面本金 ($):", value=float(fund_item["amount"]), step=10000.0, key=f"amt_{f_key}")
-                fund_item["amount"] = amt_val
+                f_key = f"{idx}_{selected_code}"
 
-                bonus_val = st.number_input("開戶獎賞 (%):", value=float(fund_item["bonus"]), step=0.5, key=f"bonus_{f_key}")
-                fund_item["bonus"] = bonus_val
+                st.number_input("帳面本金 ($):", value=float(fund_item["amount"]), step=10000.0, key=f"amt_{f_key}")
+                st.number_input("開戶獎賞 (%):", value=float(fund_item["bonus"]), step=0.5, key=f"bonus_{f_key}")
 
                 col_s, col_b = st.columns(2)
                 with col_s:
-                    stk_val = st.number_input("股票 (%):", value=int(fund_item["stock_pct"]), min_value=0, max_value=100, key=f"stk_{f_key}")
-                    fund_item["stock_pct"] = stk_val
-                    fund_item["bond_pct"] = 100 - stk_val
+                    st.number_input("股票 (%):", value=int(fund_item["stock_pct"]), min_value=0, max_value=100, key=f"stk_{f_key}")
                 with col_b:
-                    st.number_input("債券 (%):", value=int(fund_item["bond_pct"]), disabled=True, key=f"bnd_{f_key}")
+                    st.number_input("債券 (%):", value=100 - int(fund_item["stock_pct"]), disabled=True, key=f"bnd_disp_{f_key}")
 
                 col_p1, col_p2 = st.columns(2)
                 with col_p1:
-                    buy_val = st.number_input("買入價 ($):", value=float(fund_item["buy_price"]), step=0.01, key=f"buy_{f_key}")
-                    fund_item["buy_price"] = buy_val
+                    st.number_input("買入價 ($):", value=float(fund_item["buy_price"]), step=0.01, key=f"buy_{f_key}")
                 with col_p2:
-                    curr_val = st.number_input("即時現價 ($):", value=float(fund_item["curr_price"]), step=0.01, key=f"curr_{f_key}")
-                    fund_item["curr_price"] = curr_val
+                    st.number_input("即時現價 ($):", value=float(fund_item["curr_price"]), step=0.01, key=f"curr_{f_key}")
 
                 if fund_item["buy_price"] > 0:
                     chg_pct = ((fund_item["curr_price"] - fund_item["buy_price"]) / fund_item["buy_price"]) * 100.0
@@ -255,8 +207,7 @@ def render_portfolio_builder_tab():
                 with col_l:
                     st.text_input("歷史低位:", value=f"${fund_item['low']:.2f}", disabled=True, key=f"lo_{f_key}")
 
-                yld_val = st.number_input("年派息率 (%):", value=float(fund_item["yield_pct"]), step=0.1, key=f"yld_{f_key}")
-                fund_item["yield_pct"] = yld_val
+                st.number_input("年派息率 (%):", value=float(fund_item["yield_pct"]), step=0.1, key=f"yld_{f_key}")
 
                 if st.button("🗑️ 移除此基金", key=f"del_{f_key}"):
                     st.session_state.portfolio_funds.pop(idx)
