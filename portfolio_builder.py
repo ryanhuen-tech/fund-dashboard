@@ -305,16 +305,14 @@ def render_portfolio_builder_tab():
 
     st.markdown("---")
 
-    # 🟢 新增：受保人個人資料與身故保障額設定 (COI 人壽保險保障費用機制)
-    st.markdown("#### 🛡️ 受保人資訊與人壽保障設定 (用於精算月扣 COI 保費)")
-    col_ins1, col_ins2, col_ins3, col_ins4 = st.columns(4)
+    # 🟢 修正：受保人個人資料與投資年期設定 (已移除手動輸入身故保障額，改由初始投入金額自動決定)
+    st.markdown("#### 🛡️ 受保人資訊與年期設定 (身故保障額自動連動初始投入總金額)")
+    col_ins1, col_ins2, col_ins3 = st.columns([1.5, 1.5, 1.5])
     with col_ins1:
         client_age = st.number_input("受保人目前年齡:", min_value=0, max_value=85, value=35, step=1, key="client_age_input")
     with col_ins2:
         coi_category = st.selectbox("性別與吸煙習慣:", options=["男性非吸煙者", "男性吸煙者", "女性非吸煙者", "女性吸煙者"], index=0, key="coi_cat_input")
     with col_ins3:
-        sum_assured = st.number_input("基本身故賠償金額 ($):", min_value=0.0, value=250000.0, step=50000.0, key="sum_assured_input")
-    with col_ins4:
         plan_years = st.number_input("總投資年期 (Years):", min_value=1, max_value=30, value=10, step=1, key="plan_years_input")
 
     st.markdown("---")
@@ -374,7 +372,7 @@ def render_portfolio_builder_tab():
         if f"buy_{f_id}" in st.session_state: fund_item["buy_price"] = st.session_state[f"buy_{f_id}"]
         if f"curr_{f_id}" in st.session_state: fund_item["curr_price"] = st.session_state[f"curr_{f_id}"]
 
-    # 3. 精算全組合數據 (加入逐月保險保障費用 COI 精算)
+    # 3. 精算全組合數據 (身故保障額自動連動初始投入總金額)
     total_months = plan_years * 12
     total_cost = 0.0          
     total_initial_val = 0.0   
@@ -443,18 +441,21 @@ def render_portfolio_builder_tab():
             "final_val": 0.0, "val_before_bonus": 0.0
         })
 
+    # 🟢 剛性動態設定：身故保障額等於初始投入總金額 (包含開戶獎賞金額)
+    sum_assured = total_initial_val
+
     cum_fee_deducted = 0.0
     cum_coi_deducted = 0.0
     cum_bonus_earned = 0.0
     values_first_60 = []
 
-    # 逐月費用扣除演算法 (包含 COI 扣費)
+    # 逐月保險保障費用 COI 精算演算法
     for m in range(1, total_months + 1):
         m_val_before_b = 0.0
         
         # 1. 計算當前受保人年齡
         current_age = client_age + ((m - 1) // 12)
-        annual_coi_rate = get_coi_rate(current_age, coi_category)  # 每 $1,000 風險額之每年費用
+        annual_coi_rate = get_coi_rate(current_age, coi_category)
         
         # 2. 計算當月戶口總價值
         current_portfolio_value = sum(
@@ -462,21 +463,19 @@ def render_portfolio_builder_tab():
             for f in calc_funds if f["units"] > 0
         )
         
-        # 3. 計算淨風險額 (身故保額 - 戶口價值，最低為 0)
+        # 3. 🟢 核心正確機制：風險額等於身故保障額（初始本金）減去當前戶口市值，低於初始本金時才產生保費！
         net_risk_amount = max(sum_assured - current_portfolio_value, 0.0)
         monthly_coi_cash = (net_risk_amount * (annual_coi_rate / 1000.0)) / 12.0
         cum_coi_deducted += monthly_coi_cash
 
-        # 4. 逐一從各基金單位數中扣除手續費與 COI 保費
+        # 4. 從各基金持倉中扣除手續費與 COI 保費
         for f in calc_funds:
             if f["units"] > 0:
                 cur_p = f["price0"] + (f["price1"] - f["price0"]) * (m / total_months)
                 
-                # 每月管理費與前期費
                 u_deduct_upf = ((f["p"] * (f["upf"] / 100.0) / 12.0) / cur_p) if m <= 60 else 0.0
                 mgmt_fee_cash = ((f["p"] * (f["upf"] / 100.0) / 12.0) if m <= 60 else 0.0) + (f["units"] * cur_p * (f["annual_fee"] / 100.0) / 12.0)
                 
-                # 按基金持倉價值比例分攤 COI 保費單位扣除
                 f_weight = (f["units"] * cur_p / current_portfolio_value) if current_portfolio_value > 0 else 0.0
                 coi_unit_deduct = (monthly_coi_cash * f_weight) / cur_p if cur_p > 0 else 0.0
                 
@@ -489,7 +488,6 @@ def render_portfolio_builder_tab():
 
         if m <= 60: values_first_60.append(m_val_before_b)
 
-        # 第 61 個月起發放長期客戶獎賞
         if m > 60 and len(values_first_60) == 60:
             avg_60m = sum(values_first_60) / 60.0
             month_bonus = calculate_long_term_bonus(avg_60m)
@@ -727,11 +725,13 @@ def render_portfolio_builder_tab():
     alloc_comment = "屬防守型組合，淨值波動風險較低。" if overall_bond_pct >= 50 else "屬成長型組合，需留意股票市場下行波動風險。"
     deriv_comment = "⚠️ <b style='color:#DC2626;'>警示：</b> 組合內含有 L3 (144A ELN) 或 L4 (TRS) 高風險衍生工具基金（如 Z18/Z17），建議控制該類基金持倉比例不超過 20%。" if has_l3_l4 else "🟢 <b style='color:#059669;'>安全：</b> 組合內全數基金皆未包含 L3 (144A ELN) 高危否決級別衍生品，資產結構極度健康。"
 
+    coi_note = f"累計扣除之 COI 保險保障費用為 <b>${cum_coi_deducted:,.0f}</b>" if cum_coi_deducted > 0 else "<b>$0</b> (受惠於戶口市值高於初始投入金額或滿 80 歲免除，當前淨風險額為 0)"
+
     st.markdown(f"""
     <div class="advice-box">
         <h4 style="color:#1E3A8A; margin-bottom:10px;">📊 組合風險診斷結論 (加權平均風控得分: {avg_score:.1f} / 100)</h4>
         <ul style="color:#334155; font-size:14px; line-height:1.8;">
-            <li><b>受保人身故保障與 COI 保費費用：</b> 受保人現年 <b>{client_age} 歲 ({coi_category})</b>，基本人壽保障額為 <b>${sum_assured:,.0f}</b>。模擬期間累計扣除之 COI 保險保障費用為 <b>${cum_coi_deducted:,.0f}</b>。{"（註：滿 80 歲後豁免 COI 保費）" if client_age + plan_years >= 80 else ""}</li>
+            <li><b>受保人身故保障與 COI 保費費用：</b> 受保人現年 <b>{client_age} 歲 ({coi_category})</b>，基本身故保障額自動連動為初始投入總本金 <b>${sum_assured:,.0f}</b>。模擬期間{coi_note}。</li>
             <li><b>股債配置評價：</b> 當前組合股票比例為 <b>{overall_stock_pct}%</b>，債券比例為 <b>{overall_bond_pct}%</b>。{alloc_comment}</li>
             <li><b>衍生工具風險審計：</b> {deriv_comment}</li>
             <li><b>現金流與派息評估：</b> 組合加權平均年化派息率為 <b>{portfolio_yield_pct:.2f}%</b>，每月可提供 <b>${total_curr_monthly_div:,.0f}</b> 被動現金流收入。</li>
@@ -739,7 +739,7 @@ def render_portfolio_builder_tab():
         <hr style="border-top: 1px dashed #CBD5E1; margin: 12px 0;">
         <h5 style="color:#0D9488; margin-bottom:6px;">🗣️ 建議對客戶銷售對白：</h5>
         <p style="color:#475569; font-size:13px; font-style:italic;">
-            「張先生/小姐，為您量身配置的這個基金組合，加權平均派息率達到 <b>{portfolio_yield_pct:.2f}%</b>，每月能穩定帶來約 <b>${total_curr_monthly_div:,.0f}</b> 的現金流。同時配備了 <b>${sum_assured:,.0f}</b> 的人壽身故保障。在風險控制上，綜合風控得分高達 <b>{avg_score:.1f} 分</b>，股債比保持在 <b>{overall_stock_pct}:{overall_bond_pct}</b>，既能享有資本利得空間，又能透過每月現金派息對沖市場波動，非常符合您追求保障與穩健高派息的理財目標。」
+            「張先生/小姐，為您量身配置的這個基金組合，加權平均派息率達到 <b>{portfolio_yield_pct:.2f}%</b>，每月能穩定帶來約 <b>${total_curr_monthly_div:,.0f}</b> 的現金流。同時提供最低 <b>${sum_assured:,.0f}</b> 的初始本金人壽保障。在風險控制上，綜合風控得分高達 <b>{avg_score:.1f} 分</b>，股債比保持在 <b>{overall_stock_pct}:{overall_bond_pct}</b>，既能享有資本利得空間，又能透過每月現金派息對沖市場波動，非常符合您追求保障與穩健高派息的理財目標。」
         </p>
     </div>
     """, unsafe_allow_html=True)
