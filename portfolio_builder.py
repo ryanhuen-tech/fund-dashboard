@@ -10,48 +10,7 @@ def extract_fund_code(label_str):
     match = re.search(r'([A-Z0-9]{2,4})', label_str)
     return match.group(1) if match else label_str
 
-# 1. 載入官方「保險費用率表」(G部分: 每 $1,000 風險額之每年費用率)
-COI_RATES = {
-    "男性非吸煙者": {
-        0: 1.81, 5: 1.81, 10: 1.81, 15: 1.81, 20: 1.16, 25: 1.16,
-        30: 1.19, 35: 1.35, 40: 1.78, 45: 2.68, 50: 4.15, 55: 6.48,
-        60: 10.75, 65: 19.23, 70: 29.80, 75: 51.84, 80: 108.76
-    },
-    "男性吸煙者": {
-        0: 1.81, 5: 1.81, 10: 1.81, 15: 1.81, 20: 1.16, 25: 1.16,
-        30: 1.19, 35: 1.35, 40: 1.78, 45: 2.68, 50: 4.15, 55: 6.48,
-        60: 10.75, 65: 19.23, 70: 29.80, 75: 51.84, 80: 108.76
-    },
-    "女性非吸煙者": {
-        0: 1.81, 5: 1.81, 10: 1.81, 15: 1.81, 20: 1.15, 25: 1.15,
-        30: 1.15, 35: 1.24, 40: 1.48, 45: 1.98, 50: 3.01, 55: 4.31,
-        60: 6.95, 65: 12.61, 70: 21.46, 75: 37.01, 80: 76.34
-    },
-    "女性吸煙者": {
-        0: 1.81, 5: 1.81, 10: 1.81, 15: 1.81, 20: 1.15, 25: 1.15,
-        30: 1.15, 35: 1.24, 40: 1.48, 45: 1.98, 50: 3.01, 55: 4.31,
-        60: 6.95, 65: 12.61, 70: 21.46, 75: 37.01, 80: 76.34
-    }
-}
-
-# 根據受保人實際年齡查找 COI 費率 (每 $1,000 風險額之每年費用)
-def get_coi_rate(age, category="男性非吸煙者"):
-    if age >= 80:
-        return 0.0  # 滿 80 歲生日或其後保單週年日免除 COI 保險費
-    
-    rates = COI_RATES.get(category, COI_RATES["男性非吸煙者"])
-    age_keys = sorted(rates.keys())
-    
-    matched_age = age_keys[0]
-    for a in age_keys:
-        if age >= a:
-            matched_age = a
-        else:
-            break
-            
-    return rates[matched_age]
-
-# 從資料庫正本提取真實派息率
+# 1. 從資料庫正本提取真實派息率
 def get_exact_yield_from_fund(target_fund):
     history_div = target_fund.get("history_div", [])
     if history_div and len(history_div) > 0:
@@ -72,7 +31,7 @@ def get_exact_yield_from_fund(target_fund):
             
     return 7.50
 
-# 從資料庫正本提取真實股債配置
+# 2. 從資料庫正本提取真實股債配置
 def get_exact_asset_alloc(target_fund):
     cat = target_fund.get("category", "")
     if "債券" in cat:
@@ -83,7 +42,7 @@ def get_exact_asset_alloc(target_fund):
         return 52, 48
     return 50, 50
 
-# 初始化內建與自訂模版字典
+# 3. 初始化內建與自訂模版字典
 def init_custom_templates():
     if "saved_templates" not in st.session_state:
         st.session_state.saved_templates = {
@@ -101,7 +60,7 @@ def init_custom_templates():
             ]
         }
 
-# 根據名稱建立組合物件
+# 4. 根據名稱建立組合物件
 def create_portfolio_from_template(template_name):
     selected_items = st.session_state.saved_templates.get(template_name, [])
     new_funds = []
@@ -129,7 +88,7 @@ def create_portfolio_from_template(template_name):
         
     return new_funds
 
-# 下拉選單切換時強制更新 UI 狀態
+# 5. 下拉選單切換時強制更新 UI 狀態
 def on_fund_select_change(f_id, fund_item):
     sel_label = st.session_state.get(f"sel_{f_id}")
     if not sel_label:
@@ -186,7 +145,7 @@ def calculate_long_term_bonus(avg_value_60m):
 
 def render_portfolio_builder_tab():
     st.markdown("## 💼 客戶基金組合建構與動態配置試算器")
-    st.caption("連動官方 Factsheet 月報股債配置、保險風險保障費用 (COI) 與手續費/長期獎賞扣費演算法")
+    st.caption("連動官方 Factsheet 月報股債配置與簡化版手續費/長期獎賞階梯扣費演算法")
 
     init_custom_templates()
 
@@ -305,29 +264,12 @@ def render_portfolio_builder_tab():
 
     st.markdown("---")
 
-    # 🟢 修正：受保人個人資料與投資年期設定 (已移除手動輸入身故保障額，改由初始投入金額自動決定)
-    st.markdown("#### 🛡️ 受保人資訊與年期設定 (身故保障額自動連動初始投入總金額)")
-    col_ins1, col_ins2, col_ins3 = st.columns([1.5, 1.5, 1.5])
-    with col_ins1:
-        client_age = st.number_input("受保人目前年齡:", min_value=0, max_value=85, value=35, step=1, key="client_age_input")
-    with col_ins2:
-        coi_category = st.selectbox("性別與吸煙習慣:", options=["男性非吸煙者", "男性吸煙者", "女性非吸煙者", "女性吸煙者"], index=0, key="coi_cat_input")
-    with col_ins3:
-        plan_years = st.number_input("總投資年期 (Years):", min_value=1, max_value=30, value=10, step=1, key="plan_years_input")
-
-    st.markdown("---")
-
-    # 初始化預設基金
-    if "portfolio_funds" not in st.session_state:
-        st.session_state.portfolio_funds = create_portfolio_from_template("中風險組合 (平衡型 - 股債對半)")
-
-    for fund_item in st.session_state.portfolio_funds:
-        if "id" not in fund_item:
-            fund_item["id"] = str(uuid.uuid4())
-
-    # 工具列第三排：基金增刪
-    col_tb1, col_tb2 = st.columns([2, 2])
+    # 工具列：投資年期與基金增刪
+    col_tb1, col_tb2, col_tb3 = st.columns([1.5, 1.5, 1.5])
     with col_tb1:
+        plan_years = st.number_input("總投資年期 (Years):", min_value=1, max_value=30, value=10, step=1, key="plan_years_input")
+    with col_tb2:
+        st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
         if st.button("➕ 新增一隻基金", use_container_width=True):
             f_default = ALL_FUNDS.get("Z01", {})
             stk, bnd = get_exact_asset_alloc(f_default)
@@ -341,12 +283,21 @@ def render_portfolio_builder_tab():
                 }
             )
             st.rerun()
-    with col_tb2:
+    with col_tb3:
+        st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
         if st.button("🗑️ 清空所有基金", use_container_width=True):
             st.session_state.portfolio_funds = []
             st.rerun()
 
     st.markdown("---")
+
+    # 初始化預設基金
+    if "portfolio_funds" not in st.session_state:
+        st.session_state.portfolio_funds = create_portfolio_from_template("中風險組合 (平衡型 - 股債對半)")
+
+    for fund_item in st.session_state.portfolio_funds:
+        if "id" not in fund_item:
+            fund_item["id"] = str(uuid.uuid4())
 
     # 2. 同步 UI 最新動態輸入值
     for fund_item in st.session_state.portfolio_funds:
@@ -372,7 +323,7 @@ def render_portfolio_builder_tab():
         if f"buy_{f_id}" in st.session_state: fund_item["buy_price"] = st.session_state[f"buy_{f_id}"]
         if f"curr_{f_id}" in st.session_state: fund_item["curr_price"] = st.session_state[f"curr_{f_id}"]
 
-    # 3. 精算全組合數據 (身故保障額自動連動初始投入總金額)
+    # 3. 精算全組合數據
     total_months = plan_years * 12
     total_cost = 0.0          
     total_initial_val = 0.0   
@@ -441,34 +392,14 @@ def render_portfolio_builder_tab():
             "final_val": 0.0, "val_before_bonus": 0.0
         })
 
-    # 🟢 剛性動態設定：身故保障額等於初始投入總金額 (包含開戶獎賞金額)
-    sum_assured = total_initial_val
-
     cum_fee_deducted = 0.0
-    cum_coi_deducted = 0.0
     cum_bonus_earned = 0.0
     values_first_60 = []
 
-    # 逐月保險保障費用 COI 精算演算法
+    # 逐月手續費與長期客戶獎賞扣費演算法
     for m in range(1, total_months + 1):
         m_val_before_b = 0.0
         
-        # 1. 計算當前受保人年齡
-        current_age = client_age + ((m - 1) // 12)
-        annual_coi_rate = get_coi_rate(current_age, coi_category)
-        
-        # 2. 計算當月戶口總價值
-        current_portfolio_value = sum(
-            f["units"] * (f["price0"] + (f["price1"] - f["price0"]) * (m / total_months))
-            for f in calc_funds if f["units"] > 0
-        )
-        
-        # 3. 🟢 核心正確機制：風險額等於身故保障額（初始本金）減去當前戶口市值，低於初始本金時才產生保費！
-        net_risk_amount = max(sum_assured - current_portfolio_value, 0.0)
-        monthly_coi_cash = (net_risk_amount * (annual_coi_rate / 1000.0)) / 12.0
-        cum_coi_deducted += monthly_coi_cash
-
-        # 4. 從各基金持倉中扣除手續費與 COI 保費
         for f in calc_funds:
             if f["units"] > 0:
                 cur_p = f["price0"] + (f["price1"] - f["price0"]) * (m / total_months)
@@ -476,10 +407,7 @@ def render_portfolio_builder_tab():
                 u_deduct_upf = ((f["p"] * (f["upf"] / 100.0) / 12.0) / cur_p) if m <= 60 else 0.0
                 mgmt_fee_cash = ((f["p"] * (f["upf"] / 100.0) / 12.0) if m <= 60 else 0.0) + (f["units"] * cur_p * (f["annual_fee"] / 100.0) / 12.0)
                 
-                f_weight = (f["units"] * cur_p / current_portfolio_value) if current_portfolio_value > 0 else 0.0
-                coi_unit_deduct = (monthly_coi_cash * f_weight) / cur_p if cur_p > 0 else 0.0
-                
-                f["units"] = (f["units"] * (1.0 - (f["annual_fee"] / 100.0) / 12.0)) - u_deduct_upf - coi_unit_deduct
+                f["units"] = (f["units"] * (1.0 - (f["annual_fee"] / 100.0) / 12.0)) - u_deduct_upf
                 cum_fee_deducted += mgmt_fee_cash
                 
                 if f["units"] < 0: f["units"] = 0.0
@@ -725,13 +653,10 @@ def render_portfolio_builder_tab():
     alloc_comment = "屬防守型組合，淨值波動風險較低。" if overall_bond_pct >= 50 else "屬成長型組合，需留意股票市場下行波動風險。"
     deriv_comment = "⚠️ <b style='color:#DC2626;'>警示：</b> 組合內含有 L3 (144A ELN) 或 L4 (TRS) 高風險衍生工具基金（如 Z18/Z17），建議控制該類基金持倉比例不超過 20%。" if has_l3_l4 else "🟢 <b style='color:#059669;'>安全：</b> 組合內全數基金皆未包含 L3 (144A ELN) 高危否決級別衍生品，資產結構極度健康。"
 
-    coi_note = f"累計扣除之 COI 保險保障費用為 <b>${cum_coi_deducted:,.0f}</b>" if cum_coi_deducted > 0 else "<b>$0</b> (受惠於戶口市值高於初始投入金額或滿 80 歲免除，當前淨風險額為 0)"
-
     st.markdown(f"""
     <div class="advice-box">
         <h4 style="color:#1E3A8A; margin-bottom:10px;">📊 組合風險診斷結論 (加權平均風控得分: {avg_score:.1f} / 100)</h4>
         <ul style="color:#334155; font-size:14px; line-height:1.8;">
-            <li><b>受保人身故保障與 COI 保費費用：</b> 受保人現年 <b>{client_age} 歲 ({coi_category})</b>，基本身故保障額自動連動為初始投入總本金 <b>${sum_assured:,.0f}</b>。模擬期間{coi_note}。</li>
             <li><b>股債配置評價：</b> 當前組合股票比例為 <b>{overall_stock_pct}%</b>，債券比例為 <b>{overall_bond_pct}%</b>。{alloc_comment}</li>
             <li><b>衍生工具風險審計：</b> {deriv_comment}</li>
             <li><b>現金流與派息評估：</b> 組合加權平均年化派息率為 <b>{portfolio_yield_pct:.2f}%</b>，每月可提供 <b>${total_curr_monthly_div:,.0f}</b> 被動現金流收入。</li>
@@ -739,7 +664,7 @@ def render_portfolio_builder_tab():
         <hr style="border-top: 1px dashed #CBD5E1; margin: 12px 0;">
         <h5 style="color:#0D9488; margin-bottom:6px;">🗣️ 建議對客戶銷售對白：</h5>
         <p style="color:#475569; font-size:13px; font-style:italic;">
-            「張先生/小姐，為您量身配置的這個基金組合，加權平均派息率達到 <b>{portfolio_yield_pct:.2f}%</b>，每月能穩定帶來約 <b>${total_curr_monthly_div:,.0f}</b> 的現金流。同時提供最低 <b>${sum_assured:,.0f}</b> 的初始本金人壽保障。在風險控制上，綜合風控得分高達 <b>{avg_score:.1f} 分</b>，股債比保持在 <b>{overall_stock_pct}:{overall_bond_pct}</b>，既能享有資本利得空間，又能透過每月現金派息對沖市場波動，非常符合您追求保障與穩健高派息的理財目標。」
+            「張先生/小姐，為您量身配置的這個基金組合，加權平均派息率達到 <b>{portfolio_yield_pct:.2f}%</b>，每月能穩定帶來約 <b>${total_curr_monthly_div:,.0f}</b> 的現金流。在風險控制上，綜合風控得分高達 <b>{avg_score:.1f} 分</b>，股債比保持在 <b>{overall_stock_pct}:{overall_bond_pct}</b>，既能享有資本利得空間，又能透過每月現金派息對沖市場波動，非常符合您追求穩健高派息的理財目標。」
         </p>
     </div>
     """, unsafe_allow_html=True)
