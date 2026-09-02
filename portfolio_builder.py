@@ -4,15 +4,30 @@ import pandas as pd
 import plotly.express as px
 from funds import ALL_FUNDS  # 匯入系統所有基金資料庫
 
-# 實時爬蟲函數
+# 升級版 AIA API 實時爬蟲函數 (具備偽裝與降級解析)
 def fetch_aia_fund_data(fund_code):
+    url = f"https://aia-fund-api.vercel.app/api/getFund?id={fund_code}"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "application/json, text/plain, */*",
+        "Cache-Control": "no-cache"
+    }
     try:
-        url = f"https://aia-fund-api.vercel.app/api/getFund?id={fund_code}&t={pd.Timestamp.now().timestamp()}"
-        response = requests.get(url, timeout=4)
+        response = requests.get(url, headers=headers, timeout=5)
         if response.status_code == 200:
-            return response.json()
-    except Exception:
-        pass
+            data = response.json()
+            # 自動適應多種欄位命名
+            price_val = data.get("currentPrice") or data.get("nav") or data.get("price") or data.get("latestPrice")
+            high_val = data.get("historyHigh") or data.get("high")
+            low_val = data.get("historyLow") or data.get("low")
+            
+            return {
+                "price": float(price_val) if price_val else None,
+                "high": float(high_val) if high_val else None,
+                "low": float(low_val) if low_val else None
+            }
+    except Exception as e:
+        st.sidebar.warning(f"⚠️ 基金 {fund_code} 爬蟲連線超時：{e}")
     return None
 
 def render_portfolio_builder_tab():
@@ -64,7 +79,7 @@ def render_portfolio_builder_tab():
 
     st.markdown("---")
 
-    # 2. 精算全組合頂部數據 (與 UI 100% 剛性同步)
+    # 2. 精算全組合頂部數據
     total_cost = 0.0          
     total_initial_val = 0.0   
     total_stock_amt = 0.0     
@@ -138,7 +153,7 @@ def render_portfolio_builder_tab():
 
     st.markdown("---")
 
-    # 4. 基金配置編輯區 (解決快取鎖死，使用動態代號 Key)
+    # 4. 基金配置編輯區 (使用防快取動態 Key)
     st.markdown("### 📁 組合內基金詳細配置")
     
     fund_options = {f"{f_data.get('code', '')} {f_data.get('zh', '')}": f_code for f_code, f_data in ALL_FUNDS.items()}
@@ -163,7 +178,7 @@ def render_portfolio_builder_tab():
                 selected_code = fund_options[selected_label]
                 target_fund = ALL_FUNDS.get(selected_code, {})
 
-                # 當切換基金時，強制更正並刷新數據
+                # 當切換基金時，更正並刷新數據與 AIA 爬蟲現價
                 if selected_code != fund_item["code"]:
                     fund_item["code"] = selected_code
                     
@@ -180,24 +195,22 @@ def render_portfolio_builder_tab():
                     
                     fund_item["yield_pct"] = float(target_fund.get("last_yield", 8.0))
 
-                    # AIA API 即時爬蟲
+                    # ⚡ AIA 防阻擋爬蟲抓取
                     aia_data = fetch_aia_fund_data(selected_code)
-                    if aia_data:
-                        price_val = aia_data.get("currentPrice") or aia_data.get("price")
-                        if price_val:
-                            fund_item["curr_price"] = float(price_val)
-                            fund_item["buy_price"] = float(price_val)
-                        if aia_data.get("historyHigh"):
-                            fund_item["high"] = float(aia_data.get("historyHigh"))
-                        if aia_data.get("historyLow"):
-                            fund_item["low"] = float(aia_data.get("historyLow"))
+                    if aia_data and aia_data["price"]:
+                        fund_item["curr_price"] = aia_data["price"]
+                        fund_item["buy_price"] = aia_data["price"]
+                        if aia_data["high"]:
+                            fund_item["high"] = aia_data["high"]
+                        if aia_data["low"]:
+                            fund_item["low"] = aia_data["low"]
+                        st.toast(f"✅ 已為 {selected_code} 抓取 AIA 最新現價: ${aia_data['price']}", icon="📈")
 
                     st.rerun()
 
-                # 動態元件 Key（追加 selected_code，防止快取殘留跨基金覆蓋）
+                # 防快取動態 Key
                 f_key = f"{idx}_{selected_code}"
 
-                # 讀取或更新輸入值
                 amt_val = st.number_input("帳面本金 ($):", value=float(fund_item["amount"]), step=10000.0, key=f"amt_{f_key}")
                 fund_item["amount"] = amt_val
 
