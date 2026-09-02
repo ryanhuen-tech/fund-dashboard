@@ -115,11 +115,11 @@ def render_portfolio_builder_tab():
     </style>
     """, unsafe_allow_html=True)
 
-    # 預設基金組合資料結構 (精確對齊後台正本數據)
+    # 預設基金組合資料結構 (精確對齊正本數據)
     if "portfolio_funds" not in st.session_state:
         st.session_state.portfolio_funds = [
-            {"code": "Z04", "amount": 100000.0, "bonus": 4.0, "buy_price": 8.52, "curr_price": 8.00, "high": 12.96, "low": 7.99, "stock_pct": 100, "bond_pct": 0, "yield_pct": 8.13, "upf": 1.35, "annual_fee": 1.00},
-            {"code": "Z13", "amount": 100000.0, "bonus": 0.0, "buy_price": 9.20, "curr_price": 7.82, "high": 9.39, "low": 7.47, "stock_pct": 0, "bond_pct": 100, "yield_pct": 7.20, "upf": 1.35, "annual_fee": 1.00}
+            {"code": "Z04", "amount": 100000.0, "bonus": 4.0, "buy_price": 8.52, "curr_price": 8.00, "high": 12.96, "low": 7.99, "stock_pct": 100, "bond_pct": 0, "yield_pct": 9.40, "upf": 1.35, "annual_fee": 1.00},
+            {"code": "Z13", "amount": 100000.0, "bonus": 4.0, "buy_price": 9.20, "curr_price": 7.82, "high": 9.39, "low": 7.47, "stock_pct": 0, "bond_pct": 100, "yield_pct": 7.20, "upf": 1.35, "annual_fee": 1.00}
         ]
 
     # 工具列
@@ -141,7 +141,7 @@ def render_portfolio_builder_tab():
 
     st.markdown("---")
 
-    # 2. 同步 UI 最新動態輸入值
+    # 2. 優先同步 UI 最新動態輸入值 (解決派息率與輸入框沒變動問題)
     for idx, fund_item in enumerate(st.session_state.portfolio_funds):
         code = fund_item.get("code", "Z01")
         f_key = f"{idx}_{code}"
@@ -155,7 +155,7 @@ def render_portfolio_builder_tab():
         if f"upf_{f_key}" in st.session_state: fund_item["upf"] = st.session_state[f"upf_{f_key}"]
         if f"anf_{f_key}" in st.session_state: fund_item["annual_fee"] = st.session_state[f"anf_{f_key}"]
 
-    # 3. 精算全組合數據
+    # 3. 精算全組合數據 (含動態風控評分加權)
     total_months = plan_years * 12
     total_cost = 0.0          
     total_initial_val = 0.0   
@@ -167,7 +167,7 @@ def render_portfolio_builder_tab():
     portfolio_sector_weighted = {}
 
     calc_funds = []
-    portfolio_scores = []
+    weighted_score_sum = 0.0
     has_l3_l4 = False
 
     for f in st.session_state.portfolio_funds:
@@ -185,17 +185,20 @@ def render_portfolio_builder_tab():
         total_stock_amt += init_val * (s_pct / 100.0)
         total_bond_amt += init_val * (b_pct / 100.0)
         
-        monthly_div = init_val * (f.get("yield_pct", 8.0) / 100.0) / 12.0
+        # 精確派息計算 (連動 UI 最新修改值)
+        yield_val = f.get("yield_pct", 8.0)
+        monthly_div = init_val * (yield_val / 100.0) / 12.0
         total_curr_monthly_div += monthly_div
 
         code = f.get("code", "Z01")
         fund_info = ALL_FUNDS.get(code, {})
 
-        score_val = float(fund_info.get("score", 70.0))
-        portfolio_scores.append(score_val)
+        # 風控評分動態加權 (本金比重加權)
+        score_val = float(fund_info.get("score", 85.0))
+        weighted_score_sum += score_val * init_val
 
         der_level = fund_info.get("risk_derivatives", {}).get("risk_level", "L1")
-        if der_level in ["L3", "L4"]:
+        if der_level in ["L3", "L4"] or code in ["Z18", "Z17"]:
             has_l3_l4 = True
 
         # 地區加權
@@ -218,7 +221,7 @@ def render_portfolio_builder_tab():
 
         calc_funds.append({
             "code": code, "p": amt, "units": units, "price0": price0, "price1": f.get("curr_price", price0),
-            "upf": f.get("upf", 1.35), "annual_fee": f.get("annual_fee", 1.00), "div": f.get("yield_pct", 8.0),
+            "upf": f.get("upf", 1.35), "annual_fee": f.get("annual_fee", 1.00), "div": yield_val,
             "final_val": 0.0, "val_before_bonus": 0.0
         })
 
@@ -270,7 +273,7 @@ def render_portfolio_builder_tab():
         overall_stock_pct, overall_bond_pct = 0, 0
 
     portfolio_yield_pct = (total_curr_monthly_div * 12 / total_initial_val * 100) if total_initial_val > 0 else 0.0
-    avg_score = (sum(portfolio_scores) / len(portfolio_scores)) if portfolio_scores else 0.0
+    avg_score = (weighted_score_sum / total_initial_val) if total_initial_val > 0 else 0.0
 
     # 4. KPI 名片資料結構
     cards_data = {
@@ -342,7 +345,7 @@ def render_portfolio_builder_tab():
 
     st.markdown("---")
 
-    # 7. 基金配置編輯區 (優先以靜態資料庫載入精確 Factsheet 正本數據)
+    # 7. 基金配置編輯區 (優先以 Factsheet 正本派息率載入，絕不捏造)
     st.markdown("### 📁 組合內基金詳細配置與手續費設定")
     
     fund_options = {f"{f_data.get('code', '')} {f_data.get('zh', '')}": f_code for f_code, f_data in ALL_FUNDS.items()}
@@ -367,12 +370,10 @@ def render_portfolio_builder_tab():
                 selected_code = fund_options[selected_label]
                 target_fund = ALL_FUNDS.get(selected_code, {})
 
-                # 當切換基金時，100% 以系統資料庫 (Factsheet) 為準重置，保證數據絕對精確
+                # 切換基金時，精確載入 Factsheet 派息率與股債比
                 if selected_code != fund_item["code"]:
                     fund_item["code"] = selected_code
                     cat = target_fund.get("category", "")
-                    
-                    # 剛性股債比判定
                     if "債券" in cat:
                         fund_item["stock_pct"] = 0
                         fund_item["bond_pct"] = 100
@@ -383,10 +384,9 @@ def render_portfolio_builder_tab():
                         fund_item["stock_pct"] = 52
                         fund_item["bond_pct"] = 48
                     
-                    # 剛性載入 Factsheet 正本年派息率 (絕不捏造)
+                    # 剛性載入 Factsheet 正本精確年派息率
                     fund_item["yield_pct"] = float(target_fund.get("last_yield", 8.0))
                     
-                    # 載入預設高低位與買入價
                     fund_item["buy_price"] = 10.00
                     fund_item["curr_price"] = 10.00
                     fund_item["high"] = 12.00
@@ -394,7 +394,7 @@ def render_portfolio_builder_tab():
                     fund_item["upf"] = 1.35
                     fund_item["annual_fee"] = 1.00
 
-                    # 背景安全發送 AIA 爬蟲請求 (僅當成功獲取時才更新現價)
+                    # 背景安全發送 AIA 爬蟲請求
                     clean_code = extract_fund_code(selected_code)
                     aia_data = fetch_aia_fund_data(clean_code)
                     if aia_data and aia_data.get("price"):
@@ -440,6 +440,7 @@ def render_portfolio_builder_tab():
                 with col_l:
                     st.text_input("歷史低位:", value=f"${fund_item.get('low', 8.0):.2f}", disabled=True, key=f"lo_{f_key}")
 
+                # 精確帶入並允許微調派息率 %
                 st.number_input("年派息率 (%):", value=float(fund_item.get("yield_pct", 8.0)), step=0.1, key=f"yld_{f_key}")
 
                 if st.button("🗑️ 移除此基金", key=f"del_{f_key}"):
@@ -480,22 +481,26 @@ def render_portfolio_builder_tab():
         else:
             st.info("尚無數據繪製行業分佈圖。")
 
-    # 9. 組合風險評估與理專建議報告區塊
+    # 9. 動態連動版：組合風險評估與理專建議報告區塊
     st.markdown("---")
     st.markdown("### 🛡️ 組合風險評估與顧問建議報告")
 
+    # 動態建議生成邏輯
+    alloc_comment = "屬防守型組合，淨值波動風險較低。" if overall_bond_pct >= 50 else "屬成長型組合，需留意股票市場下行波動風險。"
+    deriv_comment = "⚠️ <b style='color:#DC2626;'>警示：</b> 組合內含有 L3 (144A ELN) 或 L4 (TRS) 高風險衍生工具基金（如 Z18/Z17），建議控制該類基金持倉比例不超過 20%。" if has_l3_l4 else "🟢 <b style='color:#059669;'>安全：</b> 組合內全數基金皆未包含 L3 (144A ELN) 高危否決級別衍生品，資產結構極度健康。"
+
     st.markdown(f"""
     <div class="advice-box">
-        <h4 style="color:#1E3A8A; margin-bottom:10px;">📊 組合風險診斷結論 (平均風控得分: {avg_score:.1f} / 100)</h4>
+        <h4 style="color:#1E3A8A; margin-bottom:10px;">📊 組合風險診斷結論 (加權平均風控得分: {avg_score:.1f} / 100)</h4>
         <ul style="color:#334155; font-size:14px; line-height:1.8;">
-            <li><b>股債配置評價：</b> 當前組合股票比例為 <b>{overall_stock_pct}%</b>，債券比例為 <b>{overall_bond_pct}%</b>。{"屬穩健防守型組合，淨值波動風險較低。" if overall_bond_pct >= 50 else "屬成長型組合，需留意股票市場下行波動風險。"}</li>
-            <li><b>衍生工具風險審計：</b> {"⚠️ <b style='color:#DC2626;'>警示：</b> 組合內包含含有 L3 (144A ELN) 或 L4 (TRS) 衍生工具之基金，建議控制單一高風險基金持倉比例不超過 20%。" if has_l3_l4 else "🟢 <b style='color:#059669;'>安全：</b> 組合內未包含 L3 (144A ELN) 高危否決級別衍生品，資產結構健全。"}</li>
-            <li><b>現金流與派息評估：</b> 組合平均年化派息率為 <b>{portfolio_yield_pct:.2f}%</b>，每月可提供 <b>${total_curr_monthly_div:,.0f}</b> 被動現金流收入。</li>
+            <li><b>股債配置評價：</b> 當前組合股票比例為 <b>{overall_stock_pct}%</b>，債券比例為 <b>{overall_bond_pct}%</b>。{alloc_comment}</li>
+            <li><b>衍生工具風險審計：</b> {deriv_comment}</li>
+            <li><b>現金流與派息評估：</b> 組合加權平均年化派息率為 <b>{portfolio_yield_pct:.2f}%</b>，每月可提供 <b>${total_curr_monthly_div:,.0f}</b> 被動現金流收入。</li>
         </ul>
         <hr style="border-top: 1px dashed #CBD5E1; margin: 12px 0;">
         <h5 style="color:#0D9488; margin-bottom:6px;">🗣️ 建議對客戶銷售對白：</h5>
         <p style="color:#475569; font-size:13px; font-style:italic;">
-            「張先生/小姐，為您配置的這個基金組合，平均派息率達到 <b>{portfolio_yield_pct:.2f}%</b>，每月能穩定帶來約 <b>${total_curr_monthly_div:,.0f}</b> 的現金收入。在風險控制上，我們嚴格過濾了私募結構性風險（如 144A ELN），股債比保持在 <b>{overall_stock_pct}:{overall_bond_pct}</b>，既能享受資本利得空間，又能透過每月派息對沖市場波動，非常符合您追求穩健高派息的理財目標。」
+            「張先生/小姐，為您量身配置的這個基金組合，加權平均派息率達到 <b>{portfolio_yield_pct:.2f}%</b>，每月能穩定帶來約 <b>${total_curr_monthly_div:,.0f}</b> 的現金流。在風險控制上，綜合風控得分高達 <b>{avg_score:.1f} 分</b>，股債比保持在 <b>{overall_stock_pct}:{overall_bond_pct}</b>，既能享有資本利得空間，又能透過每月現金派息對沖市場波動，非常符合您追求穩健高派息的理財目標。」
         </p>
     </div>
     """, unsafe_allow_html=True)
