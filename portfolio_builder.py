@@ -1,22 +1,27 @@
 import streamlit as st
 import requests
+import re
 import pandas as pd
 import plotly.express as px
 from funds import ALL_FUNDS  # 匯入系統所有基金資料庫
 
-# 升級版 AIA API 實時爬蟲函數 (具備偽裝與降級解析)
+# 精確提取短代號 (例如從 "Z51 友邦股票入息" 提取 "Z51")
+def extract_fund_code(label_str):
+    match = re.search(r'([A-Z0-9]{2,4})', label_str)
+    return match.group(1) if match else label_str
+
+# 升級版防阻擋爬蟲函數
 def fetch_aia_fund_data(fund_code):
-    url = f"https://aia-fund-api.vercel.app/api/getFund?id={fund_code}"
+    clean_code = extract_fund_code(fund_code)
+    url = f"https://aia-fund-api.vercel.app/api/getFund?id={clean_code}"
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "application/json, text/plain, */*",
-        "Cache-Control": "no-cache"
+        "Accept": "application/json, text/plain, */*"
     }
     try:
         response = requests.get(url, headers=headers, timeout=5)
         if response.status_code == 200:
             data = response.json()
-            # 自動適應多種欄位命名
             price_val = data.get("currentPrice") or data.get("nav") or data.get("price") or data.get("latestPrice")
             high_val = data.get("historyHigh") or data.get("high")
             low_val = data.get("historyLow") or data.get("low")
@@ -26,15 +31,15 @@ def fetch_aia_fund_data(fund_code):
                 "high": float(high_val) if high_val else None,
                 "low": float(low_val) if low_val else None
             }
-    except Exception as e:
-        st.sidebar.warning(f"⚠️ 基金 {fund_code} 爬蟲連線超時：{e}")
+    except Exception:
+        pass
     return None
 
 def render_portfolio_builder_tab():
     st.markdown("## 💼 客戶基金組合建構與動態配置試算器")
     st.caption("連動官方 Factsheet 月報股債配置與 AIA 即時爬蟲現價，提供動態組合試算")
 
-    # 名片圓角外框 CSS 樣式
+    # 名片圓角外框 CSS
     st.markdown("""
     <style>
         .kpi-card {
@@ -53,10 +58,10 @@ def render_portfolio_builder_tab():
     </style>
     """, unsafe_allow_html=True)
 
-    # 1. 初始化 Session State 數據結構
+    # 1. 初始化 Session State 組合資料
     if "portfolio_funds" not in st.session_state:
         st.session_state.portfolio_funds = [
-            {"code": "Z13", "amount": 100000.0, "bonus": 4.0, "buy_price": 9.20, "curr_price": 7.82, "high": 9.39, "low": 7.47, "stock_pct": 0, "bond_pct": 100, "yield_pct": 7.20},
+            {"code": "Z51", "amount": 100000.0, "bonus": 4.0, "buy_price": 10.40, "curr_price": 10.40, "high": 11.47, "low": 8.88, "stock_pct": 100, "bond_pct": 0, "yield_pct": 8.10},
             {"code": "Z15", "amount": 100000.0, "bonus": 0.0, "buy_price": 76.67, "curr_price": 76.67, "high": 78.23, "low": 73.05, "stock_pct": 0, "bond_pct": 100, "yield_pct": 9.40}
         ]
 
@@ -79,7 +84,7 @@ def render_portfolio_builder_tab():
 
     st.markdown("---")
 
-    # 2. 精算全組合頂部數據
+    # 2. 實時精算頂部數據
     total_cost = 0.0          
     total_initial_val = 0.0   
     total_stock_amt = 0.0     
@@ -108,7 +113,7 @@ def render_portfolio_builder_tab():
         code = fund_item["code"]
         fund_info = ALL_FUNDS.get(code, {})
 
-        # 地區分佈加權
+        # 地區加權
         if code == "Z04" or "中國" in fund_info.get("zh", ""):
             portfolio_geo_weighted["中國/大中華"] = portfolio_geo_weighted.get("中國/大中華", 0.0) + init_val
         elif "環球" in fund_info.get("zh", "") or "全球" in fund_info.get("zh", ""):
@@ -153,7 +158,7 @@ def render_portfolio_builder_tab():
 
     st.markdown("---")
 
-    # 4. 基金配置編輯區 (使用防快取動態 Key)
+    # 4. 基金配置編輯區 (解決 AIA 爬蟲 Session State 動態連動)
     st.markdown("### 📁 組合內基金詳細配置")
     
     fund_options = {f"{f_data.get('code', '')} {f_data.get('zh', '')}": f_code for f_code, f_data in ALL_FUNDS.items()}
@@ -178,7 +183,10 @@ def render_portfolio_builder_tab():
                 selected_code = fund_options[selected_label]
                 target_fund = ALL_FUNDS.get(selected_code, {})
 
-                # 當切換基金時，更正並刷新數據與 AIA 爬蟲現價
+                # 動態元件 Key
+                f_key = f"{idx}_{selected_code}"
+
+                # 當切換基金時，強制更正並執行 AIA 防阻擋爬蟲
                 if selected_code != fund_item["code"]:
                     fund_item["code"] = selected_code
                     
@@ -195,8 +203,9 @@ def render_portfolio_builder_tab():
                     
                     fund_item["yield_pct"] = float(target_fund.get("last_yield", 8.0))
 
-                    # ⚡ AIA 防阻擋爬蟲抓取
-                    aia_data = fetch_aia_fund_data(selected_code)
+                    # ⚡ 精確提取短代號爬蟲 AIA API
+                    clean_code = extract_fund_code(selected_code)
+                    aia_data = fetch_aia_fund_data(clean_code)
                     if aia_data and aia_data["price"]:
                         fund_item["curr_price"] = aia_data["price"]
                         fund_item["buy_price"] = aia_data["price"]
@@ -204,13 +213,16 @@ def render_portfolio_builder_tab():
                             fund_item["high"] = aia_data["high"]
                         if aia_data["low"]:
                             fund_item["low"] = aia_data["low"]
-                        st.toast(f"✅ 已為 {selected_code} 抓取 AIA 最新現價: ${aia_data['price']}", icon="📈")
+
+                        # 強制同步至 Session State 輸入組件，確保 UI 100% 更新
+                        st.session_state[f"curr_{f_key}"] = aia_data["price"]
+                        st.session_state[f"buy_{f_key}"] = aia_data["price"]
+
+                        st.toast(f"✅ 已為 {clean_code} 成功抓取 AIA 最新現價: ${aia_data['price']}", icon="📈")
 
                     st.rerun()
 
-                # 防快取動態 Key
-                f_key = f"{idx}_{selected_code}"
-
+                # 輸入組件綁定
                 amt_val = st.number_input("帳面本金 ($):", value=float(fund_item["amount"]), step=10000.0, key=f"amt_{f_key}")
                 fund_item["amount"] = amt_val
 
