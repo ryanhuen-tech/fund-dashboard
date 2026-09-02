@@ -10,7 +10,7 @@ def extract_fund_code(label_str):
     match = re.search(r'([A-Z0-9]{2,4})', label_str)
     return match.group(1) if match else label_str
 
-# 1. 🟢 從資料庫正本提取真實派息率
+# 獲取正本派息紀錄中的真實派息率 %
 def get_exact_yield_from_fund(target_fund):
     history_div = target_fund.get("history_div", [])
     if history_div and len(history_div) > 0:
@@ -31,40 +31,18 @@ def get_exact_yield_from_fund(target_fund):
             
     return 7.50
 
-# 2. 🟢 從資料庫正本提取真實股債配置 (徹底解決股債顯示錯誤問題)
+# 從資料庫提取預設真實股債配置
 def get_exact_asset_alloc(target_fund):
-    # 優先從資產分佈資料中提取
-    asset_dist = target_fund.get("asset_dist", [])
-    stk_pct = None
-    bnd_pct = None
-    
-    for item in asset_dist:
-        if len(item) >= 2:
-            name, pct = item[0], item[1]
-            try:
-                val = float(str(pct).replace("%", "").strip())
-                if "股票" in name or "Equities" in name:
-                    stk_pct = val
-                elif "債券" in name or "Bonds" in name or "固定收益" in name:
-                    bnd_pct = val
-            except Exception:
-                pass
-
-    if stk_pct is not None:
-        return int(round(stk_pct))
-    
-    # 備用邏輯：依據資料庫的 category 欄位進行預設值精確備用
     cat = target_fund.get("category", "")
     if "債券" in cat:
-        return 0
+        return 0, 100
     elif "股票" in cat and "混合" not in cat:
-        return 100
+        return 100, 0
     elif "混合" in cat:
-        return 52
-        
-    return 50
+        return 52, 48
+    return 50, 50
 
-# 3. 🟢 下拉選單切換時，連動正本資料庫重置 UI
+# 下拉選單切換時，強制更新 UI 狀態 (完全解鎖並重置股債比)
 def on_fund_select_change(f_id, fund_item):
     sel_label = st.session_state.get(f"sel_{f_id}")
     if not sel_label:
@@ -77,16 +55,33 @@ def on_fund_select_change(f_id, fund_item):
     target_fund = ALL_FUNDS.get(selected_code, {})
     fund_item["code"] = selected_code
     
-    # 動態獲取該基金在 Factsheet 中的真實股債比
-    true_stk = get_exact_asset_alloc(target_fund)
-    st.session_state[f"stk_{f_id}"] = true_stk
-    fund_item["stock_pct"] = true_stk
-    fund_item["bond_pct"] = 100 - true_stk
+    # 動態賦予正確的股債比
+    stk, bnd = get_exact_asset_alloc(target_fund)
+    st.session_state[f"stk_{f_id}"] = stk
+    st.session_state[f"bnd_{f_id}"] = bnd
+    fund_item["stock_pct"] = stk
+    fund_item["bond_pct"] = bnd
         
     # 動態獲取該基金在歷史紀錄中的真實派息率
     exact_yield = get_exact_yield_from_fund(target_fund)
     st.session_state[f"yld_{f_id}"] = exact_yield
     fund_item["yield_pct"] = exact_yield
+
+# 當手動修改股票 % 時，自動同步連動債券 %
+def on_stock_change(f_id, fund_item):
+    new_stk = st.session_state.get(f"stk_{f_id}", 50)
+    new_bnd = 100 - new_stk
+    st.session_state[f"bnd_{f_id}"] = new_bnd
+    fund_item["stock_pct"] = new_stk
+    fund_item["bond_pct"] = new_bnd
+
+# 當手動修改債券 % 時，自動同步連動股票 %
+def on_bond_change(f_id, fund_item):
+    new_bnd = st.session_state.get(f"bnd_{f_id}", 50)
+    new_stk = 100 - new_bnd
+    st.session_state[f"stk_{f_id}"] = new_stk
+    fund_item["stock_pct"] = new_stk
+    fund_item["bond_pct"] = new_bnd
 
 # 計算第 61 個月起的長期客戶獎賞 (Long-term Bonus)
 def calculate_long_term_bonus(avg_value_60m):
@@ -168,7 +163,7 @@ def render_portfolio_builder_tab():
     </style>
     """, unsafe_allow_html=True)
 
-    # 初始化預設基金
+    # 初始化預設基金 (Z04, Z13, Z15, Z51 正確預設)
     if "portfolio_funds" not in st.session_state:
         f_z04 = ALL_FUNDS.get("Z04", {})
         f_z13 = ALL_FUNDS.get("Z13", {})
@@ -176,16 +171,14 @@ def render_portfolio_builder_tab():
             {
                 "id": str(uuid.uuid4()),
                 "code": "Z04", "amount": 100000.0, "bonus": 4.0, "buy_price": 8.52, "curr_price": 8.00,
-                "stock_pct": get_exact_asset_alloc(f_z04),
-                "bond_pct": 100 - get_exact_asset_alloc(f_z04),
+                "stock_pct": 100, "bond_pct": 0,
                 "yield_pct": get_exact_yield_from_fund(f_z04),
                 "upf": 1.35, "annual_fee": 1.00
             },
             {
                 "id": str(uuid.uuid4()),
                 "code": "Z13", "amount": 100000.0, "bonus": 4.0, "buy_price": 9.20, "curr_price": 7.82,
-                "stock_pct": get_exact_asset_alloc(f_z13),
-                "bond_pct": 100 - get_exact_asset_alloc(f_z13),
+                "stock_pct": 0, "bond_pct": 100,
                 "yield_pct": get_exact_yield_from_fund(f_z13),
                 "upf": 1.35, "annual_fee": 1.00
             }
@@ -208,8 +201,7 @@ def render_portfolio_builder_tab():
                 {
                     "id": str(uuid.uuid4()),
                     "code": "Z01", "amount": 100000.0, "bonus": 0.0, "buy_price": 10.0, "curr_price": 10.0,
-                    "stock_pct": get_exact_asset_alloc(f_default),
-                    "bond_pct": 100 - get_exact_asset_alloc(f_default),
+                    "stock_pct": 100, "bond_pct": 0,
                     "yield_pct": get_exact_yield_from_fund(f_default),
                     "upf": 1.35, "annual_fee": 1.00
                 }
@@ -229,16 +221,16 @@ def render_portfolio_builder_tab():
         code = fund_item.get("code", "Z01")
         target_fund = ALL_FUNDS.get(code, {})
 
-        # 先從 Session State 讀取股票 %，若無則依據資料庫正本寫入
-        if f"stk_{f_id}" in st.session_state:
-            s_val = st.session_state[f"stk_{f_id}"]
-            fund_item["stock_pct"] = s_val
-            fund_item["bond_pct"] = 100 - s_val
+        # 初始化 Session State 中的股債值
+        if f"stk_{f_id}" not in st.session_state or f"bnd_{f_id}" not in st.session_state:
+            stk_init, bnd_init = get_exact_asset_alloc(target_fund)
+            st.session_state[f"stk_{f_id}"] = stk_init
+            st.session_state[f"bnd_{f_id}"] = bnd_init
+            fund_item["stock_pct"] = stk_init
+            fund_item["bond_pct"] = bnd_init
         else:
-            true_stk = get_exact_asset_alloc(target_fund)
-            fund_item["stock_pct"] = true_stk
-            fund_item["bond_pct"] = 100 - true_stk
-            st.session_state[f"stk_{f_id}"] = true_stk
+            fund_item["stock_pct"] = st.session_state[f"stk_{f_id}"]
+            fund_item["bond_pct"] = st.session_state[f"bnd_{f_id}"]
 
         if f"amt_{f_id}" in st.session_state: fund_item["amount"] = st.session_state[f"amt_{f_id}"]
         if f"bonus_{f_id}" in st.session_state: fund_item["bonus"] = st.session_state[f"bonus_{f_id}"]
@@ -274,8 +266,7 @@ def render_portfolio_builder_tab():
         total_initial_val += init_val
         
         s_pct = f.get("stock_pct", 50)
-        b_pct = 100 - s_pct
-        f["bond_pct"] = b_pct
+        b_pct = f.get("bond_pct", 50)
         
         total_stock_amt += init_val * (s_pct / 100.0)
         total_bond_amt += init_val * (b_pct / 100.0)
@@ -438,7 +429,7 @@ def render_portfolio_builder_tab():
 
     st.markdown("---")
 
-    # 7. 基金配置編輯區
+    # 7. 基金配置編輯區 (徹底解鎖股債，允許自由點擊修改)
     st.markdown("### 📁 組合內基金詳細配置與手續費設定")
     
     fund_options = {f"{f_data.get('code', '')} {f_data.get('zh', '')}": f_code for f_code, f_data in ALL_FUNDS.items()}
@@ -468,20 +459,30 @@ def render_portfolio_builder_tab():
                     on_change=on_fund_select_change,
                     args=(f_id, fund_item)
                 )
-                
-                selected_code = fund_options[selected_label]
 
                 st.number_input("帳面本金 ($):", value=float(fund_item.get("amount", 100000.0)), step=10000.0, key=f"amt_{f_id}")
                 st.number_input("開戶獎賞 (%):", value=float(fund_item.get("bonus", 0.0)), step=0.5, key=f"bonus_{f_id}")
 
-                # 🟢 動態綁定：直接讀取經過正本驗證後的 stock_pct
+                # 🟢 徹底解鎖！股票 (%) 與 債券 (%) 皆可自由編輯且雙向自動同步
                 col_s, col_b = st.columns(2)
                 with col_s:
-                    current_stk = int(fund_item.get("stock_pct", 50))
-                    st.number_input("股票 (%):", value=current_stk, min_value=0, max_value=100, key=f"stk_{f_id}")
+                    st.number_input(
+                        "股票 (%):", 
+                        value=int(st.session_state.get(f"stk_{f_id}", fund_item.get("stock_pct", 50))), 
+                        min_value=0, max_value=100, 
+                        key=f"stk_{f_id}",
+                        on_change=on_stock_change,
+                        args=(f_id, fund_item)
+                    )
                 with col_b:
-                    # 剛性計算債券比例 (100 - 股票%)
-                    st.number_input("債券 (%):", value=100 - current_stk, disabled=True, key=f"bnd_disp_{f_id}")
+                    st.number_input(
+                        "債券 (%):", 
+                        value=int(st.session_state.get(f"bnd_{f_id}", fund_item.get("bond_pct", 50))), 
+                        min_value=0, max_value=100, 
+                        key=f"bnd_{f_id}",
+                        on_change=on_bond_change,
+                        args=(f_id, fund_item)
+                    )
 
                 col_f1, col_f2 = st.columns(2)
                 with col_f1:
