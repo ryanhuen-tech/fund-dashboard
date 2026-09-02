@@ -42,25 +42,25 @@ def get_exact_asset_alloc(target_fund):
         return 52, 48
     return 50, 50
 
-# 3. 初始化內建與自訂模版字典
+# 3. 初始化內建與自訂模版字典 (所有賞金預設設定為 0.0%)
 def init_custom_templates():
     if "saved_templates" not in st.session_state:
         st.session_state.saved_templates = {
             "低風險組合 (保守型 - 高收益債券)": [
-                {"code": "Z13", "amt": 100000.0, "bonus": 4.0, "stk": 0, "bnd": 100},
+                {"code": "Z13", "amt": 100000.0, "bonus": 0.0, "stk": 0, "bnd": 100},
                 {"code": "Z15", "amt": 100000.0, "bonus": 0.0, "stk": 0, "bnd": 100}
             ],
             "中風險組合 (平衡型 - 股債對半)": [
-                {"code": "Z04", "amt": 100000.0, "bonus": 4.0, "stk": 100, "bnd": 0},
-                {"code": "Z13", "amt": 100000.0, "bonus": 4.0, "stk": 0, "bnd": 100}
+                {"code": "Z04", "amt": 100000.0, "bonus": 0.0, "stk": 100, "bnd": 0},
+                {"code": "Z13", "amt": 100000.0, "bonus": 0.0, "stk": 0, "bnd": 100}
             ],
             "高風險組合 (積極型 - 股票入息)": [
-                {"code": "Z04", "amt": 100000.0, "bonus": 4.0, "stk": 100, "bnd": 0},
+                {"code": "Z04", "amt": 100000.0, "bonus": 0.0, "stk": 100, "bnd": 0},
                 {"code": "Z51", "amt": 100000.0, "bonus": 0.0, "stk": 100, "bnd": 0}
             ]
         }
 
-# 4. 根據名稱建立組合物件
+# 4. 根據名稱建立組合物件 (預設賞金為 0.0%)
 def create_portfolio_from_template(template_name):
     selected_items = st.session_state.saved_templates.get(template_name, [])
     new_funds = []
@@ -76,7 +76,7 @@ def create_portfolio_from_template(template_name):
             "id": str(uuid.uuid4()),
             "code": code,
             "amount": item.get("amt", 100000.0),
-            "bonus": item.get("bonus", 0.0),
+            "bonus": 0.0,  # 🟢 預設開戶賞金設定為 0.0
             "buy_price": item.get("buy_price", 10.00),
             "curr_price": item.get("curr_price", 10.00),
             "stock_pct": stk,
@@ -149,13 +149,20 @@ def render_portfolio_builder_tab():
 
     init_custom_templates()
 
-    # 1. 隱藏狀態 Session State 初始化
+    # 1. 隱藏狀態與卡片順序 Session State 初始化
     if "hidden_cards" not in st.session_state:
         st.session_state.hidden_cards = {
             "c1": False, "c2": False, "c3": False, "c4": False,
             "c5": False, "c6": False, "c7": False, "c8": False,
             "c9": False, "c10": False, "c11": False, "c12": False
         }
+
+    # 名片預設順序初始化
+    if "card_order" not in st.session_state:
+        st.session_state.card_order = [
+            "c1", "c2", "c3", "c4", "c5", "c6",
+            "c7", "c8", "c9", "c10", "c11", "c12"
+        ]
 
     # 名片自訂樣式
     st.markdown("""
@@ -206,7 +213,7 @@ def render_portfolio_builder_tab():
     </style>
     """, unsafe_allow_html=True)
 
-    # 🟢 頂部模版管理區塊 (載入 / 命名儲存 / 刪除)
+    # 頂部模版管理區塊
     st.markdown("#### ⚡ 投資組合策略模版管理")
     
     template_list = list(st.session_state.saved_templates.keys())
@@ -228,7 +235,7 @@ def render_portfolio_builder_tab():
                 st.toast(f"已刪除模版：「{selected_template}」", icon="🗑️")
                 st.rerun()
 
-    # 🟢 自訂名稱並儲存當前畫面的組合
+    # 自訂名稱並儲存當前畫面的組合
     col_save_name, col_save_btn = st.columns([3, 1])
     with col_save_name:
         new_template_name = st.text_input("輸入自訂組合名稱 (例：張先生 - 20萬美金高派息方案):", placeholder="請輸入組合名稱...", key="new_tpl_name_input")
@@ -241,7 +248,7 @@ def render_portfolio_builder_tab():
                     saved_data.append({
                         "code": f.get("code", "Z01"),
                         "amt": f.get("amount", 100000.0),
-                        "bonus": f.get("bonus", 0.0),
+                        "bonus": 0.0,  # 🟢 儲存時開戶獎賞預設為 0.0
                         "stk": f.get("stock_pct", 50),
                         "bnd": f.get("bond_pct", 50),
                         "yld": f.get("yield_pct", 7.5),
@@ -258,7 +265,7 @@ def render_portfolio_builder_tab():
 
     st.markdown("---")
 
-    # 初始化預設基金 (中風險平衡型預設)
+    # 初始化預設基金
     if "portfolio_funds" not in st.session_state:
         st.session_state.portfolio_funds = create_portfolio_from_template("中風險組合 (平衡型 - 股債對半)")
 
@@ -278,7 +285,7 @@ def render_portfolio_builder_tab():
             st.session_state.portfolio_funds.append(
                 {
                     "id": str(uuid.uuid4()),
-                    "code": "Z01", "amount": 100000.0, "bonus": 0.0, "buy_price": 10.0, "curr_price": 10.0,
+                    "code": "Z01", "amount": 100000.0, "bonus": 0.0, "buy_price": 10.0, "curr_price": 10.0,  # 🟢 賞金設為 0.0
                     "stock_pct": stk, "bond_pct": bnd,
                     "yield_pct": get_exact_yield_from_fund(f_default),
                     "upf": 1.35, "annual_fee": 1.00
@@ -452,11 +459,32 @@ def render_portfolio_builder_tab():
         "c12": {"title": "組合股債比例 (股 : 債)", "val": f"{overall_stock_pct}% : {overall_bond_pct}%", "class": "kpi-border-blue", "val_class": "text-blue"}
     }
 
-    # 5. 渲染 12 張 KPI 名片
+    # 🟢 5. 渲染 12 張 KPI 名片 (支援名片位置上下移動與順序調整)
     st.markdown("### 📊 投資組合核心 KPI 儀表板")
 
-    row1_keys = ["c1", "c2", "c3", "c4", "c5", "c6"]
-    row2_keys = ["c7", "c8", "c9", "c10", "c11", "c12"]
+    # 折疊選單：提供名片順序調整功能
+    with st.expander("↕️ 點擊展開：調整名片顯示順序", expanded=False):
+        st.caption("您可以透過點擊「⬆️ 向上」或「⬇️ 向下」自由搬移調整名片的顯示優先順序：")
+        for pos, c_key in enumerate(st.session_state.card_order):
+            c_title = cards_data[c_key]["title"]
+            col_pos_title, col_up, col_dn = st.columns([3, 1, 1])
+            with col_pos_title:
+                st.write(f"**第 {pos + 1} 位:** {c_title}")
+            with col_up:
+                if pos > 0:
+                    if st.button("⬆️ 向上", key=f"move_up_{c_key}"):
+                        st.session_state.card_order[pos], st.session_state.card_order[pos - 1] = st.session_state.card_order[pos - 1], st.session_state.card_order[pos]
+                        st.rerun()
+            with col_dn:
+                if pos < len(st.session_state.card_order) - 1:
+                    if st.button("⬇️ 向下", key=f"move_dn_{c_key}"):
+                        st.session_state.card_order[pos], st.session_state.card_order[pos + 1] = st.session_state.card_order[pos + 1], st.session_state.card_order[pos]
+                        st.rerun()
+
+    # 依動態順序分兩排渲染 (每排 6 張)
+    ordered_keys = [k for k in st.session_state.card_order if k in cards_data]
+    row1_keys = ordered_keys[:6]
+    row2_keys = ordered_keys[6:12]
 
     cols_row1 = st.columns(6)
     for i, c_key in enumerate(row1_keys):
@@ -506,7 +534,7 @@ def render_portfolio_builder_tab():
 
     st.markdown("---")
 
-    # 7. 基金配置編輯區
+    # 7. 基金配置編輯區 (開戶賞金預設為 0.0)
     st.markdown("### 📁 組合內基金詳細配置與手續費設定")
     
     fund_options = {f"{f_data.get('code', '')} {f_data.get('zh', '')}": f_code for f_code, f_data in ALL_FUNDS.items()}
@@ -538,7 +566,7 @@ def render_portfolio_builder_tab():
                 )
 
                 st.number_input("帳面本金 ($):", value=float(fund_item.get("amount", 100000.0)), step=10000.0, key=f"amt_{f_id}")
-                st.number_input("開戶獎賞 (%):", value=float(fund_item.get("bonus", 0.0)), step=0.5, key=f"bonus_{f_id}")
+                st.number_input("開戶獎賞 (%):", value=float(fund_item.get("bonus", 0.0)), step=0.5, key=f"bonus_{f_id}")  # 🟢 預設顯示 0.0
 
                 col_s, col_b = st.columns(2)
                 with col_s:
