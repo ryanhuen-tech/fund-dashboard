@@ -5,6 +5,7 @@ import pandas as pd
 import plotly.express as px
 from funds_loader import load_all_funds  # 從加載器動態加載
 from utils.nav_calculator import calculate_realtime_nav_to_nav
+from portfolio_builder import render_portfolio_builder_tab  # 匯入全新客戶組合建構模組
 
 # 0. 強制清除 Streamlit 快取，確保永遠抓取 GitHub 上最新的基金數據
 st.cache_data.clear()
@@ -115,10 +116,12 @@ with user_col:
     if st.button("🚪 安全登出", use_container_width=True):
         logout()
 
-top_tab1, top_tab2, top_tab3 = st.tabs([
+# 4 大系統主 TAB (新增第 4 個客戶組合建構分頁)
+top_tab1, top_tab2, top_tab3, top_tab4 = st.tabs([
     "📊 跨基金總體風險比較表 (全基金縱覽)", 
     "🔍 單一基金深度風險剖析", 
-    "📚 衍生工具解密與客戶對白指南"
+    "📚 衍生工具解密與客戶對白指南",
+    "💼 客戶基金組合建議 (NEW)"
 ])
 
 # ==============================================================================
@@ -625,3 +628,9 @@ with top_tab3:
     ]
     
     st.table(pd.DataFrame(matrix_guide))
+
+# ==============================================================================
+# TAB 4: 💼 客戶基金組合建議與動態配置 (全新整合模組)
+# ==============================================================================
+with top_tab4:
+    render_portfolio_builder_tab()
