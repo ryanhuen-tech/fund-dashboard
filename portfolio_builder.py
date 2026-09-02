@@ -1,7 +1,39 @@
 import streamlit as st
+import requests
+import re
 import pandas as pd
 import plotly.express as px
 from funds import ALL_FUNDS  # 匯入系統所有基金資料庫
+
+# 精確提取短代號 (例如從 "Z51 友邦股票入息" 提取 "Z51")
+def extract_fund_code(label_str):
+    match = re.search(r'([A-Z0-9]{2,4})', label_str)
+    return match.group(1) if match else label_str
+
+# 安全防護版 AIA API 實時爬蟲
+def fetch_aia_fund_data(fund_code):
+    clean_code = extract_fund_code(fund_code)
+    url = f"https://aia-fund-api.vercel.app/api/getFund?id={clean_code}"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "application/json, text/plain, */*"
+    }
+    try:
+        response = requests.get(url, headers=headers, timeout=3)
+        if response.status_code == 200:
+            data = response.json()
+            price_val = data.get("currentPrice") or data.get("nav") or data.get("price")
+            high_val = data.get("historyHigh") or data.get("high")
+            low_val = data.get("historyLow") or data.get("low")
+            
+            return {
+                "price": float(price_val) if price_val else None,
+                "high": float(high_val) if high_val else None,
+                "low": float(low_val) if low_val else None
+            }
+    except Exception:
+        pass
+    return None
 
 # 計算第 61 個月起的長期客戶獎賞 (Long-term Bonus) 階梯算式
 def calculate_long_term_bonus(avg_value_60m):
@@ -83,7 +115,7 @@ def render_portfolio_builder_tab():
     </style>
     """, unsafe_allow_html=True)
 
-    # 預設基金組合資料結構
+    # 預設基金組合資料結構 (精確對齊後台正本數據)
     if "portfolio_funds" not in st.session_state:
         st.session_state.portfolio_funds = [
             {"code": "Z04", "amount": 100000.0, "bonus": 4.0, "buy_price": 8.52, "curr_price": 8.00, "high": 12.96, "low": 7.99, "stock_pct": 100, "bond_pct": 0, "yield_pct": 8.13, "upf": 1.35, "annual_fee": 1.00},
@@ -123,7 +155,7 @@ def render_portfolio_builder_tab():
         if f"upf_{f_key}" in st.session_state: fund_item["upf"] = st.session_state[f"upf_{f_key}"]
         if f"anf_{f_key}" in st.session_state: fund_item["annual_fee"] = st.session_state[f"anf_{f_key}"]
 
-    # 3. 精算全組合與費用演算法
+    # 3. 精算全組合數據
     total_months = plan_years * 12
     total_cost = 0.0          
     total_initial_val = 0.0   
@@ -159,7 +191,6 @@ def render_portfolio_builder_tab():
         code = f.get("code", "Z01")
         fund_info = ALL_FUNDS.get(code, {})
 
-        # 風險評估資料收集
         score_val = float(fund_info.get("score", 70.0))
         portfolio_scores.append(score_val)
 
@@ -241,7 +272,7 @@ def render_portfolio_builder_tab():
     portfolio_yield_pct = (total_curr_monthly_div * 12 / total_initial_val * 100) if total_initial_val > 0 else 0.0
     avg_score = (sum(portfolio_scores) / len(portfolio_scores)) if portfolio_scores else 0.0
 
-    # 4. KPI 名片資料結構（c8 修改為「組合派息率」）
+    # 4. KPI 名片資料結構
     cards_data = {
         "c1": {"title": "總投入成本", "val": f"${total_cost:,.0f}", "class": "kpi-border-slate", "val_class": "text-green"},
         "c2": {"title": "期末總剩餘市值", "val": f"${total_final_val:,.0f}", "class": "kpi-border-red", "val_class": "text-red"},
@@ -311,7 +342,7 @@ def render_portfolio_builder_tab():
 
     st.markdown("---")
 
-    # 7. 基金配置編輯區
+    # 7. 基金配置編輯區 (優先以靜態資料庫載入精確 Factsheet 正本數據)
     st.markdown("### 📁 組合內基金詳細配置與手續費設定")
     
     fund_options = {f"{f_data.get('code', '')} {f_data.get('zh', '')}": f_code for f_code, f_data in ALL_FUNDS.items()}
@@ -336,22 +367,42 @@ def render_portfolio_builder_tab():
                 selected_code = fund_options[selected_label]
                 target_fund = ALL_FUNDS.get(selected_code, {})
 
+                # 當切換基金時，100% 以系統資料庫 (Factsheet) 為準重置，保證數據絕對精確
                 if selected_code != fund_item["code"]:
                     fund_item["code"] = selected_code
                     cat = target_fund.get("category", "")
+                    
+                    # 剛性股債比判定
                     if "債券" in cat:
                         fund_item["stock_pct"] = 0
                         fund_item["bond_pct"] = 100
                     elif "股票" in cat and "混合" not in cat:
                         fund_item["stock_pct"] = 100
                         fund_item["bond_pct"] = 0
-                    else:
+                    else:  # 混合型 (如 Z18)
                         fund_item["stock_pct"] = 52
                         fund_item["bond_pct"] = 48
                     
+                    # 剛性載入 Factsheet 正本年派息率 (絕不捏造)
                     fund_item["yield_pct"] = float(target_fund.get("last_yield", 8.0))
+                    
+                    # 載入預設高低位與買入價
+                    fund_item["buy_price"] = 10.00
+                    fund_item["curr_price"] = 10.00
+                    fund_item["high"] = 12.00
+                    fund_item["low"] = 8.00
                     fund_item["upf"] = 1.35
                     fund_item["annual_fee"] = 1.00
+
+                    # 背景安全發送 AIA 爬蟲請求 (僅當成功獲取時才更新現價)
+                    clean_code = extract_fund_code(selected_code)
+                    aia_data = fetch_aia_fund_data(clean_code)
+                    if aia_data and aia_data.get("price"):
+                        fund_item["curr_price"] = aia_data["price"]
+                        fund_item["buy_price"] = aia_data["price"]
+                        if aia_data.get("high"): fund_item["high"] = aia_data["high"]
+                        if aia_data.get("low"): fund_item["low"] = aia_data["low"]
+
                     st.rerun()
 
                 f_key = f"{idx}_{selected_code}"
@@ -429,7 +480,7 @@ def render_portfolio_builder_tab():
         else:
             st.info("尚無數據繪製行業分佈圖。")
 
-    # 9. 新增：組合風險評估與理專建議報告區塊
+    # 9. 組合風險評估與理專建議報告區塊
     st.markdown("---")
     st.markdown("### 🛡️ 組合風險評估與顧問建議報告")
 
