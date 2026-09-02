@@ -34,9 +34,14 @@ def get_exact_yield_from_fund(target_fund):
 
 # 下拉選單切換時強制硬性重置 UI 狀態 (徹底解決股債比跳回 100% 的 BUG)
 def on_fund_select_change(f_id, fund_item):
-    sel_label = st.session_state[f"sel_{f_id}"]
+    sel_label = st.session_state.get(f"sel_{f_id}")
+    if not sel_label:
+        return
     fund_options = {f"{f_data.get('code', '')} {f_data.get('zh', '')}": f_code for f_code, f_data in ALL_FUNDS.items()}
-    selected_code = fund_options[sel_label]
+    selected_code = fund_options.get(sel_label)
+    if not selected_code:
+        return
+        
     target_fund = ALL_FUNDS.get(selected_code, {})
     
     fund_item["code"] = selected_code
@@ -165,7 +170,7 @@ def render_portfolio_builder_tab():
     </style>
     """, unsafe_allow_html=True)
 
-    # 2. 初始化預設基金 (Z04 股票 100%, Z13 債券 100%)
+    # 初始化預設基金 (加入容錯檢查機制)
     if "portfolio_funds" not in st.session_state:
         f_z04 = ALL_FUNDS.get("Z04", {})
         f_z13 = ALL_FUNDS.get("Z13", {})
@@ -185,6 +190,11 @@ def render_portfolio_builder_tab():
                 "upf": 1.35, "annual_fee": 1.00
             }
         ]
+
+    # 🟢 容錯修復重點 1：確保所有基金字典都有 id (修復舊數據殘留產生的 KeyError)
+    for fund_item in st.session_state.portfolio_funds:
+        if "id" not in fund_item:
+            fund_item["id"] = str(uuid.uuid4())
 
     # 工具列
     col_tb1, col_tb2, col_tb3 = st.columns([1.5, 1.5, 1.5])
@@ -212,9 +222,9 @@ def render_portfolio_builder_tab():
 
     st.markdown("---")
 
-    # 3. 優先同步 UI 最新動態輸入值
+    # 2. 優先同步 UI 最新動態輸入值 (安全讀取 id)
     for fund_item in st.session_state.portfolio_funds:
-        f_id = fund_item["id"]
+        f_id = fund_item.get("id")
         
         if f"amt_{f_id}" in st.session_state: fund_item["amount"] = st.session_state[f"amt_{f_id}"]
         if f"bonus_{f_id}" in st.session_state: fund_item["bonus"] = st.session_state[f"bonus_{f_id}"]
@@ -225,7 +235,7 @@ def render_portfolio_builder_tab():
         if f"upf_{f_id}" in st.session_state: fund_item["upf"] = st.session_state[f"upf_{f_id}"]
         if f"anf_{f_id}" in st.session_state: fund_item["annual_fee"] = st.session_state[f"anf_{f_id}"]
 
-    # 4. 精算全組合數據
+    # 3. 精算全組合數據
     total_months = plan_years * 12
     total_cost = 0.0          
     total_initial_val = 0.0   
@@ -343,7 +353,7 @@ def render_portfolio_builder_tab():
     portfolio_yield_pct = (total_curr_monthly_div * 12 / total_initial_val * 100) if total_initial_val > 0 else 0.0
     avg_score = (weighted_score_sum / total_initial_val) if total_initial_val > 0 else 0.0
 
-    # 5. KPI 名片資料結構
+    # 4. KPI 名片資料結構
     cards_data = {
         "c1": {"title": "總投入成本", "val": f"${total_cost:,.0f}", "class": "kpi-border-slate", "val_class": "text-green"},
         "c2": {"title": "期末總剩餘市值", "val": f"${total_final_val:,.0f}", "class": "kpi-border-red", "val_class": "text-red"},
@@ -359,7 +369,7 @@ def render_portfolio_builder_tab():
         "c12": {"title": "組合股債比例 (股 : 債)", "val": f"{overall_stock_pct}% : {overall_bond_pct}%", "class": "kpi-border-blue", "val_class": "text-blue"}
     }
 
-    # 6. 渲染 12 張 KPI 名片
+    # 5. 渲染 12 張 KPI 名片
     st.markdown("### 📊 投資組合核心 KPI 儀表板")
 
     row1_keys = ["c1", "c2", "c3", "c4", "c5", "c6"]
@@ -395,7 +405,7 @@ def render_portfolio_builder_tab():
                     st.session_state.hidden_cards[c_key] = True
                     st.rerun()
 
-    # 7. 🙈 已隱藏名片托盤
+    # 6. 🙈 已隱藏名片托盤
     hidden_any = any(st.session_state.hidden_cards.values())
     if hidden_any:
         st.markdown("<br>", unsafe_allow_html=True)
@@ -413,7 +423,7 @@ def render_portfolio_builder_tab():
 
     st.markdown("---")
 
-    # 8. 基金配置編輯區 (掛載 on_change 重置機制)
+    # 7. 基金配置編輯區 (使用獨立 UUID 綁定元件 key)
     st.markdown("### 📁 組合內基金詳細配置與手續費設定")
     
     fund_options = {f"{f_data.get('code', '')} {f_data.get('zh', '')}": f_code for f_code, f_data in ALL_FUNDS.items()}
@@ -427,7 +437,7 @@ def render_portfolio_builder_tab():
             with cols[idx]:
                 st.markdown(f"#### 基金 #{idx + 1}")
                 
-                f_id = fund_item["id"]  # 固定 UUID 識別碼
+                f_id = fund_item.get("id", str(uuid.uuid4()))  # 🟢 容錯取得 UUID 識別碼
                 current_code = fund_item.get("code", "Z01")
                 default_index = 0
                 for label_idx, label_str in enumerate(fund_labels):
@@ -435,7 +445,6 @@ def render_portfolio_builder_tab():
                         default_index = label_idx
                         break
 
-                # 💡 掛載 on_change 機制，切換選單時硬性刷新 UI 快取
                 selected_label = st.selectbox(
                     "選擇基金:", 
                     options=fund_labels, 
@@ -485,14 +494,14 @@ def render_portfolio_builder_tab():
                 with col_l:
                     st.text_input("歷史低位:", value=f"${fund_item.get('low', 8.0):.2f}", disabled=True, key=f"lo_{f_id}")
 
-                # 🟢 年派息率：精確讀取正本
+                # 🟢 年派息率：精確讀取正本紀錄
                 st.number_input("年派息率 (%):", value=float(fund_item.get("yield_pct", 7.5)), step=0.1, key=f"yld_{f_id}")
 
                 if st.button("🗑️ 移除此基金", key=f"del_{f_id}"):
                     st.session_state.portfolio_funds.pop(idx)
                     st.rerun()
 
-    # 9. 地區與行業加權圓餅圖
+    # 8. 地區與行業加權圓餅圖
     st.markdown("---")
     st.markdown("### 📊 組合總體風險分散度分析 (地區與行業加權分佈)")
 
@@ -526,7 +535,7 @@ def render_portfolio_builder_tab():
         else:
             st.info("尚無數據繪製行業分佈圖。")
 
-    # 10. 組合風險評估與理專建議報告區塊
+    # 9. 組合風險評估與理專建議報告區塊
     st.markdown("---")
     st.markdown("### 🛡️ 組合風險評估與顧問建議報告")
 
