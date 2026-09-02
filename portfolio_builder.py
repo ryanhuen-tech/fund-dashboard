@@ -24,26 +24,17 @@ def calculate_long_term_bonus(avg_value_60m):
 
 def render_portfolio_builder_tab():
     st.markdown("## 💼 客戶基金組合建構與動態配置試算器")
-    st.caption("連動官方 Factsheet 月報股債配置與手續費/長期獎賞階梯扣費演算法")
+    st.caption("連動官方 Factsheet 月報股債配置與簡化版手續費/長期獎賞階梯扣費演算法")
 
-    # 1. 隱藏狀態 Session State 初始化 (對齊原版 12 張卡片)
+    # 1. 隱藏狀態 Session State 初始化
     if "hidden_cards" not in st.session_state:
         st.session_state.hidden_cards = {
-            "c1": False,  # 總投入成本
-            "c2": False,  # 期末總剩餘市值
-            "c3": False,  # 本金差額
-            "c4": False,  # 累計總收取利息
-            "c5": False,  # 真實總盈虧
-            "c6": False,  # 預計每月派息
-            "c7": False,  # 累計長期獎賞賞金
-            "c8": False,  # 預計累計提款總額
-            "c9": False,  # 組合名義回報率 (ROI)
-            "c10": False, # 每年平均回報率
-            "c11": False, # 組合實際年化 IRR
-            "c12": False  # 組合股債比例
+            "c1": False, "c2": False, "c3": False, "c4": False,
+            "c5": False, "c6": False, "c7": False, "c8": False,
+            "c9": False, "c10": False, "c11": False, "c12": False
         }
 
-    # 名片自訂樣式 (彩色頂邊條 + 隱藏按鈕)
+    # 名片自訂樣式
     st.markdown("""
     <style>
         .kpi-card-box {
@@ -83,11 +74,11 @@ def render_portfolio_builder_tab():
     </style>
     """, unsafe_allow_html=True)
 
-    # 初始化組合數據
+    # 預設基金組合資料結構 (更新為統一「每年手續費」)
     if "portfolio_funds" not in st.session_state:
         st.session_state.portfolio_funds = [
-            {"code": "Z04", "amount": 100000.0, "bonus": 4.0, "buy_price": 8.52, "curr_price": 8.00, "high": 12.96, "low": 7.99, "stock_pct": 100, "bond_pct": 0, "yield_pct": 8.13, "upf": 1.35, "m1": 1.00, "m6": 1.00},
-            {"code": "Z13", "amount": 100000.0, "bonus": 0.0, "buy_price": 9.20, "curr_price": 7.82, "high": 9.39, "low": 7.47, "stock_pct": 0, "bond_pct": 100, "yield_pct": 7.20, "upf": 1.35, "m1": 1.00, "m6": 1.50}
+            {"code": "Z04", "amount": 100000.0, "bonus": 4.0, "buy_price": 8.52, "curr_price": 8.00, "high": 12.96, "low": 7.99, "stock_pct": 100, "bond_pct": 0, "yield_pct": 8.13, "upf": 1.35, "annual_fee": 1.00},
+            {"code": "Z13", "amount": 100000.0, "bonus": 0.0, "buy_price": 9.20, "curr_price": 7.82, "high": 9.39, "low": 7.47, "stock_pct": 0, "bond_pct": 100, "yield_pct": 7.20, "upf": 1.35, "annual_fee": 1.00}
         ]
 
     # 工具列
@@ -98,7 +89,7 @@ def render_portfolio_builder_tab():
         st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
         if st.button("➕ 新增一隻基金", use_container_width=True):
             st.session_state.portfolio_funds.append(
-                {"code": "Z01", "amount": 100000.0, "bonus": 0.0, "buy_price": 10.0, "curr_price": 10.0, "high": 12.0, "low": 8.0, "stock_pct": 100, "bond_pct": 0, "yield_pct": 5.0, "upf": 1.35, "m1": 1.00, "m6": 1.50}
+                {"code": "Z01", "amount": 100000.0, "bonus": 0.0, "buy_price": 10.0, "curr_price": 10.0, "high": 12.0, "low": 8.0, "stock_pct": 100, "bond_pct": 0, "yield_pct": 5.0, "upf": 1.35, "annual_fee": 1.00}
             )
             st.rerun()
     with col_tb3:
@@ -109,7 +100,7 @@ def render_portfolio_builder_tab():
 
     st.markdown("---")
 
-    # 2. 優先同步 UI 最新動態輸入值
+    # 2. 同步 UI 最新動態輸入值
     for idx, fund_item in enumerate(st.session_state.portfolio_funds):
         code = fund_item.get("code", "Z01")
         f_key = f"{idx}_{code}"
@@ -121,10 +112,9 @@ def render_portfolio_builder_tab():
             fund_item["bond_pct"] = 100 - st.session_state[f"stk_{f_key}"]
         if f"yld_{f_key}" in st.session_state: fund_item["yield_pct"] = st.session_state[f"yld_{f_key}"]
         if f"upf_{f_key}" in st.session_state: fund_item["upf"] = st.session_state[f"upf_{f_key}"]
-        if f"m1_{f_key}" in st.session_state: fund_item["m1"] = st.session_state[f"m1_{f_key}"]
-        if f"m6_{f_key}" in st.session_state: fund_item["m6"] = st.session_state[f"m6_{f_key}"]
+        if f"anf_{f_key}" in st.session_state: fund_item["annual_fee"] = st.session_state[f"anf_{f_key}"]
 
-    # 3. 逐月手續費扣除與長期客戶賞金模擬
+    # 3. 精算全組合與費用演算法
     total_months = plan_years * 12
     total_cost = 0.0          
     total_initial_val = 0.0   
@@ -177,7 +167,7 @@ def render_portfolio_builder_tab():
 
         calc_funds.append({
             "code": code, "p": amt, "units": units, "price0": price0, "price1": f.get("curr_price", price0),
-            "upf": f.get("upf", 1.35), "m1": f.get("m1", 1.00), "m6": f.get("m6", 1.50), "div": f.get("yield_pct", 8.0),
+            "upf": f.get("upf", 1.35), "annual_fee": f.get("annual_fee", 1.00), "div": f.get("yield_pct", 8.0),
             "final_val": 0.0, "val_before_bonus": 0.0
         })
 
@@ -190,15 +180,14 @@ def render_portfolio_builder_tab():
         for f in calc_funds:
             if f["units"] > 0:
                 cur_p = f["price0"] + (f["price1"] - f["price0"]) * (m / total_months)
-                if m <= 60:
-                    u_deduct_upf = (f["p"] * (f["upf"] / 100.0) / 12.0) / cur_p
-                    fee_cash = (f["p"] * (f["upf"] / 100.0) / 12.0) + (f["units"] * cur_p * (f["m1"] / 100.0) / 12.0)
-                    f["units"] = (f["units"] * (1.0 - (f["m1"] / 100.0) / 12.0)) - u_deduct_upf
-                else:
-                    fee_cash = f["units"] * cur_p * (f["m6"] / 100.0) / 12.0
-                    f["units"] *= (1.0 - (f["m6"] / 100.0) / 12.0)
                 
+                # 統一每年手續費扣除 (前 60 個月額外按月扣前期費)
+                u_deduct_upf = ((f["p"] * (f["upf"] / 100.0) / 12.0) / cur_p) if m <= 60 else 0.0
+                fee_cash = ((f["p"] * (f["upf"] / 100.0) / 12.0) if m <= 60 else 0.0) + (f["units"] * cur_p * (f["annual_fee"] / 100.0) / 12.0)
+                
+                f["units"] = (f["units"] * (1.0 - (f["annual_fee"] / 100.0) / 12.0)) - u_deduct_upf
                 cum_fee_deducted += fee_cash
+                
                 if f["units"] < 0: f["units"] = 0.0
                 f["val_before_bonus"] = f["units"] * cur_p
                 m_val_before_b += f["val_before_bonus"]
@@ -230,7 +219,7 @@ def render_portfolio_builder_tab():
     else:
         overall_stock_pct, overall_bond_pct = 0, 0
 
-    # 4. 12 張原版 KPI 名片資料結構
+    # 4. KPI 名片資料結構
     cards_data = {
         "c1": {"title": "總投入成本", "val": f"${total_cost:,.0f}", "class": "kpi-border-slate", "val_class": "text-green"},
         "c2": {"title": "期末總剩餘市值", "val": f"${total_final_val:,.0f}", "class": "kpi-border-red", "val_class": "text-red"},
@@ -246,13 +235,12 @@ def render_portfolio_builder_tab():
         "c12": {"title": "組合股債比例 (股 : 債)", "val": f"{overall_stock_pct}% : {overall_bond_pct}%", "class": "kpi-border-blue", "val_class": "text-blue"}
     }
 
-    # 5. 渲染 12 張 KPI 名片網格 (第一排 6 張，第二排 6 張)
+    # 5. 渲染 12 張 KPI 名片
     st.markdown("### 📊 投資組合核心 KPI 儀表板")
 
     row1_keys = ["c1", "c2", "c3", "c4", "c5", "c6"]
     row2_keys = ["c7", "c8", "c9", "c10", "c11", "c12"]
 
-    # 第一排 6 張卡片
     cols_row1 = st.columns(6)
     for i, c_key in enumerate(row1_keys):
         c_info = cards_data[c_key]
@@ -268,7 +256,6 @@ def render_portfolio_builder_tab():
                     st.session_state.hidden_cards[c_key] = True
                     st.rerun()
 
-    # 第二排 6 張卡片
     cols_row2 = st.columns(6)
     for i, c_key in enumerate(row2_keys):
         c_info = cards_data[c_key]
@@ -284,7 +271,7 @@ def render_portfolio_builder_tab():
                     st.session_state.hidden_cards[c_key] = True
                     st.rerun()
 
-    # 6. 🙈 已隱藏名片托盤 (可隨時點擊恢復)
+    # 6. 🙈 已隱藏名片托盤
     hidden_any = any(st.session_state.hidden_cards.values())
     if hidden_any:
         st.markdown("<br>", unsafe_allow_html=True)
@@ -302,7 +289,7 @@ def render_portfolio_builder_tab():
 
     st.markdown("---")
 
-    # 7. 基金配置編輯區
+    # 7. 基金配置編輯區 (簡化為 2 個費率欄位)
     st.markdown("### 📁 組合內基金詳細配置與手續費設定")
     
     fund_options = {f"{f_data.get('code', '')} {f_data.get('zh', '')}": f_code for f_code, f_data in ALL_FUNDS.items()}
@@ -342,8 +329,7 @@ def render_portfolio_builder_tab():
                     
                     fund_item["yield_pct"] = float(target_fund.get("last_yield", 8.0))
                     fund_item["upf"] = 1.35
-                    fund_item["m1"] = 1.00
-                    fund_item["m6"] = 1.50
+                    fund_item["annual_fee"] = 1.00
                     st.rerun()
 
                 f_key = f"{idx}_{selected_code}"
@@ -357,13 +343,12 @@ def render_portfolio_builder_tab():
                 with col_b:
                     st.number_input("債券 (%):", value=100 - int(fund_item.get("stock_pct", 50)), disabled=True, key=f"bnd_disp_{f_key}")
 
-                col_f1, col_f2, col_f3 = st.columns(3)
+                # 🟢 精簡手續費欄位：僅保留「前期費 (%)」與「每年手續費 (%)」
+                col_f1, col_f2 = st.columns(2)
                 with col_f1:
-                    st.number_input("前期費(%):", value=float(fund_item.get("upf", 1.35)), step=0.01, key=f"upf_{f_key}")
+                    st.number_input("前期費 (%):", value=float(fund_item.get("upf", 1.35)), step=0.01, key=f"upf_{f_key}")
                 with col_f2:
-                    st.number_input("首5年費(%):", value=float(fund_item.get("m1", 1.00)), step=0.01, key=f"m1_{f_key}")
-                with col_f3:
-                    st.number_input("6年後費(%):", value=float(fund_item.get("m6", 1.50)), step=0.01, key=f"m6_{f_key}")
+                    st.number_input("每年手續費 (%):", value=float(fund_item.get("annual_fee", 1.00)), step=0.01, key=f"anf_{f_key}")
 
                 col_p1, col_p2 = st.columns(2)
                 with col_p1:
