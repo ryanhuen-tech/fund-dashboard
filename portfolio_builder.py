@@ -1,5 +1,4 @@
 import streamlit as st
-import requests
 import re
 import uuid
 import pandas as pd
@@ -32,7 +31,7 @@ def get_exact_yield_from_fund(target_fund):
             
     return 7.50
 
-# 下拉選單切換時強制硬性重置 UI 狀態 (徹底解決股債比跳回 100% 的 BUG)
+# 下拉選單切換時強制重置 UI 狀態
 def on_fund_select_change(f_id, fund_item):
     sel_label = st.session_state.get(f"sel_{f_id}")
     if not sel_label:
@@ -64,31 +63,6 @@ def on_fund_select_change(f_id, fund_item):
     exact_yield = get_exact_yield_from_fund(target_fund)
     st.session_state[f"yld_{f_id}"] = exact_yield
     fund_item["yield_pct"] = exact_yield
-
-# 安全防護版 AIA API 實時爬蟲
-def fetch_aia_fund_data(fund_code):
-    clean_code = extract_fund_code(fund_code)
-    url = f"https://aia-fund-api.vercel.app/api/getFund?id={clean_code}"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "application/json, text/plain, */*"
-    }
-    try:
-        response = requests.get(url, headers=headers, timeout=3)
-        if response.status_code == 200:
-            data = response.json()
-            price_val = data.get("currentPrice") or data.get("nav") or data.get("price")
-            high_val = data.get("historyHigh") or data.get("high")
-            low_val = data.get("historyLow") or data.get("low")
-            
-            return {
-                "price": float(price_val) if price_val else None,
-                "high": float(high_val) if high_val else None,
-                "low": float(low_val) if low_val else None
-            }
-    except Exception:
-        pass
-    return None
 
 # 計算第 61 個月起的長期客戶獎賞 (Long-term Bonus)
 def calculate_long_term_bonus(avg_value_60m):
@@ -170,7 +144,7 @@ def render_portfolio_builder_tab():
     </style>
     """, unsafe_allow_html=True)
 
-    # 初始化預設基金 (加入容錯檢查機制)
+    # 初始化預設基金
     if "portfolio_funds" not in st.session_state:
         f_z04 = ALL_FUNDS.get("Z04", {})
         f_z13 = ALL_FUNDS.get("Z13", {})
@@ -178,20 +152,20 @@ def render_portfolio_builder_tab():
             {
                 "id": str(uuid.uuid4()),
                 "code": "Z04", "amount": 100000.0, "bonus": 4.0, "buy_price": 8.52, "curr_price": 8.00,
-                "high": 12.96, "low": 7.99, "stock_pct": 100, "bond_pct": 0,
+                "stock_pct": 100, "bond_pct": 0,
                 "yield_pct": get_exact_yield_from_fund(f_z04),
                 "upf": 1.35, "annual_fee": 1.00
             },
             {
                 "id": str(uuid.uuid4()),
                 "code": "Z13", "amount": 100000.0, "bonus": 4.0, "buy_price": 9.20, "curr_price": 7.82,
-                "high": 9.39, "low": 7.47, "stock_pct": 0, "bond_pct": 100,
+                "stock_pct": 0, "bond_pct": 100,
                 "yield_pct": get_exact_yield_from_fund(f_z13),
                 "upf": 1.35, "annual_fee": 1.00
             }
         ]
 
-    # 🟢 容錯修復重點 1：確保所有基金字典都有 id (修復舊數據殘留產生的 KeyError)
+    # 確保所有基金字典都有 id
     for fund_item in st.session_state.portfolio_funds:
         if "id" not in fund_item:
             fund_item["id"] = str(uuid.uuid4())
@@ -208,7 +182,7 @@ def render_portfolio_builder_tab():
                 {
                     "id": str(uuid.uuid4()),
                     "code": "Z01", "amount": 100000.0, "bonus": 0.0, "buy_price": 10.0, "curr_price": 10.0,
-                    "high": 12.0, "low": 8.0, "stock_pct": 100, "bond_pct": 0,
+                    "stock_pct": 100, "bond_pct": 0,
                     "yield_pct": get_exact_yield_from_fund(f_default),
                     "upf": 1.35, "annual_fee": 1.00
                 }
@@ -222,7 +196,7 @@ def render_portfolio_builder_tab():
 
     st.markdown("---")
 
-    # 2. 優先同步 UI 最新動態輸入值 (安全讀取 id)
+    # 2. 優先同步 UI 最新動態輸入值
     for fund_item in st.session_state.portfolio_funds:
         f_id = fund_item.get("id")
         
@@ -234,6 +208,8 @@ def render_portfolio_builder_tab():
         if f"yld_{f_id}" in st.session_state: fund_item["yield_pct"] = st.session_state[f"yld_{f_id}"]
         if f"upf_{f_id}" in st.session_state: fund_item["upf"] = st.session_state[f"upf_{f_id}"]
         if f"anf_{f_id}" in st.session_state: fund_item["annual_fee"] = st.session_state[f"anf_{f_id}"]
+        if f"buy_{f_id}" in st.session_state: fund_item["buy_price"] = st.session_state[f"buy_{f_id}"]
+        if f"curr_{f_id}" in st.session_state: fund_item["curr_price"] = st.session_state[f"curr_{f_id}"]
 
     # 3. 精算全組合數據
     total_months = plan_years * 12
@@ -423,7 +399,7 @@ def render_portfolio_builder_tab():
 
     st.markdown("---")
 
-    # 7. 基金配置編輯區 (使用獨立 UUID 綁定元件 key)
+    # 7. 基金配置編輯區 (已移除歷史高低位欄位，更名為「現價」)
     st.markdown("### 📁 組合內基金詳細配置與手續費設定")
     
     fund_options = {f"{f_data.get('code', '')} {f_data.get('zh', '')}": f_code for f_code, f_data in ALL_FUNDS.items()}
@@ -437,7 +413,7 @@ def render_portfolio_builder_tab():
             with cols[idx]:
                 st.markdown(f"#### 基金 #{idx + 1}")
                 
-                f_id = fund_item.get("id", str(uuid.uuid4()))  # 🟢 容錯取得 UUID 識別碼
+                f_id = fund_item.get("id", str(uuid.uuid4()))
                 current_code = fund_item.get("code", "Z01")
                 default_index = 0
                 for label_idx, label_str in enumerate(fund_labels):
@@ -455,9 +431,7 @@ def render_portfolio_builder_tab():
                 )
                 
                 selected_code = fund_options[selected_label]
-                target_fund = ALL_FUNDS.get(selected_code, {})
 
-                # 確保初始股債比正確
                 if f"stk_{f_id}" not in st.session_state:
                     st.session_state[f"stk_{f_id}"] = int(fund_item.get("stock_pct", 50))
 
@@ -476,11 +450,12 @@ def render_portfolio_builder_tab():
                 with col_f2:
                     st.number_input("每年手續費 (%):", value=float(fund_item.get("annual_fee", 1.00)), step=0.01, key=f"anf_{f_id}")
 
+                # 🟢 已更名為「現價 ($)」，並移除歷史高低位欄位
                 col_p1, col_p2 = st.columns(2)
                 with col_p1:
                     st.number_input("買入價 ($):", value=float(fund_item.get("buy_price", 10.0)), step=0.01, key=f"buy_{f_id}")
                 with col_p2:
-                    st.number_input("即時現價 ($):", value=float(fund_item.get("curr_price", 10.0)), step=0.01, key=f"curr_{f_id}")
+                    st.number_input("現價 ($):", value=float(fund_item.get("curr_price", 10.0)), step=0.01, key=f"curr_{f_id}")
 
                 buy_p = fund_item.get("buy_price", 10.0)
                 curr_p = fund_item.get("curr_price", 10.0)
@@ -488,13 +463,7 @@ def render_portfolio_builder_tab():
                     chg_pct = ((curr_p - buy_p) / buy_p) * 100.0
                     st.caption(f"📈 帳面升跌: **{chg_pct:+.2f}%**")
 
-                col_h, col_l = st.columns(2)
-                with col_h:
-                    st.text_input("歷史高位:", value=f"${fund_item.get('high', 12.0):.2f}", disabled=True, key=f"hi_{f_id}")
-                with col_l:
-                    st.text_input("歷史低位:", value=f"${fund_item.get('low', 8.0):.2f}", disabled=True, key=f"lo_{f_id}")
-
-                # 🟢 年派息率：精確讀取正本紀錄
+                # 年派息率
                 st.number_input("年派息率 (%):", value=float(fund_item.get("yield_pct", 7.5)), step=0.1, key=f"yld_{f_id}")
 
                 if st.button("🗑️ 移除此基金", key=f"del_{f_id}"):
