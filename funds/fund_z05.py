@@ -103,7 +103,6 @@ DATA_Z05 = {
     }
 }
 
-# 🟢 追加導出對象
 FUND_Z05 = list(DATA_Z05.values())[0]
 FUND_Z05["risk_derivatives"] = {
     "risk_level": "L1",
