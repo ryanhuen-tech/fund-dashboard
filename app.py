@@ -1,4 +1,4 @@
-# app.py - 智能基金風險評估系統 (全站分數 100% 動態實時鎖定對齊版)
+# app.py - 智能基金風險評估系統 (極簡模組化 UI 引擎版)
 import streamlit as st
 import streamlit.components.v1 as components
 import pandas as pd
@@ -6,6 +6,7 @@ import plotly.express as px
 from funds_loader import load_all_funds  # 從加載器動態加載
 from utils.nav_calculator import calculate_realtime_nav_to_nav
 from portfolio_builder import render_portfolio_builder_tab  # 匯入全新客戶組合建構模組
+from eval_engine import generate_dynamic_eval_table, process_fund_risk_scores  # 🟢 匯入獨立風控計算引擎
 
 # 0. 強制清除 Streamlit 快取，確保抓取最新數據
 st.cache_data.clear()
@@ -24,12 +25,15 @@ OFFICIAL_RETURNS_MATRIX = {
     "ZU6": {"r1": 7.25,  "r3": 4.10},
 }
 
-# ⚡ 第一階段寫入：校正回報數據
+# ⚡ 第一階段：寫入 Morningstar 官方權威回報
 for k, fund_obj in PRESET_FUNDS.items():
     code_key = fund_obj.get("code") or fund_obj.get("代號")
     if code_key in OFFICIAL_RETURNS_MATRIX:
         fund_obj["return_1y"] = OFFICIAL_RETURNS_MATRIX[code_key]["r1"]
         fund_obj["return_3y"] = OFFICIAL_RETURNS_MATRIX[code_key]["r3"]
+
+# ⚡ 第二階段：調用獨立 eval_engine.py 進行全自動動態算分與短板標籤生成
+process_fund_risk_scores(PRESET_FUNDS)
 
 # 1. 網頁頁面配置
 st.set_page_config(
@@ -87,75 +91,6 @@ if not st.session_state["authenticated"]:
                 check_login(user_input, pass_input)
 
     st.stop()
-
-# ==============================================================================
-# 🛡️ 防爆與動態評估引擎函數
-# ==============================================================================
-
-def render_safe_history_div(h_div):
-    """【防爆機制 1】自動補齊 6 欄位，徹底避免 IndexError 崩潰"""
-    if not h_div:
-        return ""
-    h_rows = ""
-    for r in h_div:
-        r_safe = list(r) + ["-"] * (6 - len(r)) if len(r) < 6 else r
-        h_rows += f"<tr><td>{r_safe[0]}</td><td>{r_safe[1]}</td><td>{r_safe[2]}</td><td><b>{r_safe[3]}</b></td><td>{r_safe[4]}</td><td style='font-weight:bold; color:#059669;'>{r_safe[5]}</td></tr>"
-    return h_rows
-
-def generate_dynamic_eval_table(curr_fund, category_type):
-    """【防爆機制 2】跨資產類別動態生成 10 大維度評估表"""
-    eval_list = curr_fund.get("eval_table", [])
-    if eval_list and len(eval_list) >= 10:
-        return eval_list
-    
-    kpis = curr_fund.get("kpis", {})
-    last_yield = curr_fund.get("last_yield", 0.0)
-    
-    if "債券" in category_type and "混合" not in category_type:
-        return [
-            ["一、派息可持續性 (25分)", "純收益覆蓋率與 YTM 對比", "• 25分: NII 覆蓋率 ≥ 100% 或 YTM ≥ 派息率", f"• 派息率 ~{last_yield}%<br>• {kpis.get('p10_delta', '純收益覆蓋佳')}", "25.0 / 25", "<span class='quality-badge-green'>✔ 零本金侵蝕</span>"],
-            ["二、底層純資產質素 (15分)", "信貸評級與受壓資產佔比", "• 15分: 投資級 > 80%<br>• 0分: 受壓資產 > 30%", f"• 評級結構：{kpis.get('p3_delta', '信貸品質適中')}", "10.0 / 15", "<span class='quality-badge-green'>🟢 質素良好</span>"],
-            ["三、集中度風險 (5分)", "前十大持倉佔比", "• 5分: 前十持倉 < 20%", f"• 前十大佔比：{kpis.get('p6', '極度分散')}", "5.0 / 5", "<span class='quality-badge-green'>✔ 發行人極度分散</span>"],
-            ["四、槓桿水平 (5分)", "資產總膨脹率", "• 5分: 比率 ≤ 105%", f"• 槓桿比率：{kpis.get('p7', '100%')}", "5.0 / 5", "<span class='quality-badge-green'>✔ 無槓桿風險</span>"],
-            ["五、利率敏感度/久期 (10分)", "有效存續期 (Duration)", "• 10分: 存續期 < 3.5 年", f"• 有效存續期：{kpis.get('p4', '適中')}", "10.0 / 10", "<span class='quality-badge-green'>✔ 高抗升息力</span>"],
-            ["六、流動性風險 (5分)", "手持現金儲備", "• 5分: 現金及流動資產 > 5%", f"• 現金及流動資產：{kpis.get('p5', '充沛')}", "5.0 / 5", "<span class='quality-badge-green'>✔ 變現流動性佳</span>"],
-            ["七、匯率風險 (5分)", "對沖機制與幣別", "• 5分: 美元專項或全額對沖", "• 基礎貨幣對沖機制完善", "5.0 / 5", "<span class='quality-badge-green'>✔ 對沖機制良好</span>"],
-            ["八、管理費與成本 (5分)", "總費用率 (TER)", "• 5分: TER ≤ 1.2%", "• 經審計費用率落在合理區間", "2.5 / 5", "<span class='quality-badge-yellow'>🟡 費用率適中</span>"],
-            ["九、衍生工具結構風險 (10分)", "144A ELN / TRS 審計", "• 10分: 無高風險衍生品", f"• {curr_fund.get('risk_derivatives', {}).get('detail_note', '無 ELN/TRS 結構風險')}", "10.0 / 10", "<span class='quality-badge-green'>🟢 無高風險衍生品</span>"],
-            ["十、不對稱策略風險 (15分)", "賣出選擇權 (Short Options)", "• 15分: 完全未採用 Short Options", "• 純債券投資組合，無期權封頂風險", "15.0 / 15", "<span class='quality-badge-green'>✔ 無期權風險</span>"]
-        ]
-    else:
-        return [
-            ["一、收益可持續性 (25分)", "股息/權利金/債息覆蓋率", "• 25分: 營運現金流完全覆蓋派息", "• 經常性收益源充沛", "25.0 / 25", "<span class='quality-badge-green'>✔ 收益覆蓋健全</span>"],
-            ["二、底層資產護城河 (15分)", "企業 ROE 或 債券評級", "• 15分: 龍頭護城河/投資級為主", "• 底層主要為全球藍籌企業/高品質資產", "12.5 / 15", "<span class='quality-badge-green'>🟢 基本面優良</span>"],
-            ["三、集中度風險 (5分)", "前十大持倉佔比", "• 5分: 前十 < 30%", f"• 前十大持倉：{kpis.get('p6', '適中')}", "5.0 / 5", "<span class='quality-badge-green'>✔ 持倉分散</span>"],
-            ["四、槓桿水平 (5分)", "資產總膨脹率", "• 5分: 比率 ≤ 105%", "• 無顯著槓桿膨脹", "5.0 / 5", "<span class='quality-badge-green'>✔ 無槓桿風險</span>"],
-            ["五、市場敏感度 (10分)", "Beta 值或久期控管", "• 10分: 風控調整良好", "• 市場波動與利率對沖適中", "7.5 / 10", "<span class='quality-badge-yellow'>🟡 波動控管良好</span>"],
-            ["六、流動性風險 (5分)", "大型股/國債變現能力", "• 5分: 流動性資產 > 80%", "• 主要配置於高日成交量活絡標的", "5.0 / 5", "<span class='quality-badge-green'>✔ 流動性佳</span>"],
-            ["七、匯率風險 (5分)", "外匯對沖機制", "• 5分: 具備完整對沖", "• 外匯風險控管健全", "5.0 / 5", "<span class='quality-badge-green'>✔ 匯率對沖良好</span>"],
-            ["八、管理費與成本 (5分)", "總費用率 (TER)", "• 5分: TER ≤ 1.5%", "• 管理費用率適中", "2.5 / 5", "<span class='quality-badge-yellow'>🟡 費用率適中</span>"],
-            ["九、衍生工具審計 (10分)", "144A ELN 票據審計", "• 10分: 無 ELN 高風險結構", "• 直持標的，無高風險結構性商品", "10.0 / 10", "<span class='quality-badge-green'>🟢 無 ELN 結構風險</span>"],
-            ["十、Covered Call/期權審計 (15分)", "賣出期權策略風險", "• 15分: 無期權風險", "• 無不對稱期權策略風險", "15.0 / 15", "<span class='quality-badge-green'>✔ 無期權風險</span>"]
-        ]
-
-# 🟢 ⚡ 第二階段全自動對齊引擎：解析明細表，動態計算 10 大維度得分，強制作業至頂層
-for k, fund_obj in PRESET_FUNDS.items():
-    cat_type = fund_obj.get("category", "債券基金")
-    e_table = generate_dynamic_eval_table(fund_obj, cat_type)
-    
-    calculated_scores = []
-    total_score_sum = 0.0
-    for row in e_table:
-        try:
-            s_num = float(row[4].split("/")[0].strip())
-            calculated_scores.append(s_num)
-            total_score_sum += s_num
-        except:
-            calculated_scores.append(0.0)
-            
-    # 全站強制寫入完全一致的總分與雷達圖陣列 (徹底消除 86.5 vs 92.5 不一致)
-    fund_obj["score"] = round(total_score_sum, 1)
-    fund_obj["radar_scores"] = calculated_scores
 
 # ==============================================================================
 # 🎯 登入後的系統主要內容
@@ -241,15 +176,13 @@ with top_tab1:
             eff_score = round((return_1y_val / (risk_deduction + 10.0)) * 100, 2)
             radar_scores = f.get("radar_scores", [0]*10)
 
-            risk_deriv_info = f.get("risk_derivatives", {
-                "display_html": "<span class='badge-green'>🟢 無 L3/L4 高風險產品 (0%)</span>"
-            })
+            short_tag = f.get("short_board_tag", "<span class='badge-green'>🟢 結構健康</span>")
 
             matrix_data.append({
                 "代號": f.get("code") or f.get("代號") or "N/A", 
                 "基金簡稱": f.get("zh") or f.get("基金簡稱") or key, 
                 "基金類別": cat,
-                "高風險衍生品曝險": risk_deriv_info.get("display_html", "<span class='badge-green'>🟢 無 L3/L4 高風險產品 (0%)</span>"),
+                "核心短板警示 ⚠️": short_tag,
                 "晨星評級": f.get("star", "未評級"), 
                 "star_num": f.get("star_num", 0), 
                 "上月年化派息率 (%)": f.get("last_yield", 0),
@@ -275,7 +208,7 @@ with top_tab1:
             st.warning(f"目前無屬於『{selected_category}』類別的預設基金。")
         else:
             with filter_col2:
-                sort_by_col = st.selectbox("🔀 排序依據：", ["風險與回報對比指數", "近1年總回報 (%)", "近3年年化總回報 (%)", "上月年化派息率 (%)", "綜合風險總分"], index=0)
+                sort_by_col = st.selectbox("🔀 排序依據：", ["綜合風險總分", "風險與回報對比指數", "近1年總回報 (%)", "近3年年化總回報 (%)", "上月年化派息率 (%)"], index=0)
             with filter_col3:
                 sort_order = st.radio("排序方向：", ["由高至低 (降序)", "由低至高 (升序)"], horizontal=True)
 
@@ -284,21 +217,21 @@ with top_tab1:
 
             rows_list = []
             for _, r in df_matrix_sorted.iterrows():
-                b1 = "quality-badge-green" if r.get('一、派息可持續性 (25)', 0)>=12.5 else "quality-badge-red"
-                b2 = "quality-badge-green" if r.get('二、底層純資產質素 (15)', 0)>=10.0 else "quality-badge-yellow"
+                b1 = "quality-badge-green" if r.get('一、派息可持續性 (25)', 0)>=20.0 else "quality-badge-yellow" if r.get('一、派息可持續性 (25)', 0)>=15.0 else "quality-badge-red"
+                b2 = "quality-badge-green" if r.get('二、底層純資產質素 (15)', 0)>=10.0 else "quality-badge-red"
                 b3 = "quality-badge-green" if r.get('三、集中度風險 (5)', 0)>=5.0 else "quality-badge-yellow"
                 b4 = "quality-badge-green" if r.get('四、槓桿水平 (5)', 0)>=5.0 else "quality-badge-yellow"
-                b5 = "quality-badge-green" if r.get('五、利率敏感度/久期 (10)', 0)>=5.0 else "quality-badge-yellow"
-                b6 = "quality-badge-green" if r.get('六、流動性風險 (5)', 0)>=2.5 else "quality-badge-yellow"
-                b7 = "quality-badge-green" if r.get('七、匯率風險 (5)', 0)>=2.5 else "quality-badge-yellow"
+                b5 = "quality-badge-green" if r.get('五、利率敏感度/久期 (10)', 0)>=10.0 else "quality-badge-yellow"
+                b6 = "quality-badge-green" if r.get('六、流動性風險 (5)', 0)>=5.0 else "quality-badge-yellow"
+                b7 = "quality-badge-green" if r.get('七、匯率風險 (5)', 0)>=5.0 else "quality-badge-yellow"
                 b8 = "quality-badge-green" if r.get('八、管理費與成本 (5)', 0)>=2.5 else "quality-badge-yellow"
-                b9 = "quality-badge-green" if r.get('九、衍生工具結構風險 (10)', 0)>=10.0 else "quality-badge-red"
+                b9 = "quality-badge-green" if r.get('九、衍生工具結構風險 (10)', 0)>=10.0 else "quality-badge-yellow" if r.get('九、衍生工具結構風險 (10)', 0)>=5.0 else "quality-badge-red"
                 b10 = "quality-badge-green" if r.get('十、不對稱策略風險 (15)', 0)>=15.0 else "quality-badge-red"
 
                 code_str = r.get('代號', '-')
                 zh_str = r.get('基金簡稱', '-')
                 cat_str = r.get('基金類別', '-')
-                deriv_html = r.get('高風險衍生品曝險', '<span class="badge-green">🟢 無 L3/L4 高風險產品 (0%)</span>')
+                short_tag_html = r.get('核心短板警示 ⚠️', '<span class="badge-green">🟢 結構健康</span>')
                 yield_str = r.get('上月年化派息率 (%)', 0)
                 r1_str = r.get('近1年總回報 (%)', 0)
                 r3_str = r.get('近3年年化總回報 (%)', 0)
@@ -306,17 +239,19 @@ with top_tab1:
                 score_str = r.get('綜合風險總分', 0)
                 eff_str = r.get('風險與回報對比指數', 0)
 
+                score_color = "#059669" if score_str >= 80 else "#D97706" if score_str >= 65 else "#DC2626"
+
                 rows_list.append(f"""
                 <tr>
                     <td><b>{code_str}</b></td>
                     <td><b>{zh_str}</b></td>
                     <td><span class='type-tag'>{cat_str}</span></td>
-                    <td style='text-align:center;'>{deriv_html}</td>
+                    <td style='text-align:center;'>{short_tag_html}</td>
                     <td><span class='yield-tag'>📈 {yield_str}%</span></td>
                     <td style='font-weight:bold; color:#059669;'>+{r1_str}%</td>
                     <td style='font-weight:bold; color:#0284C7;'>+{r3_str}%</td>
                     <td><span class='ms-star-tag'>{star_str}</span></td>
-                    <td style='font-size:15px; font-weight:800; color:#1E3A8A;'>{score_str} / 100</td>
+                    <td style='font-size:16px; font-weight:800; color:{score_color};'>{score_str} / 100</td>
                     <td style='font-size:15px; font-weight:800; color:#059669;'><b>{eff_str}</b></td>
                     <td><span class='{b1}'>{r.get('一、派息可持續性 (25)', 0)} 分</span></td>
                     <td><span class='{b2}'>{r.get('二、底層純資產質素 (15)', 0)} 分</span></td>
@@ -353,12 +288,12 @@ with top_tab1:
                     <th>代號</th>
                     <th>基金名稱</th>
                     <th>類別</th>
-                    <th style="background-color:#991B1B; color:#FFF; text-align:center;">高風險衍生品曝險 ⚠️</th>
+                    <th style="background-color:#991B1B; color:#FFF; text-align:center;">核心短板/風控警示 ⚠️</th>
                     <th>上月派息率</th>
                     <th>近1年總回報</th>
                     <th>近3年年化 (CAGR)</th>
                     <th>晨星</th>
-                    <th>風險總分</th>
+                    <th>風控體檢總分 🛡️</th>
                     <th>風險與回報對比指數 🏆</th>
                     <th>一、派息可持續性 (25)</th>
                     <th>二、底層純資產質素 (15)</th>
@@ -398,8 +333,8 @@ with top_tab1:
                     st.plotly_chart(fig_radar, use_container_width=True)
 
             with col_r:
-                st.markdown("#### 🏆 風險與回報對比指數排行榜")
-                fig_rank = px.bar(df_matrix.sort_values("風險與回報對比指數", ascending=True), x='風險與回報對比指數', y='代號', text='風險與回報對比指數', orientation='h', color='風險與回報對比指數', color_continuous_scale='Greens', template="plotly_white")
+                st.markdown("#### 🏆 風險體檢總分排行榜 (高鑑別度階梯)")
+                fig_rank = px.bar(df_matrix.sort_values("綜合風險總分", ascending=True), x='綜合風險總分', y='代號', text='綜合風險總分', orientation='h', color='綜合風險總分', color_continuous_scale='RdYlGn', template="plotly_white")
                 fig_rank.update_layout(height=450)
                 st.plotly_chart(fig_rank, use_container_width=True)
 
@@ -612,7 +547,7 @@ with top_tab2:
 
         st.markdown("---")
 
-        # 🟢 明細表：100% 實時動態自動加總，與頂層 score 完全綁定對齊
+        # 🟢 明細表：調用 eval_engine.py 產生動態高鑑別度表格
         with st.expander("📋 點擊展開 / 折疊：基金深度風險評估明細表", expanded=True):
             eval_list = generate_dynamic_eval_table(curr_fund, fund_type)
             
@@ -627,7 +562,6 @@ with top_tab2:
                 
                 eval_rows_html += f"<tr><td><b>{dim_name}</b></td><td>{metric_name}</td><td>{rule_text}</td><td>{fund_data_text}</td><td style='text-align:center; font-weight:bold;'>{score_text}</td><td style='text-align:center;'>{status_badge}</td></tr>"
 
-            # 🟢 直讀頂層全站對齊後之動態加總 score，絕不分家
             final_score_val = curr_fund.get("score", 0.0)
             final_score_str = f"{final_score_val:.1f}"
 
@@ -646,9 +580,9 @@ with top_tab2:
                 <tbody>{eval_rows_html}</tbody>
             </table>
             <div class="summary-footer">
-                <span class="summary-title">總得分 / 得分率：</span>
+                <span class="summary-title">風控體檢總得分：</span>
                 <span class="summary-score">{final_score_str} / 100</span>
-                <span class="quality-badge-green" style="font-size: 13px; padding: 5px 12px;">{final_score_str}% (健康度評估)</span>
+                <span class="quality-badge-green" style="font-size: 13px; padding: 5px 12px;">{final_score_str}% (高鑑別度慎重評估)</span>
             </div>
             ''', unsafe_allow_html=True)
 
