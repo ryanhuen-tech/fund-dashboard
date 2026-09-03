@@ -1,4 +1,4 @@
-# app.py - 智能基金風險評估系統 (100% 實時動態加總與防爆全對齊版)
+# app.py - 智能基金風險評估系統 (全站分數 100% 動態實時鎖定對齊版)
 import streamlit as st
 import streamlit.components.v1 as components
 import pandas as pd
@@ -11,27 +11,25 @@ from portfolio_builder import render_portfolio_builder_tab  # 匯入全新客戶
 st.cache_data.clear()
 PRESET_FUNDS = load_all_funds()
 
-# 🟢 【全站數據權威校正矩陣】直接覆蓋舊快取與混亂數據，確保畫面 100% 顯示 Morningstar 年化標準與精確總分
+# 🟢 Morningstar 官方 1 年總回報與 3 年年化 (CAGR) 校正矩陣
 OFFICIAL_RETURNS_MATRIX = {
-    "Z05": {"r1": 9.90,  "r3": 5.82, "score": 86.0, "radar": [25.0, 10.0, 5.0, 5.0, 5.0, 5.0, 5.0, 2.5, 10.0, 15.0]},
-    "Z13": {"r1": 9.85,  "r3": 1.58, "score": 86.5, "radar": [25.0, 10.0, 5.0, 5.0, 10.0, 5.0, 5.0, 2.5, 10.0, 15.0]},
-    "Z15": {"r1": 11.20, "r3": 1.69, "score": 70.5, "radar": [25.0, 0.0, 5.0, 5.0, 10.0, 5.0, 5.0, 2.5, 5.0, 15.0]},
-    "Z29": {"r1": 6.15,  "r3": 3.79, "score": 78.0, "radar": [25.0, 15.0, 5.0, 5.0, 5.0, 2.5, 3.0, 2.5, 10.0, 15.0]},
-    "Z12": {"r1": 6.82,  "r3": 4.00, "score": 88.0, "radar": [25.0, 10.0, 5.0, 5.0, 10.0, 2.5, 3.0, 2.5, 10.0, 15.0]}, # 🟢 Z12 總分精確修復為 88.0 分
-    "Z52": {"r1": 6.85,  "r3": 4.52, "score": 78.5, "radar": [25.0, 5.0, 5.0, 5.0, 10.0, 5.0, 2.5, 3.5, 10.0, 15.0]},
-    "Z69": {"r1": 3.72,  "r3": 3.35, "score": 71.5, "radar": [25.0, 5.0, 5.0, 5.0, 10.0, 2.5, 2.5, 2.5, 10.0, 15.0]},
-    "ZP4": {"r1": 3.91,  "r3": 2.76, "score": 69.5, "radar": [20.0, 5.0, 5.0, 5.0, 5.0, 2.5, 3.0, 1.5, 7.5, 15.0]},
-    "ZU6": {"r1": 7.25,  "r3": 4.10, "score": 80.0, "radar": [25.0, 5.0, 5.0, 5.0, 10.0, 5.0, 2.5, 2.5, 10.0, 15.0]},
+    "Z05": {"r1": 9.90,  "r3": 5.82},
+    "Z13": {"r1": 9.85,  "r3": 1.58},
+    "Z15": {"r1": 11.20, "r3": 1.69},
+    "Z29": {"r1": 6.15,  "r3": 3.79},
+    "Z12": {"r1": 6.82,  "r3": 4.00},
+    "Z52": {"r1": 6.85,  "r3": 4.52},
+    "Z69": {"r1": 3.72,  "r3": 3.35},
+    "ZP4": {"r1": 3.91,  "r3": 2.76},
+    "ZU6": {"r1": 7.25,  "r3": 4.10},
 }
 
-# ⚡ 強制覆蓋寫入，徹底解決後台檔案舊數據殘留與總分算錯問題
+# ⚡ 第一階段寫入：校正回報數據
 for k, fund_obj in PRESET_FUNDS.items():
     code_key = fund_obj.get("code") or fund_obj.get("代號")
     if code_key in OFFICIAL_RETURNS_MATRIX:
         fund_obj["return_1y"] = OFFICIAL_RETURNS_MATRIX[code_key]["r1"]
         fund_obj["return_3y"] = OFFICIAL_RETURNS_MATRIX[code_key]["r3"]
-        fund_obj["score"] = OFFICIAL_RETURNS_MATRIX[code_key]["score"]
-        fund_obj["radar_scores"] = OFFICIAL_RETURNS_MATRIX[code_key]["radar"]
 
 # 1. 網頁頁面配置
 st.set_page_config(
@@ -120,7 +118,7 @@ def generate_dynamic_eval_table(curr_fund, category_type):
             ["三、集中度風險 (5分)", "前十大持倉佔比", "• 5分: 前十持倉 < 20%", f"• 前十大佔比：{kpis.get('p6', '極度分散')}", "5.0 / 5", "<span class='quality-badge-green'>✔ 發行人極度分散</span>"],
             ["四、槓桿水平 (5分)", "資產總膨脹率", "• 5分: 比率 ≤ 105%", f"• 槓桿比率：{kpis.get('p7', '100%')}", "5.0 / 5", "<span class='quality-badge-green'>✔ 無槓桿風險</span>"],
             ["五、利率敏感度/久期 (10分)", "有效存續期 (Duration)", "• 10分: 存續期 < 3.5 年", f"• 有效存續期：{kpis.get('p4', '適中')}", "10.0 / 10", "<span class='quality-badge-green'>✔ 高抗升息力</span>"],
-            ["六、流動性風險 (5分)", "手持現金儲備", "• 5分: 現金及等值 > 5%", f"• 現金及流動資產：{kpis.get('p5', '充沛')}", "5.0 / 5", "<span class='quality-badge-green'>✔ 變現流動性佳</span>"],
+            ["六、流動性風險 (5分)", "手持現金儲備", "• 5分: 現金及流動資產 > 5%", f"• 現金及流動資產：{kpis.get('p5', '充沛')}", "5.0 / 5", "<span class='quality-badge-green'>✔ 變現流動性佳</span>"],
             ["七、匯率風險 (5分)", "對沖機制與幣別", "• 5分: 美元專項或全額對沖", "• 基礎貨幣對沖機制完善", "5.0 / 5", "<span class='quality-badge-green'>✔ 對沖機制良好</span>"],
             ["八、管理費與成本 (5分)", "總費用率 (TER)", "• 5分: TER ≤ 1.2%", "• 經審計費用率落在合理區間", "2.5 / 5", "<span class='quality-badge-yellow'>🟡 費用率適中</span>"],
             ["九、衍生工具結構風險 (10分)", "144A ELN / TRS 審計", "• 10分: 無高風險衍生品", f"• {curr_fund.get('risk_derivatives', {}).get('detail_note', '無 ELN/TRS 結構風險')}", "10.0 / 10", "<span class='quality-badge-green'>🟢 無高風險衍生品</span>"],
@@ -139,6 +137,25 @@ def generate_dynamic_eval_table(curr_fund, category_type):
             ["九、衍生工具審計 (10分)", "144A ELN 票據審計", "• 10分: 無 ELN 高風險結構", "• 直持標的，無高風險結構性商品", "10.0 / 10", "<span class='quality-badge-green'>🟢 無 ELN 結構風險</span>"],
             ["十、Covered Call/期權審計 (15分)", "賣出期權策略風險", "• 15分: 無期權風險", "• 無不對稱期權策略風險", "15.0 / 15", "<span class='quality-badge-green'>✔ 無期權風險</span>"]
         ]
+
+# 🟢 ⚡ 第二階段全自動對齊引擎：解析明細表，動態計算 10 大維度得分，強制作業至頂層
+for k, fund_obj in PRESET_FUNDS.items():
+    cat_type = fund_obj.get("category", "債券基金")
+    e_table = generate_dynamic_eval_table(fund_obj, cat_type)
+    
+    calculated_scores = []
+    total_score_sum = 0.0
+    for row in e_table:
+        try:
+            s_num = float(row[4].split("/")[0].strip())
+            calculated_scores.append(s_num)
+            total_score_sum += s_num
+        except:
+            calculated_scores.append(0.0)
+            
+    # 全站強制寫入完全一致的總分與雷達圖陣列 (徹底消除 86.5 vs 92.5 不一致)
+    fund_obj["score"] = round(total_score_sum, 1)
+    fund_obj["radar_scores"] = calculated_scores
 
 # ==============================================================================
 # 🎯 登入後的系統主要內容
@@ -218,7 +235,6 @@ with top_tab1:
             score_val = float(f.get("score", 0))
             risk_deduction = 100.0 - score_val
             
-            # 🟢 直讀覆蓋後的 100% 正確數據
             return_1y_val = float(f.get("return_1y", 0.0))
             return_3y_val = float(f.get("return_3y", 0.0))
 
@@ -388,7 +404,7 @@ with top_tab1:
                 st.plotly_chart(fig_rank, use_container_width=True)
 
 # ==============================================================================
-# TAB 2: 🔍 單一基金深度風險剖析 (含 100% 動態實時加總引擎)
+# TAB 2: 🔍 單一基金深度風險剖析
 # ==============================================================================
 with top_tab2:
     if not PRESET_FUNDS:
@@ -596,13 +612,11 @@ with top_tab2:
 
         st.markdown("---")
 
-        # 🟢 明細表：100% 實時動態自動加總引擎 (Auto-Sum Engine)
+        # 🟢 明細表：100% 實時動態自動加總，與頂層 score 完全綁定對齊
         with st.expander("📋 點擊展開 / 折疊：基金深度風險評估明細表", expanded=True):
             eval_list = generate_dynamic_eval_table(curr_fund, fund_type)
             
             eval_rows_html = ""
-            realtime_calculated_score = 0.0  # 實時加總變數
-            
             for r in eval_list:
                 dim_name = r[0] if len(r) > 0 else "-"
                 metric_name = r[1] if len(r) > 1 else "-"
@@ -611,17 +625,11 @@ with top_tab2:
                 score_text = r[4] if len(r) > 4 else "-"
                 status_badge = r[5] if len(r) > 5 else "-"
                 
-                # 🟢 實時解析得分數字並累加 (例如從 "25.0 / 25" 中解析出 25.0)
-                try:
-                    score_num = float(score_text.split("/")[0].strip())
-                    realtime_calculated_score += score_num
-                except:
-                    pass
-                
                 eval_rows_html += f"<tr><td><b>{dim_name}</b></td><td>{metric_name}</td><td>{rule_text}</td><td>{fund_data_text}</td><td style='text-align:center; font-weight:bold;'>{score_text}</td><td style='text-align:center;'>{status_badge}</td></tr>"
 
-            # 🟢 使用實時精算總分 (精確顯示 88.0 分，徹底淘汰舊硬編碼 78.0 分)
-            final_score_str = f"{realtime_calculated_score:.1f}"
+            # 🟢 直讀頂層全站對齊後之動態加總 score，絕不分家
+            final_score_val = curr_fund.get("score", 0.0)
+            final_score_str = f"{final_score_val:.1f}"
 
             st.markdown(f'''
             <table class="custom-table">
