@@ -1,4 +1,4 @@
-# app.py - 智能基金風險評估系統 (極簡模組化 UI 引擎版)
+# app.py - 智能基金風險評估系統 (極簡模組化 UI 引擎與防爆對齊版)
 import streamlit as st
 import streamlit.components.v1 as components
 import pandas as pd
@@ -12,7 +12,7 @@ from eval_engine import generate_dynamic_eval_table, process_fund_risk_scores  #
 st.cache_data.clear()
 PRESET_FUNDS = load_all_funds()
 
-# 🟢 【防爆機制】定義 render_safe_history_div 函數，徹底解決 NameError
+# 🟢 【防爆機制 1】定義 render_safe_history_div 函數，徹底避免 NameError
 def render_safe_history_div(h_div):
     """自動補齊 6 欄位，徹底避免 IndexError 與 NameError 崩潰"""
     if not h_div:
@@ -327,21 +327,52 @@ with top_tab1:
             col_l, col_r = st.columns([1.3, 1])
             with col_l:
                 st.markdown("#### 🕸️ 雷達圖多基金重疊對比")
-                selected_compare = st.multiselect("請選擇要對比的基金：", list(PRESET_FUNDS.keys()), default=list(PRESET_FUNDS.keys())[:2])
+                default_picks = list(PRESET_FUNDS.keys())[:2] if len(PRESET_FUNDS) >= 2 else list(PRESET_FUNDS.keys())
+                selected_compare = st.multiselect("請選擇要對比的基金：", list(PRESET_FUNDS.keys()), default=default_picks)
+                
+                # 🟢 【防爆修正】：必須確認選取的基金數據非空才繪製
                 if selected_compare:
                     radar_data = []
+                    default_dims = [
+                        "一、派息可持續性 (25)", "二、底層純資產質素 (15)", "三、集中度風險 (5)", 
+                        "四、槓桿水平 (5)", "五、利率敏感度 (10)", "六、流動性風險 (5)", 
+                        "七、匯率風險 (5)", "八、管理費與成本 (5)", "九、衍生工具結構風險 (10)", "十、不對稱策略風險 (15)"
+                    ]
+                    max_scores = [25, 15, 5, 5, 10, 5, 5, 5, 10, 15]
+
                     for f_name in selected_compare:
-                        f_obj = PRESET_FUNDS[f_name]
+                        f_obj = PRESET_FUNDS.get(f_name, {})
                         radar_scores = f_obj.get("radar_scores", [0]*10)
-                        radar_dims = f_obj.get("radar_dimensions", ["維度"]*10)
+                        radar_dims = f_obj.get("radar_dimensions", default_dims)
+                        if len(radar_dims) < 10:
+                            radar_dims = default_dims
+
                         code_val = f_obj.get("code") or f_obj.get("代號") or ""
                         zh_val = f_obj.get("zh") or f_obj.get("基金簡稱") or f_name
                         code_name = f"{code_val} {zh_val}"
-                        for dim, score, m_score in zip(radar_dims, radar_scores, [25, 15, 5, 5, 10, 5, 5, 5, 10, 15]):
-                            radar_data.append({"基金": code_name, "維度": dim, "得分率 (%)": (score / m_score) * 100})
-                    fig_radar = px.line_polar(pd.DataFrame(radar_data), r='得分率 (%)', theta='維度', color='基金', line_close=True, markers=True, range_r=[0, 100], template="plotly_dark")
-                    fig_radar.update_layout(height=450, paper_bgcolor="rgba(0,0,0,0)")
-                    st.plotly_chart(fig_radar, use_container_width=True)
+
+                        for dim, score, m_score in zip(radar_dims[:10], radar_scores[:10], max_scores):
+                            pct = round((score / m_score) * 100, 1) if m_score > 0 else 0
+                            radar_data.append({"基金": code_name, "維度": dim, "得分率 (%)": pct})
+
+                    if len(radar_data) > 0:
+                        df_radar = pd.DataFrame(radar_data)
+                        fig_radar = px.line_polar(
+                            df_radar, 
+                            r='得分率 (%)', 
+                            theta='維度', 
+                            color='基金', 
+                            line_close=True, 
+                            markers=True, 
+                            range_r=[0, 100], 
+                            template="plotly_dark"
+                        )
+                        fig_radar.update_layout(height=450, paper_bgcolor="rgba(0,0,0,0)")
+                        st.plotly_chart(fig_radar, use_container_width=True)
+                    else:
+                        st.info("💡 請於上方選單選取基金以繪製雷達圖。")
+                else:
+                    st.info("💡 請選取至少一隻基金以展開雷達對比圖。")
 
             with col_r:
                 st.markdown("#### 🏆 風險體檢總分排行榜 (高鑑別度階梯)")
@@ -485,7 +516,11 @@ with top_tab2:
 
         with main_tab1:
             radar_scores = curr_fund.get("radar_scores", [0]*10)
-            radar_dims = curr_fund.get("radar_dimensions", ["維度"]*10)
+            radar_dims = curr_fund.get("radar_dimensions", [
+                "一、派息可持續性 (25)", "二、底層純資產質素 (15)", "三、集中度風險 (5)", 
+                "四、槓桿水平 (5)", "五、利率敏感度 (10)", "六、流動性風險 (5)", 
+                "七、匯率風險 (5)", "八、管理費與成本 (5)", "九、衍生工具結構風險 (10)", "十、不對稱策略風險 (15)"
+            ])
             max_scores = [25, 15, 5, 5, 10, 5, 5, 5, 10, 15]
             
             df_chart = pd.DataFrame(dict(
