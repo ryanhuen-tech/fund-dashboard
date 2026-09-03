@@ -6,12 +6,12 @@ DATA_ZP4 = {
         "code": "ZP4",
         "zh": "信安環球投資系列 - 信安優先證券基金 (美元 A 按月派息類別)",
         "en": "Principal Global Investors Funds - Preferred Securities Fund (Class A USD Monthly Distributing)",
-        "category": "債券/優先股基金",
+        "category": "債券基金",  # 🟢 修正：統一分類為「債券基金」，確保前端選單可成功過濾顯示
         "star": "⭐⭐⭐",
         "star_num": 3,
         "last_yield": 8.00,
-        "return_1y": 3.91,   # 🟢 官方 1 年 NAV-to-NAV 實時總回報 +3.91%
-        "return_3y": 8.50,   # 🟢 官方 3 年累積總回報 +8.50%
+        "return_1y": 3.91,   # 🟢 1 年實時總回報 +3.91%
+        "return_3y": 2.76,   # 🟢 晨星官方 3 年年化回報 (Annualized Return/CAGR) +2.76%
         "holdings_count": "180+ 隻資產",
         "company_name": "信安環球投資 (Principal Global Investors)",
         "company_profile": [
@@ -34,7 +34,7 @@ DATA_ZP4 = {
             "p1": "8.00%",
             "p2": "+0.50%", "p2_delta": "🟢 YTM 7.50% vs 派息率 8.00% (息差僅 +0.50%)", "p2_color": "normal",
             "p3": "BBB / BB 級", "p3_delta": "🟡 大型金融機構次級資本/優先股", "p3_color": "normal",
-            "p4": "4.90 年", "p4_delta": "🟢 1年總回報 +3.91% | 3年總回報 +8.50%", "p4_color": "normal",
+            "p4": "4.90 年", "p4_delta": "🟢 1年總回報 +3.91% | 3年年化回報 +2.76%", "p4_color": "normal",
             "p5": "3.20%", "p5_delta": "🟢 現金及等值資產", "p5_color": "normal",
             "p6": "18.50%",
             "p7": "101.8%",
@@ -64,7 +64,7 @@ DATA_ZP4 = {
             {"排名": 5, "持倉名稱": "MetLife Inc Fixed-to-Floating Preferred", "資產類別": "保險服務 / 美國大都會人壽優先股", "佔比 (%)": "1.75%", "品質": "投資級", "badge": "<span class='quality-badge-green'>🟢 良好 (BBB)</span>", "bg": "美國壽險巨人發行之固定轉浮動利率優先股。"}
         ],
 
-        # 🟢 嚴格確保每筆數據均具備 6 個元素，防止前端 IndexError
+        # 🟢 完整 12 期數據，每筆 6 個元素，防爆防錯
         "history_div": [
             ["30/06/2026", "30/06/2026", "08/07/2026", "0.0533", "8.00", "8.00%"],
             ["29/05/2026", "29/05/2026", "08/06/2026", "0.0533", "8.02", "8.00%"],
