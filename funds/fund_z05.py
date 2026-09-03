@@ -1,4 +1,5 @@
 # funds/fund_z05.py
+# 路博邁投資基金 - NB 新興市場債券基金 - 強勢貨幣 (Neuberger Berman Emerging Market Debt - Hard Currency Fund)
 
 DATA_Z05 = {
     "Z05 NB 新興市場債券基金 - 強勢貨幣 (上月派息: 7.00%)": {
@@ -18,7 +19,7 @@ DATA_Z05 = {
             "<b>強勢貨幣主權債核心策略</b>：主要投資於新興市場國家公眾及私人發行人發行之強勢貨幣 (美元/歐元) 債務證券。",
             "<b>純正債券結構無 ELN 爆點</b>：底層 82.9% 為新興國主權/半主權債，僅運用 0.09% CDS 及期貨對沖，完全不依賴 144A ELN。"
         ],
-        "score": "81.0",  # 依獨立損益表與剛性 10 維度矩陣精算後之總分 (81.0分)
+        "score": 81.0,  # 轉為 float 數字型態，便利 portfolio_builder 試算
         "score_ratio": "9.90",
         "risk_derivatives": {
             "has_high_risk": False,
@@ -125,4 +126,13 @@ DATA_Z05 = {
             ["十、歷史相對波動 (5分)", "3 年年化波幅 (Standard Deviation)", "• 5分: 波幅 < 10%<br>• 2.5分: 波幅 10%-15%<br>• 0分: 波幅 > 15%", "• 3 年年化標準差 (波幅) 為 <b>7.08%</b> (遠低於 10% 門檻)。<br>👉 獲 <b>5.0 分滿分</b>。", "5.0 / 5", "<span class='quality-badge-green'>✔ 7.08% 低波幅 (5分)</span>"]
         ]
     }
+}
+
+# 🟢 追加對接建構器 (Portfolio Builder) 的標準導出對象
+FUND_Z05 = list(DATA_Z05.values())[0]
+FUND_Z05["risk_derivatives"] = {
+    "risk_level": "L1",
+    "has_eln": False,
+    "has_trs": False,
+    "description": "無高風險衍生工具 (無 L3/L4)，僅 0.09% CDS 避險與 0.35% 期貨存續期調控，結構健康。"
 }
