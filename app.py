@@ -1,4 +1,4 @@
-# app.py - 智能基金風險評估系統 (權威數據強制校正與自動防爆版)
+# app.py - 智能基金風險評估系統 (新版 100 分風控表頭全對齊版)
 import streamlit as st
 import streamlit.components.v1 as components
 import pandas as pd
@@ -117,12 +117,12 @@ def generate_dynamic_eval_table(curr_fund, category_type):
             ["二、底層純資產質素 (15分)", "信貸評級與受壓資產佔比", "• 15分: 投資級 > 80%<br>• 0分: 受壓資產 > 30%", f"• 評級結構：{kpis.get('p3_delta', '信貸品質適中')}", "10.0 / 15", "<span class='quality-badge-green'>🟢 質素良好</span>"],
             ["三、集中度風險 (5分)", "前十大持倉佔比", "• 5分: 前十持倉 < 20%", f"• 前十大佔比：{kpis.get('p6', '極度分散')}", "5.0 / 5", "<span class='quality-badge-green'>✔ 發行人極度分散</span>"],
             ["四、槓桿水平 (5分)", "資產總膨脹率", "• 5分: 比率 ≤ 105%", f"• 槓桿比率：{kpis.get('p7', '100%')}", "5.0 / 5", "<span class='quality-badge-green'>✔ 無槓桿風險</span>"],
-            ["五、利率敏感度 (10分)", "有效存續期 (Duration)", "• 10分: 存續期 < 3.5 年", f"• 有效存續期：{kpis.get('p4', '適中')}", "10.0 / 10", "<span class='quality-badge-green'>✔ 高抗升息力</span>"],
+            ["五、利率敏感度/久期 (10分)", "有效存續期 (Duration)", "• 10分: 存續期 < 3.5 年", f"• 有效存續期：{kpis.get('p4', '適中')}", "10.0 / 10", "<span class='quality-badge-green'>✔ 高抗升息力</span>"],
             ["六、流動性風險 (5分)", "手持現金儲備", "• 5分: 現金及等值 > 5%", f"• 現金及流動資產：{kpis.get('p5', '充沛')}", "5.0 / 5", "<span class='quality-badge-green'>✔ 變現流動性佳</span>"],
             ["七、匯率風險 (5分)", "對沖機制與幣別", "• 5分: 美元專項或全額對沖", "• 基礎貨幣對沖機制完善", "5.0 / 5", "<span class='quality-badge-green'>✔ 對沖機制良好</span>"],
             ["八、管理費與成本 (5分)", "總費用率 (TER)", "• 5分: TER ≤ 1.2%", "• 經審計費用率落在合理區間", "2.5 / 5", "<span class='quality-badge-yellow'>🟡 費用率適中</span>"],
             ["九、衍生工具結構風險 (10分)", "144A ELN / TRS 審計", "• 10分: 無高風險衍生品", f"• {curr_fund.get('risk_derivatives', {}).get('detail_note', '無 ELN/TRS 結構風險')}", "10.0 / 10", "<span class='quality-badge-green'>🟢 無高風險衍生品</span>"],
-            ["十、不對稱策略風險 (15分)", "賣出選擇權 (Short Options)", "• 15分: 完全未採用 Short Options", "• 純債券投資組合，無期權封頂風險", "15.0 / 15", "<span class='quality-badge-green'>✔ 無不對稱期權炸彈</span>"]
+            ["十、不對稱策略風險 (15分)", "賣出選擇權 (Short Options)", "• 15分: 完全未採用 Short Options", "• 純債券投資組合，無期權封頂風險", "15.0 / 15", "<span class='quality-badge-green'>✔ 無期權風險</span>"]
         ]
     else:
         return [
@@ -195,7 +195,7 @@ top_tab1, top_tab2, top_tab3, top_tab4 = st.tabs([
 ])
 
 # ==============================================================================
-# TAB 1: 📊 全基金縱覽比較表
+# TAB 1: 📊 全基金縱覽比較表 (100% 新版 100 分標頭完全對齊)
 # ==============================================================================
 with top_tab1:
     st.markdown("### 📊 跨基金 10 大風險維度得分與回報總覽表")
@@ -227,6 +227,7 @@ with top_tab1:
                 "display_html": "<span class='badge-green'>🟢 無 L3/L4 高風險產品 (0%)</span>"
             })
 
+            # 🟢 對齊新版 100 分謹慎風控模型的 10 大維度 key
             matrix_data.append({
                 "代號": f.get("code") or f.get("代號") or "N/A", 
                 "基金簡稱": f.get("zh") or f.get("基金簡稱") or key, 
@@ -241,14 +242,14 @@ with top_tab1:
                 "風險與回報對比指數": eff_score,
                 "一、派息可持續性 (25)": radar_scores[0] if len(radar_scores) > 0 else 0, 
                 "二、底層純資產質素 (15)": radar_scores[1] if len(radar_scores) > 1 else 0,
-                "三、衍生工具與槓桿 (20)": radar_scores[2] if len(radar_scores) > 2 else 0, 
-                "四、集中度風險 (5)": radar_scores[3] if len(radar_scores) > 3 else 0,
-                "五、風險調整後回報 (10)": radar_scores[4] if len(radar_scores) > 4 else 0, 
-                "六、大盤敏感度 (5)": radar_scores[5] if len(radar_scores) > 5 else 0,
-                "七、流動性與規模 (5)": radar_scores[6] if len(radar_scores) > 6 else 0, 
-                "八、匯率風險 (5)": radar_scores[7] if len(radar_scores) > 7 else 0,
-                "九、區域集中度 (5)": radar_scores[8] if len(radar_scores) > 8 else 0, 
-                "十、歷史相對波動 (5)": radar_scores[9] if len(radar_scores) > 9 else 0
+                "三、集中度風險 (5)": radar_scores[2] if len(radar_scores) > 2 else 0, 
+                "四、槓桿水平 (5)": radar_scores[3] if len(radar_scores) > 3 else 0,
+                "五、利率敏感度/久期 (10)": radar_scores[4] if len(radar_scores) > 4 else 0, 
+                "六、流動性風險 (5)": radar_scores[5] if len(radar_scores) > 5 else 0,
+                "七、匯率風險 (5)": radar_scores[6] if len(radar_scores) > 6 else 0, 
+                "八、管理費與成本 (5)": radar_scores[7] if len(radar_scores) > 7 else 0,
+                "九、衍生工具結構風險 (10)": radar_scores[8] if len(radar_scores) > 8 else 0, 
+                "十、不對稱策略風險 (15)": radar_scores[9] if len(radar_scores) > 9 else 0
             })
         
         df_matrix = pd.DataFrame(matrix_data)
@@ -267,15 +268,15 @@ with top_tab1:
             rows_list = []
             for _, r in df_matrix_sorted.iterrows():
                 b1 = "quality-badge-green" if r.get('一、派息可持續性 (25)', 0)>=12.5 else "quality-badge-red"
-                b2 = "quality-badge-green" if r.get('二、底層純資產質素 (15)', 0)>=12.0 else "quality-badge-yellow"
-                b3 = "quality-badge-green" if r.get('三、衍生工具與槓桿 (20)', 0)>=12.0 else "quality-badge-red"
-                b4 = "quality-badge-green" if r.get('四、集中度風險 (5)', 0)>=5.0 else "quality-badge-yellow"
-                b5 = "quality-badge-green" if r.get('五、風險調整後回報 (10)', 0)>=8.0 else "quality-badge-yellow"
-                b6 = "quality-badge-green" if r.get('六、大盤敏感度 (5)', 0)>=4.0 else "quality-badge-yellow"
-                b7 = "quality-badge-green" if r.get('七、流動性與規模 (5)', 0)>=5.0 else "quality-badge-yellow"
-                b8 = "quality-badge-green" if r.get('八、匯率風險 (5)', 0)>=5.0 else "quality-badge-yellow"
-                b9 = "quality-badge-green" if r.get('九、區域集中度 (5)', 0)>=5.0 else "quality-badge-yellow"
-                b10 = "quality-badge-green" if r.get('十、歷史相對波動 (5)', 0)>=3.0 else "quality-badge-yellow"
+                b2 = "quality-badge-green" if r.get('二、底層純資產質素 (15)', 0)>=10.0 else "quality-badge-yellow"
+                b3 = "quality-badge-green" if r.get('三、集中度風險 (5)', 0)>=5.0 else "quality-badge-yellow"
+                b4 = "quality-badge-green" if r.get('四、槓桿水平 (5)', 0)>=5.0 else "quality-badge-yellow"
+                b5 = "quality-badge-green" if r.get('五、利率敏感度/久期 (10)', 0)>=5.0 else "quality-badge-yellow"
+                b6 = "quality-badge-green" if r.get('六、流動性風險 (5)', 0)>=2.5 else "quality-badge-yellow"
+                b7 = "quality-badge-green" if r.get('七、匯率風險 (5)', 0)>=2.5 else "quality-badge-yellow"
+                b8 = "quality-badge-green" if r.get('八、管理費與成本 (5)', 0)>=2.5 else "quality-badge-yellow"
+                b9 = "quality-badge-green" if r.get('九、衍生工具結構風險 (10)', 0)>=10.0 else "quality-badge-red"
+                b10 = "quality-badge-green" if r.get('十、不對稱策略風險 (15)', 0)>=15.0 else "quality-badge-red"
 
                 code_str = r.get('代號', '-')
                 zh_str = r.get('基金簡稱', '-')
@@ -288,8 +289,32 @@ with top_tab1:
                 score_str = r.get('綜合風險總分', 0)
                 eff_str = r.get('風險與回報對比指數', 0)
 
-                rows_list.append(f"<tr><td><b>{code_str}</b></td><td><b>{zh_str}</b></td><td><span class='type-tag'>{cat_str}</span></td><td style='text-align:center;'>{deriv_html}</td><td><span class='yield-tag'>📈 {yield_str}%</span></td><td style='font-weight:bold; color:#059669;'>+{r1_str}%</td><td style='font-weight:bold; color:#0284C7;'>+{r3_str}%</td><td><span class='ms-star-tag'>{star_str}</span></td><td style='font-size:15px; font-weight:800; color:#1E3A8A;'>{score_str} / 100</td><td style='font-size:15px; font-weight:800; color:#059669;'><b>{eff_str}</b></td><td><span class='{b1}'>{r.get('一、派息可持續性 (25)', 0)} 分</span></td><td><span class='{b2}'>{r.get('二、底層純資產質素 (15)', 0)} 分</span></td><td><span class='{b3}'>{r.get('三、衍生工具與槓桿 (20)', 0)} 分</span></td><td><span class='{b4}'>{r.get('四、集中度風險 (5)', 0)} 分</span></td><td><span class='{b5}'>{r.get('五、風險調整後回報 (10)', 0)} 分</span></td><td><span class='{b6}'>{r.get('六、大盤敏感度 (5)', 0)} 分</span></td><td><span class='{b7}'>{r.get('七、流動性與規模 (5)', 0)} 分</span></td><td><span class='{b8}'>{r.get('八、匯率風險 (5)', 0)} 分</span></td><td><span class='{b9}'>{r.get('九、區域風險 (5)', 0)} 分</span></td><td><span class='{b10}'>{r.get('十、歷史相對波動 (5)', 0)} 分</span></td></tr>")
+                rows_list.append(f"""
+                <tr>
+                    <td><b>{code_str}</b></td>
+                    <td><b>{zh_str}</b></td>
+                    <td><span class='type-tag'>{cat_str}</span></td>
+                    <td style='text-align:center;'>{deriv_html}</td>
+                    <td><span class='yield-tag'>📈 {yield_str}%</span></td>
+                    <td style='font-weight:bold; color:#059669;'>+{r1_str}%</td>
+                    <td style='font-weight:bold; color:#0284C7;'>+{r3_str}%</td>
+                    <td><span class='ms-star-tag'>{star_str}</span></td>
+                    <td style='font-size:15px; font-weight:800; color:#1E3A8A;'>{score_str} / 100</td>
+                    <td style='font-size:15px; font-weight:800; color:#059669;'><b>{eff_str}</b></td>
+                    <td><span class='{b1}'>{r.get('一、派息可持續性 (25)', 0)} 分</span></td>
+                    <td><span class='{b2}'>{r.get('二、底層純資產質素 (15)', 0)} 分</span></td>
+                    <td><span class='{b3}'>{r.get('三、集中度風險 (5)', 0)} 分</span></td>
+                    <td><span class='{b4}'>{r.get('四、槓桿水平 (5)', 0)} 分</span></td>
+                    <td><span class='{b5}'>{r.get('五、利率敏感度/久期 (10)', 0)} 分</span></td>
+                    <td><span class='{b6}'>{r.get('六、流動性風險 (5)', 0)} 分</span></td>
+                    <td><span class='{b7}'>{r.get('七、匯率風險 (5)', 0)} 分</span></td>
+                    <td><span class='{b8}'>{r.get('八、管理費與成本 (5)', 0)} 分</span></td>
+                    <td><span class='{b9}'>{r.get('九、衍生工具結構風險 (10)', 0)} 分</span></td>
+                    <td><span class='{b10}'>{r.get('十、不對稱策略風險 (15)', 0)} 分</span></td>
+                </tr>
+                """)
 
+            # 🟢 HTML 表頭 100% 正確對齊新版 10 大維度與配分
             component_html = f"""
             <!DOCTYPE html><html><head><style>
             body {{ font-family: sans-serif; margin:0; background: transparent; }}
@@ -306,8 +331,33 @@ with top_tab1:
             .ms-star-tag {{ background:#FEF08A; color:#854D0E; padding:3px 8px; border-radius:4px; font-weight:bold; }}
             .yield-tag {{ background:#E0F2FE; color:#0369A1; padding:3px 8px; border-radius:4px; font-weight:bold; }}
             </style></head><body><div style="overflow-x:auto;">
-            <table class="custom-table" style="min-width:1850px;"><thead><tr><th>代號</th><th>基金名稱</th><th>類別</th><th style="background-color:#991B1B; color:#FFF; text-align:center;">高風險衍生品曝險 ⚠️</th><th>上月派息率</th><th>近1年總回報</th><th>近3年年化 (CAGR)</th><th>晨星</th><th>風險總分</th><th>風險與回報對比指數 🏆</th><th>一、派息可持續性 (25)</th><th>二、底層純資產質素 (15)</th><th>三、衍生工具與槓桿 (20)</th><th>四、集中度 (5)</th><th>五、風控與夏普 (10)</th><th>六、敏感度/Beta (5)</th><th>七、流動性 (5)</th><th>八、匯率風險 (5)</th><th>九、區域風險 (5)</th><th>十、淨值波動 (5)</th></tr></thead>
-            <tbody>{"".join(rows_list)}</tbody></table></div></body></html>
+            <table class="custom-table" style="min-width:1850px;">
+            <thead>
+                <tr>
+                    <th>代號</th>
+                    <th>基金名稱</th>
+                    <th>類別</th>
+                    <th style="background-color:#991B1B; color:#FFF; text-align:center;">高風險衍生品曝險 ⚠️</th>
+                    <th>上月派息率</th>
+                    <th>近1年總回報</th>
+                    <th>近3年年化 (CAGR)</th>
+                    <th>晨星</th>
+                    <th>風險總分</th>
+                    <th>風險與回報對比指數 🏆</th>
+                    <th>一、派息可持續性 (25)</th>
+                    <th>二、底層純資產質素 (15)</th>
+                    <th>三、集中度風險 (5)</th>
+                    <th>四、槓桿水平 (5)</th>
+                    <th>五、利率敏感度/久期 (10)</th>
+                    <th>六、流動性風險 (5)</th>
+                    <th>七、匯率風險 (5)</th>
+                    <th>八、管理費與成本 (5)</th>
+                    <th>九、衍生工具結構風險 (10)</th>
+                    <th>十、不對稱策略風險 (15)</th>
+                </tr>
+            </thead>
+            <tbody>{"".join(rows_list)}</tbody>
+            </table></div></body></html>
             """
             components.html(component_html, height=380, scrolling=True)
 
@@ -325,7 +375,7 @@ with top_tab1:
                         code_val = f_obj.get("code") or f_obj.get("代號") or ""
                         zh_val = f_obj.get("zh") or f_obj.get("基金簡稱") or f_name
                         code_name = f"{code_val} {zh_val}"
-                        for dim, score, m_score in zip(radar_dims, radar_scores, [25, 15, 20, 5, 10, 5, 5, 5, 5, 5]):
+                        for dim, score, m_score in zip(radar_dims, radar_scores, [25, 15, 5, 5, 10, 5, 5, 5, 10, 15]):
                             radar_data.append({"基金": code_name, "維度": dim, "得分率 (%)": (score / m_score) * 100})
                     fig_radar = px.line_polar(pd.DataFrame(radar_data), r='得分率 (%)', theta='維度', color='基金', line_close=True, markers=True, range_r=[0, 100], template="plotly_dark")
                     fig_radar.update_layout(height=450, paper_bgcolor="rgba(0,0,0,0)")
@@ -475,7 +525,7 @@ with top_tab2:
         with main_tab1:
             radar_scores = curr_fund.get("radar_scores", [0]*10)
             radar_dims = curr_fund.get("radar_dimensions", ["維度"]*10)
-            max_scores = [25, 15, 20, 5, 10, 5, 5, 5, 5, 5]
+            max_scores = [25, 15, 5, 5, 10, 5, 5, 5, 10, 15]
             
             df_chart = pd.DataFrame(dict(
                 Score=[(s/m)*100 for s,m in zip(radar_scores, max_scores)], 
@@ -509,7 +559,7 @@ with top_tab2:
                 c_rows = "".join([f"<tr><td><b>{r[0]}</b></td><td>{r[1]}</td><td>{r[2]}</td><td style='font-weight:bold; color:#D97706;'>{r[3]}</td></tr>" for r in c_div])
                 st.markdown(f'<table class="custom-table"><thead><tr><th>除息日</th><th>每股股息</th><th>可分派淨收益/權利金 %</th><th>由資本所分派之股息 % (ROC)</th></tr></thead><tbody>{c_rows}</tbody></table>', unsafe_allow_html=True)
             else:
-                st.warning("⚠️ 正本數據未匯入提示：該基金之《派息成份報告 (Dividend Composition)》尚未補充 PDF 档建檔。")
+                st.warning("⚠️ 正本數據未匯入提示：該基金之《派息成份報告 (Dividend Composition)》尚未補充 PDF 檔建檔。")
 
         with main_tab5:
             s_dist = curr_fund.get("sector_dist", [])
