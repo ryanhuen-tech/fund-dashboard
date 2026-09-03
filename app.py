@@ -6,11 +6,22 @@ import plotly.express as px
 from funds_loader import load_all_funds  # 從加載器動態加載
 from utils.nav_calculator import calculate_realtime_nav_to_nav
 from portfolio_builder import render_portfolio_builder_tab  # 匯入全新客戶組合建構模組
-from eval_engine import generate_dynamic_eval_table, process_fund_risk_scores  # 🟢 匯入獨立風控計算引擎
+from eval_engine import generate_dynamic_eval_table, process_fund_risk_scores  # 匯入獨立風控計算引擎
 
 # 0. 強制清除 Streamlit 快取，確保抓取最新數據
 st.cache_data.clear()
 PRESET_FUNDS = load_all_funds()
+
+# 🟢 【防爆機制】定義 render_safe_history_div 函數，徹底解決 NameError
+def render_safe_history_div(h_div):
+    """自動補齊 6 欄位，徹底避免 IndexError 與 NameError 崩潰"""
+    if not h_div:
+        return ""
+    h_rows = ""
+    for r in h_div:
+        r_safe = list(r) + ["-"] * (6 - len(r)) if len(r) < 6 else r
+        h_rows += f"<tr><td>{r_safe[0]}</td><td>{r_safe[1]}</td><td>{r_safe[2]}</td><td><b>{r_safe[3]}</b></td><td>{r_safe[4]}</td><td style='font-weight:bold; color:#059669;'>{r_safe[5]}</td></tr>"
+    return h_rows
 
 # 🟢 Morningstar 官方 1 年總回報與 3 年年化 (CAGR) 校正矩陣
 OFFICIAL_RETURNS_MATRIX = {
