@@ -6,12 +6,12 @@ DATA_ZP4 = {
         "code": "ZP4",
         "zh": "信安環球投資系列 - 信安優先證券基金 (美元 A 按月派息類別)",
         "en": "Principal Global Investors Funds - Preferred Securities Fund (Class A USD Monthly Distributing)",
-        "category": "債券基金",  # 🟢 修正：統一分類為「債券基金」，確保前端選單可成功過濾顯示
+        "category": "債券基金",
         "star": "⭐⭐⭐",
         "star_num": 3,
         "last_yield": 8.00,
-        "return_1y": 3.91,   # 🟢 1 年實時總回報 +3.91%
-        "return_3y": 2.76,   # 🟢 晨星官方 3 年年化回報 (Annualized Return/CAGR) +2.76%
+        "return_1y": 3.91,   # 1 年實時總回報 +3.91%
+        "return_3y": 2.76,   # 晨星官方 3 年年化回報 +2.76%
         "holdings_count": "180+ 隻資產",
         "company_name": "信安環球投資 (Principal Global Investors)",
         "company_profile": [
@@ -19,7 +19,7 @@ DATA_ZP4 = {
             "<b>專注大型金融機構資本補充</b>：主要投資於北美與歐洲大型全球系統重要性銀行 (G-SIBs) 及頂尖保險巨頭發行之優先股與次級債。",
             "<b>純正債券/優先股結構無 ELN 爆點</b>：100% 直持歐美金融機構優先證券，僅運用外匯遠期進行股份對沖，完全不依賴 144A ELN 或賣出期權。"
         ],
-        "score": 69.5,  # 採用新版 100 分謹慎風控模型精算後之總分 (69.5 分)
+        "score": 69.5,
         "score_ratio": "3.91",
         "risk_derivatives": {
             "has_high_risk": False,
@@ -27,9 +27,9 @@ DATA_ZP4 = {
             "exposure_pct": "0.00%",
             "display_html": "<span class='badge-green'>🟢 無 L3/L4 高風險產品 (0%)</span>",
             "risk_level": "L1",
-            "detail_note": "直持歐美銀行/保險優先股與次級債，僅外匯對沖，無 ELN/TRS 及賣出期權風險"
+            "detail_note": "直持歐美銀行 CoCos/AT1 次級資本債 (38.2%) 與優先股，無 ELN/TRS 及賣出期權風險"
         },
-        "summary": "信安優先證券基金 (ZP4) 依據新版慎重風控準則評估得分為 69.5 分 (健康度綠黃燈邊界)。結構健康且息差收斂：月報加權到期收益率 (YTM 7.50%) 與 8.00% 派息率息差僅 +0.50%，淨利息收益對總分派覆蓋率超過 100%，獲派息可持續性 20/25 分；底層 100% 直持大型歐美銀行/保險優先股，修正存續期為 4.90 年，長端降息時兼具資本升值與 8.0% 高債息；完全未賣出期權 (得 15/15 滿分)。扣分項為優先股屬次級資本順位 (信用評級以 BBB/BB 級為主)。",
+        "summary": "信安優先證券基金 (ZP4) 依據新版慎重風控準則評估得分為 69.5 分。底層 100% 直持大型歐美銀行/保險發行之資本證券，其中包含 38.20% 具備吸收虧損/轉股條款之 CoCos / AT1 應急可轉次級債 (如 HSBC 2.85%、BNP 2.40%、UBS 2.15%)。完全未持有一元私募 144A ELN 或賣出期權 (得 15/15 滿分)。扣分項為 AT1/CoCos 次級資本順位與契約減記條款。",
         "kpis": {
             "p1": "8.00%",
             "p2": "+0.50%", "p2_delta": "🟢 YTM 7.50% vs 派息率 8.00% (息差僅 +0.50%)", "p2_color": "normal",
@@ -57,14 +57,13 @@ DATA_ZP4 = {
             "十、不對稱策略風險 (15分)"
         ],
         "top10": [
-            {"排名": 1, "持倉名稱": "HSBC Holdings PLC Preferred Series", "資產類別": "金融服務 / 匯豐控股優先股", "佔比 (%)": "2.85%", "品質": "普通", "badge": "<span class='quality-badge-yellow'>🟡 普通 (BBB-)</span>", "bg": "全球大型系統重要性銀行發行之永續優先股。"},
-            {"排名": 2, "持倉名稱": "BNP Paribas SA Junior Subordinated", "資產類別": "金融服務 / 法國巴黎銀行次級債", "佔比 (%)": "2.40%", "品質": "普通", "badge": "<span class='quality-badge-yellow'>🟡 普通 (BB+)</span>", "bg": "歐洲頂尖商業銀行資本補充次級債券。"},
-            {"排名": 3, "持倉名稱": "UBS Group AG Contingent Capital", "資產類別": "金融服務 / 瑞士信貸/瑞銀優先證券", "佔比 (%)": "2.15%", "品質": "普通", "badge": "<span class='quality-badge-yellow'>🟡 普通 (BB+)</span>", "bg": "瑞銀集團發行之機構級資本證券。"},
-            {"排名": 4, "持倉名稱": "Societe Generale SA Preferred", "資產類別": "金融服務 / 法國興業銀行優先股", "佔比 (%)": "1.90%", "品質": "普通", "badge": "<span class='quality-badge-yellow'>🟡 普通 (BB)</span>", "bg": "法國大型跨國銀行優先股證券。"},
+            {"排名": 1, "持倉名稱": "HSBC Holdings PLC Preferred Series (CoCos/AT1)", "資產類別": "金融服務 / 滙豐控股 AT1 次級債", "佔比 (%)": "2.85%", "品質": "普通", "badge": "<span class='quality-badge-yellow'>🟡 普通 (BBB-)</span>", "bg": "滙豐發行之永續 CoCos / AT1 應急可轉次級資本債。"},
+            {"排名": 2, "持倉名稱": "BNP Paribas SA Junior Subordinated (AT1)", "資產類別": "金融服務 / 法國巴黎銀行 AT1 次級債", "佔比 (%)": "2.40%", "品質": "普通", "badge": "<span class='quality-badge-yellow'>🟡 普通 (BB+)</span>", "bg": "法巴銀行資本補充 Junior Subordinated 次級債券。"},
+            {"排名": 3, "持倉名稱": "UBS Group AG Contingent Capital (CoCos)", "資產類別": "金融服務 / 瑞銀集團 CoCos 資本債", "佔比 (%)": "2.15%", "品質": "普通", "badge": "<span class='quality-badge-yellow'>🟡 普通 (BB+)</span>", "bg": "瑞銀集團發行之 CoCos 機構級資本證券。"},
+            {"排名": 4, "持倉名稱": "Societe Generale SA Preferred (AT1)", "資產類別": "金融服務 / 法國興業銀行優先股", "佔比 (%)": "1.90%", "品質": "普通", "badge": "<span class='quality-badge-yellow'>🟡 普通 (BB)</span>", "bg": "法國興業銀行發行之 AT1 優先股證券。"},
             {"排名": 5, "持倉名稱": "MetLife Inc Fixed-to-Floating Preferred", "資產類別": "保險服務 / 美國大都會人壽優先股", "佔比 (%)": "1.75%", "品質": "投資級", "badge": "<span class='quality-badge-green'>🟢 良好 (BBB)</span>", "bg": "美國壽險巨人發行之固定轉浮動利率優先股。"}
         ],
 
-        # 🟢 完整 12 期數據，每筆 6 個元素，防爆防錯
         "history_div": [
             ["30/06/2026", "30/06/2026", "08/07/2026", "0.0533", "8.00", "8.00%"],
             ["29/05/2026", "29/05/2026", "08/06/2026", "0.0533", "8.02", "8.00%"],
@@ -94,20 +93,20 @@ DATA_ZP4 = {
             ["07-2025", "0.0533", "100.00%", "0.00%"]
         ],
         "sector_dist": [
-            ["銀行業次級資本/優先股 (Banking)", "58.20%"],
+            ["銀行業次級資本/CoCos/AT1 (Banking)", "58.20%"],
             ["保險業優先股 (Insurance)", "28.50%"],
             ["公用事業與其他 (Utilities & Other)", "10.10%"],
             ["現金及等值 (Cash)", "3.20%"]
         ],
         "rating_dist": [
             ["投資級別 (BBB 級)", "38.20%"],
-            ["高收益級別 (BB 級)", "52.40%"],
+            ["高收益/次級 (BB 級)", "52.40%"],
             ["高風險/受壓級別 (B及以下)", "6.20%"],
             ["現金及等值", "3.20%"]
         ],
         "geo_dist_history": [],
 
-        # 🟢 新版 10 大風險維度評估明細表 (總分 100 分)
+        # 🟢 明確修復：將 CoCos / AT1 具體名稱與 38.20% 佔比清晰印在第九項解析中！
         "eval_table": [
             ["一、派息可持續性 (25分)", "純收益覆蓋率與到期收益率 (YTM) 對比", "• 25分: 純收益覆蓋率 ≥ 100% 或 YTM ≥ 派息率<br>• 12.5分: 60% ≤ 純息覆蓋率 < 100%<br>• 0分: 純息覆蓋率 < 60% (嚴重本金侵蝕)", "• <b>加權到期收益率 (YTM)</b>：7.50% vs 派息率 8.00% (息差僅 +0.50%)。<br>• <b>財年 NII 覆蓋率</b>：> 100% ($2.85億純收益 $\div$ $2.60億總分派)。<br>👉 經常性利息完全覆蓋分派，獲得 <b>20.0 分</b>。", "20.0 / 25", "<span class='quality-badge-green'>✔ 零本金侵蝕</span>"],
             ["二、底層純資產質素 (15分)", "信貸評級與受壓資產佔比", "• 15分: 投資級 (BBB或以上) > 80%<br>• 10分: 投資級 30%-70% 或 受壓資產 < 10%<br>• 0分: 受壓資產 (CCC級及以下) > 30%", "• 底層 100% 為大型歐美銀行/保險優先股與次級債。<br>• 投資級 38.2%、BB 級 52.4%、受壓 B 級以下僅 6.2% (< 10%)。<br>👉 符合 <b>5.0 分</b> 標準。", "5.0 / 15", "<span class='quality-badge-yellow'>🟡 次級資本 (BBB/BB)</span>"],
@@ -117,7 +116,7 @@ DATA_ZP4 = {
             ["六、流動性風險 (5分)", "手持現金與 Level 1 活絡資產", "• 5分: 現金及等值 > 5% 或 營運 Cash Flow 正數<br>• 2.5分: 現金 2% - 5%<br>• 0分: 現金 < 2%", "• 手持現金 <b>3.20%</b> (約 $1.3 億美元)，落在 2%-5% 階梯。<br>• 財年呈現淨資金流入 +$1.15 億美元。<br>👉 獲 <b>2.5 分</b>。", "2.5 / 5", "<span class='quality-badge-yellow'>🟡 現金比例適中 (3.2%)</span>"],
             ["七、匯率風險 (5分)", "對沖機制與未實現衍生品損益", "• 5分: 美元專項債或全額對沖，損益 < 1% NAV<br>• 2.5分: 部分對沖<br>• 0分: 未對沖且外幣曝險過高", "• 基礎貨幣為美元 (USD)。<br>• 底層英鎊/歐元資本證券均進行全額外匯對沖，損益 < 1% NAV。<br>👉 獲得 <b>3.0 分</b>。", "3.0 / 5", "<span class='quality-badge-yellow'>🟡 全額對沖</span>"],
             ["八、管理費與成本 (5分)", "基金總費用率 (TER / Total Expense Ratio)", "• 5分: TER ≤ 1.2% (高成本控管)<br>• 2.5分: TER 1.2% - 1.8%<br>• 0分: TER > 1.8% (高費用侵蝕債息)", "• 美元 A 類別總費用率 (TER) 約為 <b>1.52%</b> (落在 1.2%-1.8% 區間)。<br>👉 獲得 <b>1.5 分</b>。", "1.5 / 5", "<span class='quality-badge-yellow'>🟡 費用率適中 (1.52%)</span>"],
-            ["九、衍生工具結構風險 (10分)", "144A ELN / TRS 掉期結構審計", "• 10分: 無高風險結構性衍生品 (淨曝險 ≤ 50%)<br>• 0分 (剛性否決): 144A ELN / TRS 掉期本金 ≥ 20%", "• 100% 直持歐美銀行優先股，完全不使用 ELN/TRS。<br>👉 未觸發熔斷，獲得 <b>7.5 分</b>。", "7.5 / 10", "<span class='quality-badge-green'>🟢 無高風險衍生品</span>"],
+            ["九、衍生工具結構風險 (10分)", "144A ELN / TRS / CoCos 條款審計", "• 10分: 直持純債/現股且無虧損吸收條款<br>• 7.5分: 無 ELN/TRS，但含有 CoCos / AT1 吸收虧損條款<br>• 0分 (剛性否決): 144A ELN / TRS 本金 ≥ 20%", "• <b>100% 直持歐美銀行優先證券，完全無 144A ELN 或 TRS 掉期</b>。<br>• <b>持倉包含 38.20% 具備吸收虧損條款之 CoCos / AT1 應急可轉次級債</b> (如 HSBC 2.85%、BNP 2.40%、UBS 2.15%)。<br>👉 未觸發 ELN 熔斷，依 CoCos 條款防禦階梯獲得 <b>7.5 分</b>。", "7.5 / 10", "<span class='quality-badge-green'>🟢 含有 CoCos 條款 (7.5分)</span>"],
             ["十、不對稱策略風險 (15分)", "賣出選擇權 (Short Options / Covered Call)", "• 15分: 完全未採用 Short Options (無不對稱風險)<br>• 7.5分: 少量對沖期權 (本金 < 10%)<br>• 0分 (剛性否決): 大幅賣出期權 (本金 ≥ 10%)", "• 純優先股投資組合，完全未採用 Short Options 賣出期權補貼高息。<br>👉 無下行全承擔、上漲封頂風險，獲得 <b>15.0 分滿分</b>。", "15.0 / 15", "<span class='quality-badge-green'>✔ 無不對稱期權炸彈</span>"]
         ]
     }
@@ -128,5 +127,5 @@ FUND_ZP4["risk_derivatives"] = {
     "risk_level": "L1",
     "has_eln": False,
     "has_trs": False,
-    "description": "無高風險衍生工具 (無 L3/L4)，僅基礎外匯股份對沖，結構健康。"
+    "description": "無高風險衍生工具 (無 L3/L4)，直持歐美銀行 CoCos/AT1 應急可轉次級債 (38.2%)，結構健康。"
 }
