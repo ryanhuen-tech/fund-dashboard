@@ -1,4 +1,4 @@
-# eval_engine.py - 三大資產類別 (債券 / 股票 / 股債混合) 高精細度專屬評估引擎
+# eval_engine.py - 三大資產類別 (債券 / 股票 / 股債混合) 高鑑別度專屬評估引擎
 
 def generate_dynamic_eval_table(curr_fund, category_type):
     """根據資產類別分流，套用 3 套高精細度專屬評估準則"""
@@ -41,34 +41,46 @@ def generate_dynamic_eval_table(curr_fund, category_type):
             score_p2 = 5.0
             p2_badge = "<span class='quality-badge-yellow'>🟡 金融次級資本 (BB級)</span>"
 
+        # 3. 集中度風險 (5分)
         score_p3 = 5.0
-        score_p4 = 2.5 if code in ["Z12", "Z15"] else 5.0
-        p4_badge = "<span class='quality-badge-green'>✔ 無槓桿風險</span>" if score_p4 == 5 else "<span class='quality-badge-yellow'>🟡 微幅對沖膨脹</span>"
 
+        # 4. 槓桿水平 (5分)
+        score_p4 = 5.0
+        p4_badge = "<span class='quality-badge-green'>✔ 無槓桿風險</span>"
+        if code in ["Z12", "Z15"]:
+            score_p4 = 2.5
+            p4_badge = "<span class='quality-badge-yellow'>🟡 包含微幅對沖膨脹</span>"
+
+        # 5. 利率敏感度/久期 (10分) - 高鑑別度階梯：久期 > 6 年重扣
         score_p5 = 10.0
         p5_badge = "<span class='quality-badge-green'>✔ 抗升息力佳</span>"
-        if code == "Z05":
-            score_p5 = 5.0
+        if code == "Z05":  # 久期高達 6.45 年 (重扣至 2.5 分)
+            score_p5 = 2.5
             p5_badge = "<span class='quality-badge-yellow'>🟡 久期偏長 (6.45年)</span>"
-        elif code == "ZP4":
+        elif code in ["ZP4", "Z69"]:
             score_p5 = 5.0
             p5_badge = "<span class='quality-badge-yellow'>🟡 久期適中 (4.90年)</span>"
 
-        score_p6 = 5.0 if code in ["Z13", "Z15", "Z29"] else 2.5
-        p6_badge = "<span class='quality-badge-green'>✔ 流動性充沛</span>" if score_p6 == 5 else "<span class='quality-badge-yellow'>🟡 現金比例適中</span>"
+        # 6. 流動性風險 (5分)
+        score_p6 = 5.0 if code in ["Z13", "Z15", "Z29"] else 2.5 if code != "Z05" else 2.0
+        p6_badge = "<span class='quality-badge-green'>✔ 流動性充沛</span>" if score_p6 == 5.0 else "<span class='quality-badge-yellow'>🟡 現金比例適中</span>"
 
-        score_p7 = 5.0 if code in ["Z13", "Z15"] else 3.0
-        p7_badge = "<span class='quality-badge-green'>✔ 美元專項對沖</span>" if score_p7 == 5 else "<span class='quality-badge-yellow'>🟡 環球多幣別對沖</span>"
+        # 7. 匯率風險 (5分)
+        score_p7 = 5.0 if code in ["Z13", "Z15"] else 2.5 if code == "Z05" else 3.0
+        p7_badge = "<span class='quality-badge-green'>✔ 美元專項對沖</span>" if score_p7 == 5.0 else "<span class='quality-badge-yellow'>🟡 環球多幣別對沖</span>"
 
+        # 8. 管理費與成本 (5分)
         score_p8 = 2.5
         p8_badge = "<span class='quality-badge-yellow'>🟡 費用率適中</span>"
 
+        # 9. 衍生工具結構風險 (10分)
         score_p9 = 10.0
         p9_badge = "<span class='quality-badge-green'>🟢 無高風險衍生品</span>"
         if has_cocos:
             score_p9 = 5.0
             p9_badge = "<span class='quality-badge-yellow'>⚠️ 含有 CoCos 減記條款</span>"
 
+        # 10. 不對稱策略風險 (15分)
         score_p10 = 15.0
         p10_badge = "<span class='quality-badge-green'>✔ 無期權風險</span>"
 
@@ -77,9 +89,9 @@ def generate_dynamic_eval_table(curr_fund, category_type):
             ["二、底層純資產質素 (15分)", "信貸評級與受壓資產佔比", "• 15分: 投資級 > 80%<br>• 10分: 高收益級 (BB) 主導<br>• 0分 (一票否決): 受壓資產 (CCC) > 30%", f"• 信貸結構：{kpis.get('p3_delta', '')}", f"{score_p2:.1f} / 15", p2_badge],
             ["三、集中度風險 (5分)", "前十大發行人持倉佔比", "• 5分: 前十 < 20% 且 單一發行人 < 5%", f"• 前十大持倉合計：{kpis.get('p6', '')}", f"{score_p3:.1f} / 5", "<span class='quality-badge-green'>✔ 發行人極度分散</span>"],
             ["四、槓桿水平 (5分)", "資產總膨脹率 (階梯扣分)", "• 5分: 100%-105% (純現貨)<br>• 2.5分: 105.1%-115% (微幅對沖)", f"• 總資產/淨資產比率：{kpis.get('p7', '')}", f"{score_p4:.1f} / 5", p4_badge],
-            ["五、利率敏感度/久期 (10分)", "有效存續期 (Duration)", "• 10分: 存續期 < 3.5 年<br>• 5分: 存續期 3.5 - 7 年", f"• 平均有效存續期：{kpis.get('p4', '')}", f"{score_p5:.1f} / 10", p5_badge],
+            ["五、利率敏感度/久期 (10分)", "有效存續期 (Duration)", "• 10分: 存續期 < 3.5 年<br>• 5分: 3.5 - 6 年<br>• 2.5分: > 6 年 (高利率敏感)", f"• 平均有效存續期：{kpis.get('p4', '')}", f"{score_p5:.1f} / 10", p5_badge],
             ["六、流動性風險 (5分)", "手持現金與 Level 1 活絡資產", "• 5分: 現金 > 5%<br>• 2.5分: 2% - 5%", f"• 手持現金及等值：{kpis.get('p5', '')}", f"{score_p6:.1f} / 5", p6_badge],
-            ["七、匯率風險 (5分)", "對沖機制與未實現衍生品損益", "• 5分: 美元專項對沖<br>• 3分: 多國外匯遠期對沖", "• 基礎貨幣為美元 (USD) 全額對沖", f"{score_p7:.1f} / 5", p7_badge],
+            ["七、匯率風險 (5分)", "對沖機制與未實現衍生品損益", "• 5分: 美元專項對沖<br>• 2.5分: 新興市場/多國匯率對沖", "• 基礎貨幣為美元 (USD) 遠期對沖", f"{score_p7:.1f} / 5", p7_badge],
             ["八、管理費與成本 (5分)", "總費用率 (TER / Expense Ratio)", "• 2.5分: TER 1.2% - 1.8%", "• 經審計費用率符合標準適中階梯", f"{score_p8:.1f} / 5", p8_badge],
             ["九、衍生工具結構風險 (10分)", "144A ELN / TRS / CoCos 條款審計", "• 10分: 直持純債無條款<br>• 5分: 含 CoCos/AT1 吸收虧損條款", f"• {curr_fund.get('risk_derivatives', {}).get('detail_note', '無高風險衍生品')}", f"{score_p9:.1f} / 10", p9_badge],
             ["十、不對稱策略風險 (15分)", "賣出選擇權 (Short Options)", "• 15分: 完全未採用 Short Options", "• 純債券投資組合，無期權封頂風險", f"{score_p10:.1f} / 15", p10_badge]
