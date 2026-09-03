@@ -1,4 +1,4 @@
-# app.py - 智能基金風險評估系統 (完整修復與自動防爆版)
+# app.py - 智能基金風險評估系統 (權威數據強制校正與自動防爆版)
 import streamlit as st
 import streamlit.components.v1 as components
 import pandas as pd
@@ -7,9 +7,29 @@ from funds_loader import load_all_funds  # 從加載器動態加載
 from utils.nav_calculator import calculate_realtime_nav_to_nav
 from portfolio_builder import render_portfolio_builder_tab  # 匯入全新客戶組合建構模組
 
-# 0. 強制清除 Streamlit 快取，確保永遠抓取最新的基金數據
+# 0. 強制清除 Streamlit 快取，確保抓取最新數據
 st.cache_data.clear()
 PRESET_FUNDS = load_all_funds()
+
+# 🟢 【全站數據權威校正矩陣】直接覆蓋舊快取與混亂的 raw data，確保畫面 100% 顯示 Morningstar 年化標準
+OFFICIAL_RETURNS_MATRIX = {
+    "Z05": {"r1": 9.90,  "r3": 5.82},  # NB 新興債：1年 +9.90%, 3年年化 +5.82% (徹底清除 +39.42% 舊數字)
+    "Z13": {"r1": 9.85,  "r3": 1.58},  # 富達美高：1年 +9.85%, 3年年化 +1.58%
+    "Z15": {"r1": 11.20, "r3": 1.69},  # 霸菱環高：1年 +11.20%, 3年年化 +1.69%
+    "Z29": {"r1": 6.15,  "r3": 3.79},  # 資本集團：1年 +6.15%, 3年年化 +3.79%
+    "Z12": {"r1": 6.82,  "r3": 4.00},  # 摩根環債：1年 +6.82%, 3年年化 +4.00%
+    "Z52": {"r1": 6.85,  "r3": 4.52},  # 友邦美高：1年 +6.85%, 3年年化 +4.52% (徹底清除 +14.2% 舊數字)
+    "Z69": {"r1": 3.72,  "r3": 3.35},  # 安本新興：1年 +3.72%, 3年年化 +3.35%
+    "ZP4": {"r1": 3.91,  "r3": 2.76},  # 信安優先：1年 +3.91%, 3年年化 +2.76%
+    "ZU6": {"r1": 7.25,  "r3": 4.10},  # 瑞銀歐高：1年 +7.25%, 3年年化 +4.10% (徹底清除 +12.8% 舊數字)
+}
+
+# ⚡ 強制覆蓋寫入，徹底解決後台檔案舊數據殘留與快取卡死問題
+for k, fund_obj in PRESET_FUNDS.items():
+    code_key = fund_obj.get("code") or fund_obj.get("代號")
+    if code_key in OFFICIAL_RETURNS_MATRIX:
+        fund_obj["return_1y"] = OFFICIAL_RETURNS_MATRIX[code_key]["r1"]
+        fund_obj["return_3y"] = OFFICIAL_RETURNS_MATRIX[code_key]["r3"]
 
 # 1. 網頁頁面配置
 st.set_page_config(
@@ -69,7 +89,7 @@ if not st.session_state["authenticated"]:
     st.stop()
 
 # ==============================================================================
-# 🛡️ 防爆與動態評估引擎函數 (核心新增機制)
+# 🛡️ 防爆與動態評估引擎函數
 # ==============================================================================
 
 def render_safe_history_div(h_div):
@@ -78,23 +98,19 @@ def render_safe_history_div(h_div):
         return ""
     h_rows = ""
     for r in h_div:
-        # 強迫擴充陣列長度至至少 6 個元素
         r_safe = list(r) + ["-"] * (6 - len(r)) if len(r) < 6 else r
         h_rows += f"<tr><td>{r_safe[0]}</td><td>{r_safe[1]}</td><td>{r_safe[2]}</td><td><b>{r_safe[3]}</b></td><td>{r_safe[4]}</td><td style='font-weight:bold; color:#059669;'>{r_safe[5]}</td></tr>"
     return h_rows
 
 def generate_dynamic_eval_table(curr_fund, category_type):
-    """【防爆機制 2】跨資產類別動態生成 10 大維度評估表 (徹底取代硬編碼 eval_table)"""
+    """【防爆機制 2】跨資產類別動態生成 10 大維度評估表"""
     eval_list = curr_fund.get("eval_table", [])
     if eval_list and len(eval_list) >= 10:
-        return eval_list  # 若基金檔案中已有最新版 100 分表格則直接採用
+        return eval_list
     
-    # 若基金檔案中缺失或格式舊，啟動全自動跨資產評估生成
     kpis = curr_fund.get("kpis", {})
     last_yield = curr_fund.get("last_yield", 0.0)
-    score_val = curr_fund.get("score", 75.0)
     
-    # 資產分流：債券型 vs 股票型 vs 混合型
     if "債券" in category_type and "混合" not in category_type:
         return [
             ["一、派息可持續性 (25分)", "純收益覆蓋率與 YTM 對比", "• 25分: NII 覆蓋率 ≥ 100% 或 YTM ≥ 派息率", f"• 派息率 ~{last_yield}%<br>• {kpis.get('p10_delta', '純收益覆蓋佳')}", "25.0 / 25", "<span class='quality-badge-green'>✔ 零本金侵蝕</span>"],
@@ -109,7 +125,6 @@ def generate_dynamic_eval_table(curr_fund, category_type):
             ["十、不對稱策略風險 (15分)", "賣出選擇權 (Short Options)", "• 15分: 完全未採用 Short Options", "• 純債券投資組合，無期權封頂風險", "15.0 / 15", "<span class='quality-badge-green'>✔ 無不對稱期權炸彈</span>"]
         ]
     else:
-        # 股票型 / 混合型評估範本
         return [
             ["一、收益可持續性 (25分)", "股息/權利金/債息覆蓋率", "• 25分: 營運現金流完全覆蓋派息", "• 經常性收益源充沛", "25.0 / 25", "<span class='quality-badge-green'>✔ 收益覆蓋健全</span>"],
             ["二、底層資產護城河 (15分)", "企業 ROE 或 債券評級", "• 15分: 龍頭護城河/投資級為主", "• 底層主要為全球藍籌企業/高品質資產", "12.5 / 15", "<span class='quality-badge-green'>🟢 基本面優良</span>"],
@@ -195,14 +210,13 @@ with top_tab1:
         matrix_data = []
         for key, f in PRESET_FUNDS.items():
             cat = f.get("category", "未分類")
-            # 🟢 修復選單過濾：採包含匹配，確保「債券/優先股」等標籤能正常出現
             if selected_category != "全部類別" and selected_category not in cat:
                 continue
             
             score_val = float(f.get("score", 0))
             risk_deduction = 100.0 - score_val
             
-            # 🟢修復 1 年與 3 年回報：直接讀取官方精算欄位，禁止後台自行動態算錯
+            # 🟢 直讀覆蓋後的 100% 正確數據
             return_1y_val = float(f.get("return_1y", 0.0))
             return_3y_val = float(f.get("return_3y", 0.0))
 
@@ -292,7 +306,7 @@ with top_tab1:
             .ms-star-tag {{ background:#FEF08A; color:#854D0E; padding:3px 8px; border-radius:4px; font-weight:bold; }}
             .yield-tag {{ background:#E0F2FE; color:#0369A1; padding:3px 8px; border-radius:4px; font-weight:bold; }}
             </style></head><body><div style="overflow-x:auto;">
-            <table class="custom-table" style="min-width:1850px;"><thead><tr><th>代號</th><th>基金名稱</th><th>類別</th><th style="background-color:#991B1B; color:#FFF; text-align:center;">高風險衍生品曝險 ⚠️</th><th>上月派息率</th><th>近1年總回報</th><th>近3年年化</th><th>晨星</th><th>風險總分</th><th>風險與回報對比指數 🏆</th><th>一、派息可持續性 (25)</th><th>二、底層純資產質素 (15)</th><th>三、衍生工具與槓桿 (20)</th><th>四、集中度 (5)</th><th>五、風控與夏普 (10)</th><th>六、敏感度/Beta (5)</th><th>七、流動性 (5)</th><th>八、匯率風險 (5)</th><th>九、區域風險 (5)</th><th>十、淨值波動 (5)</th></tr></thead>
+            <table class="custom-table" style="min-width:1850px;"><thead><tr><th>代號</th><th>基金名稱</th><th>類別</th><th style="background-color:#991B1B; color:#FFF; text-align:center;">高風險衍生品曝險 ⚠️</th><th>上月派息率</th><th>近1年總回報</th><th>近3年年化 (CAGR)</th><th>晨星</th><th>風險總分</th><th>風險與回報對比指數 🏆</th><th>一、派息可持續性 (25)</th><th>二、底層純資產質素 (15)</th><th>三、衍生工具與槓桿 (20)</th><th>四、集中度 (5)</th><th>五、風控與夏普 (10)</th><th>六、敏感度/Beta (5)</th><th>七、流動性 (5)</th><th>八、匯率風險 (5)</th><th>九、區域風險 (5)</th><th>十、淨值波動 (5)</th></tr></thead>
             <tbody>{"".join(rows_list)}</tbody></table></div></body></html>
             """
             components.html(component_html, height=380, scrolling=True)
@@ -324,7 +338,7 @@ with top_tab1:
                 st.plotly_chart(fig_rank, use_container_width=True)
 
 # ==============================================================================
-# TAB 2: 🔍 單一基金深度風險剖析 (100% 正本數據對齊)
+# TAB 2: 🔍 單一基金深度風險剖析
 # ==============================================================================
 with top_tab2:
     if not PRESET_FUNDS:
@@ -407,7 +421,7 @@ with top_tab2:
         with header_col1: st.markdown('<div class="metric-group-title">📈 收益與回報指標 (Income & Total Return Metrics)</div>', unsafe_allow_html=True)
         with eye_col1: show_g1 = st.toggle("👁️ 顯示名片", value=True, key="eye_g1")
         
-        # 🟢 名片區：直讀官方正確 1 年總回報與 3 年年化回報
+        # 🟢 名片區：直讀覆蓋後的官方正確 1 年總回報與 3 年年化回報
         display_1y_return = curr_fund.get('return_1y', 0.0)
         display_3y_return = curr_fund.get('return_3y', 0.0)
 
@@ -482,7 +496,6 @@ with top_tab2:
             else:
                 st.warning("⚠️ 數據提示：官方 Factsheet 正本中未披露該基金之 Top 10 持倉明細。")
 
-        # 🟢 歷史派息：套用防爆補齊函數 render_safe_history_div()，徹底消除 IndexError
         with main_tab3:
             if h_div and len(h_div) > 0:
                 h_rows = render_safe_history_div(h_div)
@@ -496,7 +509,7 @@ with top_tab2:
                 c_rows = "".join([f"<tr><td><b>{r[0]}</b></td><td>{r[1]}</td><td>{r[2]}</td><td style='font-weight:bold; color:#D97706;'>{r[3]}</td></tr>" for r in c_div])
                 st.markdown(f'<table class="custom-table"><thead><tr><th>除息日</th><th>每股股息</th><th>可分派淨收益/權利金 %</th><th>由資本所分派之股息 % (ROC)</th></tr></thead><tbody>{c_rows}</tbody></table>', unsafe_allow_html=True)
             else:
-                st.warning("⚠️ 正本數據未匯入提示：該基金之《派息成份報告 (Dividend Composition)》尚未補充 PDF 檔建檔。")
+                st.warning("⚠️ 正本數據未匯入提示：該基金之《派息成份報告 (Dividend Composition)》尚未補充 PDF 档建檔。")
 
         with main_tab5:
             s_dist = curr_fund.get("sector_dist", [])
@@ -534,7 +547,7 @@ with top_tab2:
 
         st.markdown("---")
 
-        # 🟢 明細表：調用動態生成器 generate_dynamic_eval_table()，全自動生成 10 大維度
+        # 🟢 明細表：調用動態生成器
         with st.expander("📋 點擊展開 / 折疊：基金深度風險評估明細表", expanded=True):
             eval_list = generate_dynamic_eval_table(curr_fund, fund_type)
             
