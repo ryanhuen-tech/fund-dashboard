@@ -8,22 +8,29 @@ from utils.nav_calculator import calculate_realtime_nav_to_nav
 from portfolio_builder import render_portfolio_builder_tab
 from eval_engine import generate_dynamic_eval_table, process_fund_risk_scores
 
-# 1. 載入所有基金數據 (已整合 JSON 快取)
+# 🟢 0. 啟動時強制刷空 Streamlit 社群雲端記憶體快取，確保讀取最新 JSON 與扣分邏輯
+try:
+    st.cache_data.clear()
+    st.cache_resource.clear()
+except Exception:
+    pass
+
+# 1. 載入所有基金數據 (已整合 parsed_funds_data.json 快取)
 PRESET_FUNDS = load_all_funds()
 
-# 🟢 動態校正：將所有基金的 return_1y 統一讀取為實時精算的 NAV-to-NAV 總回報
+# 🟢 2. 動態校正：將所有基金的 return_1y 統一讀取為實時精算的 NAV-to-NAV 總回報
 for k, fund_obj in PRESET_FUNDS.items():
     h_div = fund_obj.get("history_div", [])
     if h_div and len(h_div) >= 12:
         nav_res = calculate_realtime_nav_to_nav(h_div)
         if nav_res.get("status") == "success":
-            # 強制將動態精算出的總回報同步至全系統 (如 Z15 的 6.23%)
+            # 強制將動態精算出的總回報同步至全系統 (如 Z15 的 6.23%, Z12 的 5.18%)
             fund_obj["return_1y"] = nav_res["nav_to_nav_return_pct"]
 
-# 2. 調用獨立 eval_engine.py 進行風控算分
+# 🟢 3. 調用升級版 eval_engine.py 進行風控算分 (強效更新第 10 項不對稱風險)
 process_fund_risk_scores(PRESET_FUNDS)
 
-# 3. 定義 render_safe_history_div 函數，徹底避免表格崩潰
+# 4. 定義 render_safe_history_div 函數，徹底避免表格崩潰
 def render_safe_history_div(h_div):
     if not h_div:
         return ""
@@ -33,7 +40,7 @@ def render_safe_history_div(h_div):
         h_rows += f"<tr><td>{r_safe[0]}</td><td>{r_safe[1]}</td><td>{r_safe[2]}</td><td><b>{r_safe[3]}</b></td><td>{r_safe[4]}</td><td style='font-weight:bold; color:#059669;'>{r_safe[5]}</td></tr>"
     return h_rows
 
-# 4. 網頁頁面配置
+# 5. 網頁頁面配置
 st.set_page_config(
     page_title="智能基金風險評估系統", 
     page_icon="🛡️", 
@@ -224,7 +231,7 @@ with top_tab1:
                 b7 = "quality-badge-green" if r.get('七、匯率風險 (5)', 0)>=5.0 else "quality-badge-yellow"
                 b8 = "quality-badge-green" if r.get('八、管理費與成本 (5)', 0)>=2.5 else "quality-badge-yellow"
                 b9 = "quality-badge-green" if r.get('九、衍生工具結構風險 (10)', 0)>=10.0 else "quality-badge-yellow" if r.get('九、衍生工具結構風險 (10)', 0)>=5.0 else "quality-badge-red"
-                b10 = "quality-badge-green" if r.get('十、不對稱策略風險 (15)', 0)>=15.0 else "quality-badge-red"
+                b10 = "quality-badge-green" if r.get('十、不對稱策略風險 (15)', 0)>=15.0 else "quality-badge-yellow" if r.get('十、不對稱策略風險 (15)', 0)>=10.0 else "quality-badge-red"
 
                 code_str = r.get('代號', '-')
                 zh_str = r.get('基金簡稱', '-')
