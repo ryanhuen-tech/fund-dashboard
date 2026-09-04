@@ -1,4 +1,4 @@
-# app.py - 智能基金風險評估系統 (全欄位動態數據精算與對齊版)
+# app.py - 智能基金風險評估系統 (完整全功能版)
 import re
 import streamlit as st
 import streamlit.components.v1 as components
@@ -26,7 +26,7 @@ for k, fund_obj in PRESET_FUNDS.items():
         kpis = fund_obj.get("kpis", {})
         
         if h_div and len(h_div) > 0:
-            # A. 提取最新一期的真實年化派息率 (如 Z52 的 7.23%)
+            # A. 提取最新一期的真實年化派息率
             latest_record = h_div[0]
             if len(latest_record) >= 6:
                 latest_yield_str = str(latest_record[5]).replace("%", "").strip()
@@ -35,7 +35,7 @@ for k, fund_obj in PRESET_FUNDS.items():
                     fund_obj["last_yield"] = latest_yield_val
                     kpis["p1"] = f"{latest_yield_val:.2f}%"
 
-                    # B. 提取 YTM 數據 (如 7.22%)
+                    # B. 提取 YTM 數據
                     old_p2_delta = str(kpis.get("p2_delta", ""))
                     ytm_match = re.search(r"YTM\s*(\d+\.\d+|\d+)%", old_p2_delta)
                     ytm_val = float(ytm_match.group(1)) if ytm_match else 7.22
@@ -49,8 +49,8 @@ for k, fund_obj in PRESET_FUNDS.items():
                     kpis["p2_color"] = "normal" if real_gap >= 0 else "inverse"
 
                     # 🟢 嚴格保留以 Net Income / Dividends Paid (淨收益 / 總派息) 計算
-                    p9_str = str(kpis.get("p9", ""))   # Net Income / 權利金 (例如 "$26.85 M")
-                    p10_str = str(kpis.get("p10", "")) # Dividends Paid / 總派息金額 (例如 "$18.25 M")
+                    p9_str = str(kpis.get("p9", ""))   # Net Income / 權利金
+                    p10_str = str(kpis.get("p10", "")) # Dividends Paid / 總派息金額
                     
                     net_inc_match = re.findall(r"\d+\.\d+|\d+", p9_str)
                     div_paid_match = re.findall(r"\d+\.\d+|\d+", p10_str)
@@ -80,7 +80,7 @@ for k, fund_obj in PRESET_FUNDS.items():
 # 🟢 3. 調用升級版 eval_engine.py 進行風控算分
 process_fund_risk_scores(PRESET_FUNDS)
 
-# 4. 定義 render_safe_history_div 函數，徹底避免表格崩潰
+# 4. 定義 render_safe_history_div 函數
 def render_safe_history_div(h_div):
     if not h_div:
         return ""
@@ -504,7 +504,6 @@ with top_tab2:
         with header_col1: st.markdown('<div class="metric-group-title">📈 收益與回報指標 (Income & Total Return Metrics)</div>', unsafe_allow_html=True)
         with eye_col1: show_g1 = st.toggle("👁️ 顯示名片", value=True, key="eye_g1")
         
-        # 🟢 此處將過往 1 年總回報率，動態同步為最新精算的實時回報率！
         display_1y_return = curr_fund.get('return_1y', 0.0)
         display_3y_return = curr_fund.get('return_3y', 0.0)
 
@@ -673,11 +672,78 @@ with top_tab2:
             ''', unsafe_allow_html=True)
 
 # ==============================================================================
-# TAB 3 & TAB 4 保持原本介面
+# TAB 3: 📚 衍生工具解密與理專話術寶典
 # ==============================================================================
 with top_tab3:
     st.markdown("### 📚 基金衍生工具速查與理專話術寶典")
-    # (此區塊維持原樣)
+    st.caption("💡 專為第一線理財專員打造：拆解複雜衍生品結構、槓桿運作機制與客訴應對權威話術。")
 
+    col_d1, col_d2 = st.columns(2)
+
+    with col_d1:
+        st.markdown("""
+        <div class="deriv-card">
+            <div class="deriv-title">1. Covered Call (備售認購期權策略) <span class="deriv-tag-l2">⚠️ 結構性封頂</span></div>
+            <p style="font-size: 13px; color: #475569; margin-bottom: 8px;"><b>適用基金：</b> Z01 (安聯收益寶)、Z03 (金瑞收益)、Z04 (摩根環球股息)</p>
+            <p style="font-size: 13px; color: #334155; line-height: 1.6;">
+            <b>運作原理：</b> 基金在持有股票資產的同時，向市場賣出該股票的認購期權 (Call Options)，藉此收取額外期權金 (Premium) 補貼派息。<br>
+            <b>風控風險：</b> 屬於「下行完全承擔、上行漲幅封頂」的不對稱策略。當大盤大漲時，基金無法享受上行資本利得；大盤大跌時，期權金緩衝極有限，NAV 會完全隨大盤下挫。
+            </p>
+            <div class="script-box">
+                <b>🗣️ 理專專業對白指南：</b><br>
+                「客戶您好，這隻基金之所以能維持高派息，部分收益來自於賣出股票上行漲幅所換取的權利金。優點是平盤或慢牛行情下收息非常穩定，但提醒您在強勁牛市時，它的淨值增長會被封頂，且大跌時依然會跟隨股市回撤。」
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown("""
+        <div class="deriv-card">
+            <div class="deriv-title">2. Total Return Swap (TRS 總收益互換) <span class="deriv-tag-l3">🚨 槓桿放大</span></div>
+            <p style="font-size: 13px; color: #475569; margin-bottom: 8px;"><b>適用基金：</b> 高收益債券型基金 (如 Z15, ZU6 部分級別)</p>
+            <p style="font-size: 13px; color: #334155; line-height: 1.6;">
+            <b>運作原理：</b> 基金與投行簽訂衍生品合約，不需直接購買底層債券現貨，而是支付固定利率以換取標的資產的總回報 (利息+資本利得)。<br>
+            <b>風控風險：</b> 屬於高槓桿非現貨交易。若市場信用利差劇烈擴大，合約將面臨補繳保證金 (Margin Call) 壓力，可能被迫在高點平倉，造成資本淨值不可逆的永久傷害。
+            </p>
+            <div class="script-box">
+                <b>🗣️ 理專專業對白指南：</b><br>
+                「這隻基金透過 TRS 合約能夠用較少資金獲取高額債息。但在市場信用市場動盪時，這種衍生品結構會放大淨值波動，因此我們建議將其定位為中短期收息工具，而非無風險的固定收益配置。」
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col_d2:
+        st.markdown("""
+        <div class="deriv-card">
+            <div class="deriv-title">3. CoCo Bonds (應急可轉換債券) <span class="deriv-tag-l2">⚠️ 觸發吸收損失</span></div>
+            <p style="font-size: 13px; color: #475569; margin-bottom: 8px;"><b>適用基金：</b> ZP4 (信安優先證券基金)</p>
+            <p style="font-size: 13px; color: #334155; line-height: 1.6;">
+            <b>運作原理：</b> 主要由大型銀行發行的次級資本債券 (AT1)。當發行銀行之資本適足率跌破法定門檻時，合約將強制自動觸發債轉股或本金全額減記 (Write-down)。<br>
+            <b>風控風險：</b> 具有剛性減記機制。平時票息極高，但在銀行業金融危機發生時（如瑞士信貸事件），投資人可能面臨本金一夕之間歸零的極端風險。
+            </p>
+            <div class="script-box">
+                <b>🗣️ 理專專業對白指南：</b><br>
+                「信安這隻基金主要持有全球系統性重要銀行的高息 AT1 債券。收益率非常吸引人，但這種債券帶有應急減記條款。經我們風控系統審核，目前底層發行行均為資本健全的頂級銀行，風險受控，但仍需密切關注全球金融監管動向。」
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown("""
+        <div class="deriv-card">
+            <div class="deriv-title">4. Interest Rate Swaps / FX Forward (利率/外匯避險合約) <span class="deriv-tag-l1">🟢 純對沖工具</span></div>
+            <p style="font-size: 13px; color: #475569; margin-bottom: 8px;"><b>適用基金：</b> 全體優質投資級債券基金 (如 Z12, Z13, Z29)</p>
+            <p style="font-size: 13px; color: #334155; line-height: 1.6;">
+            <b>運作原理：</b> 經由遠期外匯合約 (FX Forward) 與利率互換 (IRS)，鎖定跨國投資的匯率波動與美聯儲升息帶來的久期風險。<br>
+            <b>風控風險：</b> 屬於標準風控防禦性衍生品。無投機槓桿，淨曝險比例低於 100%，主要是為了確保派息不受外幣貶值侵蝕。
+            </p>
+            <div class="script-box">
+                <b>🗣️ 理專專業對白指南：</b><br>
+                「這隻基金使用的衍生工具完全是用來做美元匯率避險與利率鎖定，不含任何開槓桿賭博的成分，目的是讓您每月的現金派息更加穩定安全。」
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+# ==============================================================================
+# TAB 4: 💼 客戶基金組合建議
+# ==============================================================================
 with top_tab4:
     render_portfolio_builder_tab()
