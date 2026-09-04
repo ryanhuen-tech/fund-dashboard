@@ -41,3 +41,13 @@ for fund_dict in FUND_MODULES:
         ALL_FUNDS.update(fund_dict)
     else:
         logging.warning(f"跳過無效模組格式: {type(fund_dict)}")
+
+# 🟢 補充定義模組映射表，供 funds_loader 使用
+ALL_FUNDS_MAP = {
+    "Z01": "fund_z01", "Z03": "fund_z03", "Z04": "fund_z04", "Z05": "fund_z05",
+    "Z06": "fund_z06", "Z07": "fund_z07", "Z08": "fund_z08", "Z12": "fund_z12",
+    "Z13": "fund_z13", "Z15": "fund_z15", "Z17": "fund_z17", "Z18": "fund_z18",
+    "Z20": "fund_z20", "Z29": "fund_z29", "Z31": "fund_z31", "Z33": "fund_z33", 
+    "Z51": "fund_z51", "Z52": "fund_z52", "Z69": "fund_z69", "Z77": "fund_z77", 
+    "ZP4": "fund_zp4", "ZU6": "fund_zu6"
+}
