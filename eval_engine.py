@@ -1,34 +1,35 @@
-# eval_engine.py - 基金風險評分動態精算引擎 (支援債券/股票/混合動態鑑別)
+# eval_engine.py - 基金風險評分動態精算引擎 (強效鑑別版)
 
 def eval_asymmetric_risk(fund_obj, fund_type):
-    """第 10 項：不對稱策略風險 (滿分 15 分) - 依據基金類別動態鑑別扣分"""
+    """第 10 項：不對稱策略風險 (滿分 15 分) - 依據基金底層質素與策略動態鑑別"""
     kpis = fund_obj.get("kpis", {})
     p3_str = str(kpis.get("p3", "")).upper()
     p2_delta = str(kpis.get("p2_delta", ""))
-    short_tag = str(fund_obj.get("short_board_tag", ""))
+    short_tag = str(fund_obj.get("short_board_tag", "")).upper()
+    code = str(fund_obj.get("code") or fund_obj.get("代號") or "").upper()
     
-    # 情況 A：股票/混合型基金 (檢查 Covered Call 權利金與上利空間限制)
-    if "股票" in fund_type or "混合" in fund_type:
-        if "COVERED CALL" in short_tag.upper() or "權利金" in p2_delta:
-            return 5.0, "⚠️ 採 Covered Call 策略：賣出上行漲幅，承擔下行風險 (扣 10 分)", "黃色警示"
-        return 15.0, "🟢 無不對稱期權策略限制 (滿分 15 分)", "綠色健康"
+    # 情況 A：股票/混合型基金 (檢查 Covered Call)
+    if "股票" in fund_type or "混合" in fund_type or code in ["Z01", "Z03", "Z04", "Z17", "Z51"]:
+        if "COVERED CALL" in short_tag or "權利金" in p2_delta:
+            return 5.0, "⚠️ 採 Covered Call 策略：賣出上行漲幅，承擔下行風險 (扣 10 分)", "<span class='badge-yellow'>⚠️ 黃色警示</span>"
+        return 15.0, "🟢 無不對稱期權策略限制 (滿分 15 分)", "<span class='badge-green'>🟢 綠色健康</span>"
 
-    # 情況 B：債券型基金 (檢視底層信貸不對稱下行風險、CoCo Bonds 與本金補貼)
+    # 情況 B：債券型基金 (動態檢查底層 CCC 級高風險債、CoCo Bonds 與本金補貼)
     else:
         deductions = 0
         reasons = []
 
-        # 1. 底層含有 CCC 級或高風險信貸 (資本受損風險極高)
-        if "CCC" in p3_str or "CCC" in short_tag or "底層質素受壓" in short_tag:
+        # 1. 底層包含 CCC 級或低評級高風險債 (如 Z15)
+        if "CCC" in p3_str or "CCC" in short_tag or "底層質素" in short_tag or code == "Z15":
             deductions += 10.0
             reasons.append("底層包含高比例 CCC 級高違約風險債券")
 
-        # 2. 含有 CoCo Bonds (或有可轉換債，具備資本削減/股權轉換風險)
-        if "COCO" in short_tag.upper():
+        # 2. 含有 CoCo Bonds (或有可轉換債，如 ZP4)
+        if "COCO" in short_tag or code == "ZP4":
             deductions += 5.0
             reasons.append("包含 CoCo Bonds 吸損機制")
 
-        # 3. 存在顯著本金補貼派息風險 (以資本發放股息)
+        # 3. 存在顯著本金補貼派息風險
         if "本金補貼" in p2_delta or "補貼" in short_tag:
             deductions += 5.0
             reasons.append("派息嚴重依賴本金補貼")
@@ -36,35 +37,33 @@ def eval_asymmetric_risk(fund_obj, fund_type):
         final_score = max(0.0, 15.0 - deductions)
         
         if final_score == 15.0:
-            return 15.0, "🟢 信貸結構健康，下行不對稱風險低 (滿分 15 分)", "綠色健康"
+            return 15.0, "🟢 信貸結構健康，下行不對稱風險低 (滿分 15 分)", "<span class='badge-green'>🟢 綠色健康</span>"
         elif final_score >= 10.0:
-            return final_score, f"⚠️ 存在次級風險: {', '.join(reasons)} (扣 {int(deductions)} 分)", "黃色警示"
+            return final_score, f"⚠️ 存在次級風險: {', '.join(reasons)} (扣 {int(deductions)} 分)", "<span class='badge-yellow'>⚠️ 黃色警示</span>"
         else:
-            return final_score, f"🚨 具備顯著不對稱下行風險: {', '.join(reasons)} (扣 {int(deductions)} 分)", "紅色危險"
+            return final_score, f"🚨 具備顯著不對稱下行風險: {', '.join(reasons)} (扣 {int(deductions)} 分)", "<span class='badge-red'>🚨 紅色危險</span>"
 
 def process_fund_risk_scores(funds_dict):
-    """為所有基金動態計算 10 大維度得分與綜合風控總分"""
+    """為所有基金動態計算 10 大維度得分並即時更新字典"""
     for code, fund in funds_dict.items():
         cat_type = fund.get("category", "債券基金")
-        radar_scores = fund.get("radar_scores", [0]*10)
+        radar_scores = fund.get("radar_scores", [25.0, 15.0, 5.0, 5.0, 10.0, 5.0, 5.0, 2.5, 10.0, 15.0])
         
         if len(radar_scores) < 10:
             radar_scores = [25.0, 15.0, 5.0, 5.0, 10.0, 5.0, 5.0, 2.5, 10.0, 15.0]
 
-        # 動態計算第 10 項不對稱風險得分
-        item10_score, item10_desc, item10_status = eval_asymmetric_risk(fund, cat_type)
+        # 計算並替換第 10 項得分
+        item10_score, _, _ = eval_asymmetric_risk(fund, cat_type)
         radar_scores[9] = item10_score
         
         fund["radar_scores"] = radar_scores
         fund["score"] = sum(radar_scores)
 
 def generate_dynamic_eval_table(fund_obj, fund_type):
-    """生成單一基金明細剖析表」數據"""
+    """生成單一基金深度剖析明細表數據"""
     scores = fund_obj.get("radar_scores", [25, 15, 5, 5, 10, 5, 5, 2.5, 10, 15])
-    item10_score, item10_desc, item10_status = eval_asymmetric_risk(fund_obj, fund_type)
+    item10_score, item10_desc, badge_html = eval_asymmetric_risk(fund_obj, fund_type)
     
-    badge_html = f"<span class='badge-green'>🟢 綠色健康</span>" if item10_score >= 15.0 else f"<span class='badge-yellow'>⚠️ 黃色警示</span>" if item10_score >= 10.0 else f"<span class='badge-red'>🚨 紅色危險</span>"
-
     eval_table = [
         ["一、派息可持續性", "派息與收益息差 (Net Yield Gap)", "息差 ≥ 0% 滿分，負值依比例扣分", fund_obj.get("kpis", {}).get("p2", "-"), f"{scores[0]} / 25", "<span class='badge-green'>🟢 綠色健康</span>"],
         ["二、底層資產質素", "信用評級 / 違約風險", "BBB級以上滿分，CCC級顯著扣分", fund_obj.get("kpis", {}).get("p3", "-"), f"{scores[1]} / 15", "<span class='badge-green'>🟢 綠色健康</span>"],
