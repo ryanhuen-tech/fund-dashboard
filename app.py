@@ -27,7 +27,7 @@ for k, fund_obj in PRESET_FUNDS.items():
             # 強制將動態精算出的總回報同步至全系統 (如 Z15 的 6.23%, Z12 的 5.18%)
             fund_obj["return_1y"] = nav_res["nav_to_nav_return_pct"]
 
-# 🟢 3. 調用升級版 eval_engine.py 進行風控算分 (強效更新第 10 項不對稱風險)
+# 🟢 3. 調用升級版 eval_engine.py 進行風控算分 (依據 10 大機構級準則實時算分)
 process_fund_risk_scores(PRESET_FUNDS)
 
 # 4. 定義 render_safe_history_div 函數，徹底避免表格崩潰
@@ -222,16 +222,16 @@ with top_tab1:
 
             rows_list = []
             for _, r in df_matrix_sorted.iterrows():
-                b1 = "quality-badge-green" if r.get('一、派息可持續性 (25)', 0)>=20.0 else "quality-badge-yellow" if r.get('一、派息可持續性 (25)', 0)>=15.0 else "quality-badge-red"
-                b2 = "quality-badge-green" if r.get('二、底層純資產質素 (15)', 0)>=10.0 else "quality-badge-red"
-                b3 = "quality-badge-green" if r.get('三、集中度風險 (5)', 0)>=5.0 else "quality-badge-yellow"
-                b4 = "quality-badge-green" if r.get('四、槓桿水平 (5)', 0)>=5.0 else "quality-badge-yellow"
-                b5 = "quality-badge-green" if r.get('五、利率敏感度/久期 (10)', 0)>=10.0 else "quality-badge-yellow"
-                b6 = "quality-badge-green" if r.get('六、流動性風險 (5)', 0)>=5.0 else "quality-badge-yellow"
+                b1 = "quality-badge-green" if r.get('一、派息可持續性 (25)', 0)>=20.0 else "quality-badge-yellow" if r.get('一、派息可持續性 (25)', 0)>=12.5 else "quality-badge-red"
+                b2 = "quality-badge-green" if r.get('二、底層純資產質素 (15)', 0)>=15.0 else "quality-badge-yellow" if r.get('二、底層純資產質素 (15)', 0)>=10.0 else "quality-badge-red"
+                b3 = "quality-badge-green" if r.get('三、集中度風險 (5)', 0)>=5.0 else "quality-badge-yellow" if r.get('三、集中度風險 (5)', 0)>=2.5 else "quality-badge-red"
+                b4 = "quality-badge-green" if r.get('四、槓桿水平 (5)', 0)>=5.0 else "quality-badge-yellow" if r.get('四、槓桿水平 (5)', 0)>=2.5 else "quality-badge-red"
+                b5 = "quality-badge-green" if r.get('五、利率敏感度/久期 (10)', 0)>=10.0 else "quality-badge-yellow" if r.get('五、利率敏感度/久期 (10)', 0)>=5.0 else "quality-badge-red"
+                b6 = "quality-badge-green" if r.get('六、流動性風險 (5)', 0)>=5.0 else "quality-badge-yellow" if r.get('六、流動性風險 (5)', 0)>=2.5 else "quality-badge-red"
                 b7 = "quality-badge-green" if r.get('七、匯率風險 (5)', 0)>=5.0 else "quality-badge-yellow"
-                b8 = "quality-badge-green" if r.get('八、管理費與成本 (5)', 0)>=2.5 else "quality-badge-yellow"
-                b9 = "quality-badge-green" if r.get('九、衍生工具結構風險 (10)', 0)>=10.0 else "quality-badge-yellow" if r.get('九、衍生工具結構風險 (10)', 0)>=5.0 else "quality-badge-red"
-                b10 = "quality-badge-green" if r.get('十、不對稱策略風險 (15)', 0)>=15.0 else "quality-badge-yellow" if r.get('十、不對稱策略風險 (15)', 0)>=10.0 else "quality-badge-red"
+                b8 = "quality-badge-green" if r.get('八、管理費與成本 (5)', 0)>=5.0 else "quality-badge-yellow" if r.get('八、管理費與成本 (5)', 0)>=2.5 else "quality-badge-red"
+                b9 = "quality-badge-green" if r.get('九、衍生工具結構風險 (10)', 0)>=10.0 else "quality-badge-red"
+                b10 = "quality-badge-green" if r.get('十、不對稱策略風險 (15)', 0)>=15.0 else "quality-badge-yellow" if r.get('十、不對稱策略風險 (15)', 0)>=7.5 else "quality-badge-red"
 
                 code_str = r.get('代號', '-')
                 zh_str = r.get('基金簡稱', '-')
