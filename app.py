@@ -1,4 +1,4 @@
-# app.py - 智能基金風險評估系統 (極簡模組化 UI 引擎與防爆對齊版)
+# app.py - 智能基金風險評估系統 (極簡模組化 UI 引擎與實時 NAV 精算版)
 import streamlit as st
 import streamlit.components.v1 as components
 import pandas as pd
@@ -411,12 +411,13 @@ with top_tab2:
 
         st.markdown('<div class="data-disclaimer-note"><b>📑 數據來源聲明備註：</b> 本 Dashboard 內所有財務數據、持倉比率、派息成分與營運損益，均完全依據<b>基金官方發布之基金月報 (Factsheet)、派息分派紀錄及年度財務報告</b> 客觀建檔分析。</div>', unsafe_allow_html=True)
 
+        # 🟢 強制依據過往 12 個月派息歷史進行實時動態精算
         h_div = curr_fund.get("history_div", [])
-        if h_div:
+        if h_div and len(h_div) >= 12:
             nav_res = calculate_realtime_nav_to_nav(h_div)
             if nav_res.get("status") == "success":
                 st.markdown("### 🧮 最新 12 個月實時含息總回報精算 (NAV-to-NAV)")
-                st.caption("💡 本區塊根據該基金最新發放的 12 個月派息與動態 NAV 自動精算，非半年前之舊歷史數據。")
+                st.caption("💡 本區塊完全根據該基金過去 12 個月官方發放之派息紀錄與每月中 NAV 實時動態精算。")
                 
                 c1, c2, c3 = st.columns(3)
                 with c1:
@@ -441,8 +442,8 @@ with top_tab2:
                 
                 st.info(f"""
                 **🗣️ 理專白話解說對白：**
-                * **每月領現金**：過去 12 個月落袋利息為 **+{nav_res['simple_cash_yield_pct']}%**，扣除淨值微幅波動後，純領現金實質總收益為 **+{nav_res['cash_payout_return_pct']}%**。
-                * **股息再投資**：若選擇利息滾存，單位數自動增加了 **+{nav_res['units_added']} 單位**，最新實時總資產增長率高達 **+{nav_res['nav_to_nav_return_pct']}%**！
+                * **每月領現金**：過去 12 個月落袋利息為 **+{nav_res['simple_cash_yield_pct']}%**，扣除淨值微幅下跌 ({nav_res['nav_capital_change_pct']}%) 後，純領現金實質總收益為 **+{nav_res['cash_payout_return_pct']}%**。
+                * **股息再投資**：若選擇利息滾存，單位數由 1,000 單位自動滾存至 **{nav_res['units_grown']} 單位**（增加了 +{nav_res['units_added']} 單位），最新實時總資產增長率為 **+{nav_res['nav_to_nav_return_pct']}%**！
                 """)
                 st.markdown("<hr style='margin: 15px 0; border: none; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
 
