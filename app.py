@@ -18,16 +18,29 @@ except Exception:
 # 1. 載入所有基金數據 (已整合 parsed_funds_data.json 快取)
 PRESET_FUNDS = load_all_funds()
 
-# 🟢 2. 動態校正：將所有基金的 return_1y 統一讀取為實時精算的 NAV-to-NAV 總回報
+# 🟢 2. 動態校正：將所有基金的 return_1y 與頂部現時派息率，統一讀取並同步為最新實時精算數據
 for k, fund_obj in PRESET_FUNDS.items():
     h_div = fund_obj.get("history_div", [])
+    if h_div and len(h_div) > 0:
+        # A. 提取最新一個月的真實年度化派息率 (解決如 Z52 5.87% vs 7.23% 不一致的問題)
+        latest_record = h_div[0]
+        if len(latest_record) >= 6:
+            latest_yield_str = str(latest_record[5]).replace("%", "").strip()
+            try:
+                latest_yield_val = float(latest_yield_str)
+                fund_obj["last_yield"] = latest_yield_val
+                if "kpis" in fund_obj:
+                    fund_obj["kpis"]["p1"] = f"{latest_yield_val:.2f}%"
+            except ValueError:
+                pass
+
+    # B. 精算 NAV-to-NAV 實時總回報
     if h_div and len(h_div) >= 12:
         nav_res = calculate_realtime_nav_to_nav(h_div)
         if nav_res.get("status") == "success":
-            # 強制將動態精算出的總回報同步至全系統 (如 Z15 的 6.23%, Z12 的 5.18%)
             fund_obj["return_1y"] = nav_res["nav_to_nav_return_pct"]
 
-# 🟢 3. 調用升級版 eval_engine.py 進行風控算分 (依據 10 大機構級準則實時算分)
+# 🟢 3. 調用升級版 eval_engine.py 進行風控算分 (依據 10 大機構級準則與最新矩陣實時算分)
 process_fund_risk_scores(PRESET_FUNDS)
 
 # 4. 定義 render_safe_history_div 函數，徹底避免表格崩潰
