@@ -1,4 +1,5 @@
 # app.py - 智能基金風險評估系統 (全欄位動態數據精算與對齊版)
+import re
 import streamlit as st
 import streamlit.components.v1 as components
 import pandas as pd
@@ -20,56 +21,61 @@ PRESET_FUNDS = load_all_funds()
 
 # 🟢 2. 動態校正：將所有基金的派息率、YTM 息差與 Net Income/Dividends 覆蓋率全數連動精算
 for k, fund_obj in PRESET_FUNDS.items():
-    h_div = fund_obj.get("history_div", [])
-    kpis = fund_obj.get("kpis", {})
-    
-    if h_div and len(h_div) > 0:
-        # A. 提取最新一期的真實年化派息率 (如 Z52 的 7.23%)
-        latest_record = h_div[0]
-        if len(latest_record) >= 6:
-            latest_yield_str = str(latest_record[5]).replace("%", "").strip()
-            try:
-                latest_yield_val = float(latest_yield_str)
-                fund_obj["last_yield"] = latest_yield_val
-                kpis["p1"] = f"{latest_yield_val:.2f}%"
+    try:
+        h_div = fund_obj.get("history_div", [])
+        kpis = fund_obj.get("kpis", {})
+        
+        if h_div and len(h_div) > 0:
+            # A. 提取最新一期的真實年化派息率 (如 Z52 的 7.23%)
+            latest_record = h_div[0]
+            if len(latest_record) >= 6:
+                latest_yield_str = str(latest_record[5]).replace("%", "").strip()
+                try:
+                    latest_yield_val = float(latest_yield_str)
+                    fund_obj["last_yield"] = latest_yield_val
+                    kpis["p1"] = f"{latest_yield_val:.2f}%"
 
-                # B. 提取 YTM 數據 (如 7.22%)
-                old_p2_delta = str(kpis.get("p2_delta", ""))
-                import re
-                ytm_match = re.search(r"YTM\s*(\d+\.\d+|\d+)%", old_p2_delta)
-                ytm_val = float(ytm_match.group(1)) if ytm_match else 7.22
+                    # B. 提取 YTM 數據 (如 7.22%)
+                    old_p2_delta = str(kpis.get("p2_delta", ""))
+                    ytm_match = re.search(r"YTM\s*(\d+\.\d+|\d+)%", old_p2_delta)
+                    ytm_val = float(ytm_match.group(1)) if ytm_match else 7.22
 
-                # 實時精算：派息與收益息差 (YTM - 派息率)
-                real_gap = round(ytm_val - latest_yield_val, 2)
+                    # 實時精算：派息與收益息差 (YTM - 派息率)
+                    real_gap = round(ytm_val - latest_yield_val, 2)
 
-                # 🟢 指標 2 修改：主數字改顯示「收益率 (YTM)」，下欄反映息差
-                kpis["p2"] = f"{ytm_val:.2f}%"
-                kpis["p2_delta"] = f"{'🟢' if real_gap >= 0 else '⚠️'} 派息與收益息差 {'+' if real_gap > 0 else ''}{real_gap:.2f}% (YTM {ytm_val:.2f}% vs 派息率 {latest_yield_val:.2f}%)"
-                kpis["p2_color"] = "normal" if real_gap >= 0 else "inverse"
+                    # 🟢 主數字改顯示「收益率 (YTM)」，下欄反映息差
+                    kpis["p2"] = f"{ytm_val:.2f}%"
+                    kpis["p2_delta"] = f"{'🟢' if real_gap >= 0 else '⚠️'} 派息與收益息差 {'+' if real_gap > 0 else ''}{real_gap:.2f}% (YTM {ytm_val:.2f}% vs 派息率 {latest_yield_val:.2f}%)"
+                    kpis["p2_color"] = "normal" if real_gap >= 0 else "inverse"
 
-                # 🟢 指標 5/6 修改：嚴格保留以 Net Income / Dividends Paid (淨收益 / 總派息) 計算
-                p9_str = str(kpis.get("p9", ""))   # Net Income / 權利金 (例如 "$26.85 M")
-                p10_str = str(kpis.get("p10", "")) # Dividends Paid / 總派息金額 (例如 "$18.25 M")
-                
-                net_inc_val = float(re.findall(r"\d+\.\d+|\d+", p9_str)[0]) if re.findall(r"\d+\.\d+|\d+", p9_str) else None
-                div_paid_val = float(re.findall(r"\d+\.\d+|\d+", p10_str)[0]) if re.findall(r"\d+\.\d+|\d+", p10_str) else None
+                    # 🟢 嚴格保留以 Net Income / Dividends Paid (淨收益 / 總派息) 計算
+                    p9_str = str(kpis.get("p9", ""))   # Net Income / 權利金 (例如 "$26.85 M")
+                    p10_str = str(kpis.get("p10", "")) # Dividends Paid / 總派息金額 (例如 "$18.25 M")
+                    
+                    net_inc_match = re.findall(r"\d+\.\d+|\d+", p9_str)
+                    div_paid_match = re.findall(r"\d+\.\d+|\d+", p10_str)
 
-                if net_inc_val and div_paid_val and div_paid_val > 0:
-                    nii_coverage_pct = round((net_inc_val / div_paid_val) * 100, 1)
-                    kpis["p10_delta"] = f"{'🟢' if nii_coverage_pct >= 100 else '⚠️'} 淨收益覆蓋率 {nii_coverage_pct}% (Net Income / Dividends)"
-                    kpis["p10_color"] = "normal" if nii_coverage_pct >= 100 else "inverse"
-                else:
-                    kpis["p10_delta"] = "🟢 淨收益覆蓋佳 (Net Income / Dividends)"
-                    kpis["p10_color"] = "normal"
+                    net_inc_val = float(net_inc_match[0]) if net_inc_match else None
+                    div_paid_val = float(div_paid_match[0]) if div_paid_match else None
 
-            except ValueError:
-                pass
+                    if net_inc_val and div_paid_val and div_paid_val > 0:
+                        nii_coverage_pct = round((net_inc_val / div_paid_val) * 100, 1)
+                        kpis["p10_delta"] = f"{'🟢' if nii_coverage_pct >= 100 else '⚠️'} 淨收益覆蓋率 {nii_coverage_pct}% (Net Income / Dividends)"
+                        kpis["p10_color"] = "normal" if nii_coverage_pct >= 100 else "inverse"
+                    else:
+                        kpis["p10_delta"] = "🟢 淨收益覆蓋佳 (Net Income / Dividends)"
+                        kpis["p10_color"] = "normal"
 
-    # C. 動態同步 NAV-to-NAV 實時總回報至頂部名片與全系統
-    if h_div and len(h_div) >= 12:
-        nav_res = calculate_realtime_nav_to_nav(h_div)
-        if nav_res.get("status") == "success":
-            fund_obj["return_1y"] = nav_res["nav_to_nav_return_pct"]
+                except ValueError:
+                    pass
+
+        # C. 動態同步 NAV-to-NAV 實時總回報至頂部名片與全系統
+        if h_div and len(h_div) >= 12:
+            nav_res = calculate_realtime_nav_to_nav(h_div)
+            if nav_res.get("status") == "success":
+                fund_obj["return_1y"] = nav_res["nav_to_nav_return_pct"]
+    except Exception:
+        pass
 
 # 🟢 3. 調用升級版 eval_engine.py 進行風控算分
 process_fund_risk_scores(PRESET_FUNDS)
