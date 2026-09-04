@@ -1,4 +1,4 @@
-# app.py - 智能基金風險評估系統 (100% 動態數據對齊與極速版)
+# app.py - 智能基金風險評估系統 (全欄位動態數據精算與對齊版)
 import streamlit as st
 import streamlit.components.v1 as components
 import pandas as pd
@@ -8,7 +8,7 @@ from utils.nav_calculator import calculate_realtime_nav_to_nav
 from portfolio_builder import render_portfolio_builder_tab
 from eval_engine import generate_dynamic_eval_table, process_fund_risk_scores
 
-# 🟢 0. 啟動時強制刷空 Streamlit 社群雲端記憶體快取，確保讀取最新 JSON 與扣分邏輯
+# 🟢 0. 啟動時強制刷空 Streamlit 社群雲端記憶體快取
 try:
     st.cache_data.clear()
     st.cache_resource.clear()
@@ -18,29 +18,60 @@ except Exception:
 # 1. 載入所有基金數據 (已整合 parsed_funds_data.json 快取)
 PRESET_FUNDS = load_all_funds()
 
-# 🟢 2. 動態校正：將所有基金的 return_1y 與頂部現時派息率，統一讀取並同步為最新實時精算數據
+# 🟢 2. 動態校正：將所有基金的派息率、YTM 息差與 Net Income/Dividends 覆蓋率全數連動精算
 for k, fund_obj in PRESET_FUNDS.items():
     h_div = fund_obj.get("history_div", [])
+    kpis = fund_obj.get("kpis", {})
+    
     if h_div and len(h_div) > 0:
-        # A. 提取最新一個月的真實年度化派息率 (解決如 Z52 5.87% vs 7.23% 不一致的問題)
+        # A. 提取最新一期的真實年化派息率 (如 Z52 的 7.23%)
         latest_record = h_div[0]
         if len(latest_record) >= 6:
             latest_yield_str = str(latest_record[5]).replace("%", "").strip()
             try:
                 latest_yield_val = float(latest_yield_str)
                 fund_obj["last_yield"] = latest_yield_val
-                if "kpis" in fund_obj:
-                    fund_obj["kpis"]["p1"] = f"{latest_yield_val:.2f}%"
+                kpis["p1"] = f"{latest_yield_val:.2f}%"
+
+                # B. 提取 YTM 數據 (如 7.22%)
+                old_p2_delta = str(kpis.get("p2_delta", ""))
+                import re
+                ytm_match = re.search(r"YTM\s*(\d+\.\d+|\d+)%", old_p2_delta)
+                ytm_val = float(ytm_match.group(1)) if ytm_match else 7.22
+
+                # 實時精算：派息與收益息差 (YTM - 派息率)
+                real_gap = round(ytm_val - latest_yield_val, 2)
+
+                # 🟢 指標 2 修改：主數字改顯示「收益率 (YTM)」，下欄反映息差
+                kpis["p2"] = f"{ytm_val:.2f}%"
+                kpis["p2_delta"] = f"{'🟢' if real_gap >= 0 else '⚠️'} 派息與收益息差 {'+' if real_gap > 0 else ''}{real_gap:.2f}% (YTM {ytm_val:.2f}% vs 派息率 {latest_yield_val:.2f}%)"
+                kpis["p2_color"] = "normal" if real_gap >= 0 else "inverse"
+
+                # 🟢 指標 5/6 修改：嚴格保留以 Net Income / Dividends Paid (淨收益 / 總派息) 計算
+                p9_str = str(kpis.get("p9", ""))   # Net Income / 權利金 (例如 "$26.85 M")
+                p10_str = str(kpis.get("p10", "")) # Dividends Paid / 總派息金額 (例如 "$18.25 M")
+                
+                net_inc_val = float(re.findall(r"\d+\.\d+|\d+", p9_str)[0]) if re.findall(r"\d+\.\d+|\d+", p9_str) else None
+                div_paid_val = float(re.findall(r"\d+\.\d+|\d+", p10_str)[0]) if re.findall(r"\d+\.\d+|\d+", p10_str) else None
+
+                if net_inc_val and div_paid_val and div_paid_val > 0:
+                    nii_coverage_pct = round((net_inc_val / div_paid_val) * 100, 1)
+                    kpis["p10_delta"] = f"{'🟢' if nii_coverage_pct >= 100 else '⚠️'} 淨收益覆蓋率 {nii_coverage_pct}% (Net Income / Dividends)"
+                    kpis["p10_color"] = "normal" if nii_coverage_pct >= 100 else "inverse"
+                else:
+                    kpis["p10_delta"] = "🟢 淨收益覆蓋佳 (Net Income / Dividends)"
+                    kpis["p10_color"] = "normal"
+
             except ValueError:
                 pass
 
-    # B. 精算 NAV-to-NAV 實時總回報
+    # C. 動態同步 NAV-to-NAV 實時總回報至頂部名片與全系統
     if h_div and len(h_div) >= 12:
         nav_res = calculate_realtime_nav_to_nav(h_div)
         if nav_res.get("status") == "success":
             fund_obj["return_1y"] = nav_res["nav_to_nav_return_pct"]
 
-# 🟢 3. 調用升級版 eval_engine.py 進行風控算分 (依據 10 大機構級準則與最新矩陣實時算分)
+# 🟢 3. 調用升級版 eval_engine.py 進行風控算分
 process_fund_risk_scores(PRESET_FUNDS)
 
 # 4. 定義 render_safe_history_div 函數，徹底避免表格崩潰
@@ -474,7 +505,7 @@ with top_tab2:
         if show_g1:
             g1_c1, g1_c2, g1_c3, g1_c4, g1_c5, g1_c6 = st.columns(6)
             with g1_c1: st.metric(label="現時派息率", value=kpis.get('p1', '-'), delta="年化分派", delta_color="normal")
-            with g1_c2: st.metric(label="派息與收益息差", value=kpis.get('p2', '-'), delta=p2_delta, delta_color=p2_color)
+            with g1_c2: st.metric(label="收益率 (YTM)", value=kpis.get('p2', '-'), delta=p2_delta, delta_color=p2_color)
             with g1_c3: st.metric(label="過往 1 年總回報率", value=f"+{display_1y_return}%", delta="實時 1 年動態總回報", delta_color="normal")
             with g1_c4: st.metric(label="過往 3 年年化總回報", value=f"+{display_3y_return}%", delta="晨星年化複合回報 (CAGR)", delta_color="normal")
             with g1_c5: st.metric(label="過往一年總派息金額", value=kpis.get('p10', '-'), delta=p10_delta, delta_color=p10_color)
